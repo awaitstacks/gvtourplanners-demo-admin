@@ -1,9 +1,9 @@
 import React, { useContext } from "react";
 import { assets } from "../assets/assets";
-import { AdminContext } from "../context/AdminContext";
+
 import { TourAdminContext } from "../context/TourAdminContext";
 import { useNavigate } from "react-router-dom";
-import { DoctorContext } from "../context/DoctorContext";
+
 import { TourContext } from "../context/TourContext";
 
 const TourNavbar = () => {

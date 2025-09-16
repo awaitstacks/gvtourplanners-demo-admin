@@ -1,7 +1,7 @@
 import React, { useContext, useState } from "react";
 
 import { TourAdminContext } from "../context/TourAdminContext.jsx";
-import { DoctorContext } from "../context/DoctorContext.jsx";
+
 import { TourContext } from "../context/TourContext.jsx";
 
 import axios from "axios";
