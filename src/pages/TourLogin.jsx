@@ -18,7 +18,7 @@ const TourLogin = () => {
     event.preventDefault();
     try {
       if (state === "Admin") {
-        const { data } = await axios.post(backendUrl + "/api/admin/login", {
+        const { data } = await axios.post(backendUrl + "/api/touradmin/login", {
           email,
           password,
         });
