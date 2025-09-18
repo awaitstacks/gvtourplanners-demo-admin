@@ -194,6 +194,10 @@ const TourBookings = () => {
                   {/* Booking Info */}
                   <div>
                     <p>
+                      <span className="font-medium">Tour title:</span>{" "}
+                      {booking?.tourData?.title}
+                    </p>
+                    <p>
                       <span className="font-medium">Booking Date:</span>{" "}
                       {new Date(booking.bookingDate).toLocaleDateString()}
                     </p>
