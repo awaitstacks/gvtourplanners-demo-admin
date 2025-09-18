@@ -35,8 +35,8 @@ const TourApp = () => {
           <Route path="/" element={<></>} />
           <Route path="/admin-dashboard" element={<TourAdminDashboard />} />
           <Route path="/all-bookings" element={<AllBookings />} />
-          <Route path="/tour-list" element={<ToursList />} />
           <Route path="/add-tour" element={<AddTour />} />
+          <Route path="/tour-list" element={<ToursList />} />
 
           {/* Doctor Routes */}
           <Route path="/tour-dashboard" element={<TourDashboard />} />

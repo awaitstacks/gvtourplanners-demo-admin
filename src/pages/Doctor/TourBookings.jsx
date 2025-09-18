@@ -274,6 +274,13 @@ const TourBookings = () => {
                             {trav.boardingPoint.stationCode})
                           </p>
                         )}
+                        {trav.deboardingPoint?.stationName && (
+                          <p>
+                            Return De-Boarding Point:{" "}
+                            {trav.deboardingPoint.stationName} (
+                            {trav.deboardingPoint.stationCode})
+                          </p>
+                        )}
 
                         {trav.selectedAddon?.name && (
                           <p>
