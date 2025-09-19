@@ -70,7 +70,6 @@
 //     galleryImages: [],
 //   });
 
-//   // New state variables for calculated balances
 //   const [balances, setBalances] = useState({
 //     balanceDouble: "",
 //     balanceTriple: "",
@@ -102,7 +101,6 @@
 //           : initialForm.boardingPoints,
 //         remarks: profileData.remarks || initialForm.remarks,
 //       });
-//       // Set initial balances from profile data
 //       setBalances({
 //         balanceDouble: profileData.balanceDouble,
 //         balanceTriple: profileData.balanceTriple,
@@ -112,7 +110,6 @@
 //     }
 //   }, [profileData]);
 
-//   // New useEffect to recalculate balances
 //   useEffect(() => {
 //     const { price, advanceAmount } = formData;
 //     if (price && advanceAmount) {
@@ -131,7 +128,6 @@
 //     }
 //   }, [formData.price, formData.advanceAmount]);
 
-//   // A single, more flexible handleChange function
 //   const handleChange = (
 //     e,
 //     field,
@@ -140,16 +136,13 @@
 //     subField = null
 //   ) => {
 //     const value = e.target.value;
-
 //     if (nestedField && index !== null) {
-//       // Handles changes in arrays of objects (e.g., trainDetails)
 //       setFormData((prev) => {
 //         const updated = [...prev[nestedField]];
 //         updated[index][subField] = value;
 //         return { ...prev, [nestedField]: updated };
 //       });
 //     } else if (typeof field === "object") {
-//       // Handles changes in nested objects (e.g., price, duration, advanceAmount)
 //       setFormData((prev) => ({
 //         ...prev,
 //         [field.main]: {
@@ -158,14 +151,12 @@
 //         },
 //       }));
 //     } else if (index !== null) {
-//       // Handles changes in arrays of strings (e.g., destination)
 //       setFormData((prev) => {
 //         const updated = [...prev[field]];
 //         updated[index] = value;
 //         return { ...prev, [field]: updated };
 //       });
 //     } else {
-//       // Handles changes in top-level fields
 //       setFormData((prev) => ({ ...prev, [field]: value }));
 //     }
 //   };
@@ -253,7 +244,6 @@
 //     try {
 //       const data = new FormData();
 
-//       // Append all fields to FormData, checking for non-empty values
 //       const fieldsToAppend = {
 //         title: formData.title,
 //         batch: formData.batch,
@@ -261,14 +251,12 @@
 //         completedTripsCount: formData.completedTripsCount,
 //         remarks: formData.remarks,
 //       };
-
 //       for (const [key, value] of Object.entries(fieldsToAppend)) {
 //         if (value?.toString().trim()) {
 //           data.append(key, value);
 //         }
 //       }
 
-//       // Append nested objects as JSON strings
 //       const objectsToAppend = {
 //         duration: formData.duration,
 //         price: formData.price,
@@ -280,7 +268,6 @@
 //         }
 //       }
 
-//       // Append calculated balances to FormData
 //       data.append("balanceDouble", balances.balanceDouble);
 //       data.append("balanceTriple", balances.balanceTriple);
 //       data.append("balanceChildWithBerth", balances.balanceChildWithBerth);
@@ -289,7 +276,6 @@
 //         balances.balanceChildWithoutBerth
 //       );
 
-//       // Append arrays as JSON strings
 //       const arraysToAppend = {
 //         destination: formData.destination,
 //         sightseeing: formData.sightseeing,
@@ -307,7 +293,6 @@
 //         }
 //       }
 
-//       // Append images
 //       if (images.titleImage) data.append("titleImage", images.titleImage);
 //       if (images.mapImage) data.append("mapImage", images.mapImage);
 //       if (images.galleryImages.length > 0) {
@@ -344,8 +329,10 @@
 //   };
 
 //   return (
-//     <div className="p-6 max-w-4xl mx-auto">
-//       <h1 className="text-2xl font-bold mb-6">Update Tour Profile</h1>
+//     <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">
+//       <h1 className="text-xl sm:text-2xl font-bold mb-6">
+//         Update Tour Profile
+//       </h1>
 //       <form onSubmit={handleSubmit} className="space-y-6">
 //         <input
 //           type="text"
@@ -378,7 +365,7 @@
 //             </select>
 //           </div>
 //         </div>
-//         <div className="grid grid-cols-2 gap-4">
+//         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 //           <label className="block">
 //             Days
 //             <input
@@ -405,7 +392,7 @@
 //           </label>
 //         </div>
 
-//         <div className="grid grid-cols-2 gap-4">
+//         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 //           <div>
 //             <h2 className="text-lg font-semibold mb-2">Advance Amounts</h2>
 //             <div className="space-y-2">
@@ -490,8 +477,7 @@
 //           </div>
 //         </div>
 
-//         {/* Balances Section - New Read-Only Inputs */}
-//         <div className="grid grid-cols-2 gap-4">
+//         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 //           <div>
 //             <h2 className="text-lg font-semibold mb-2">Calculated Balances</h2>
 //             <div className="space-y-2">
@@ -563,7 +549,10 @@
 //               {field}
 //             </label>
 //             {formData[field].map((item, index) => (
-//               <div key={index} className="flex gap-2 items-center mb-2">
+//               <div
+//                 key={index}
+//                 className="flex flex-col sm:flex-row gap-2 items-center mb-2"
+//               >
 //                 <input
 //                   value={item}
 //                   placeholder={`${field} ${index + 1}`}
@@ -572,7 +561,7 @@
 //                 />
 //                 <button
 //                   type="button"
-//                   className="bg-red-500 text-white px-2 py-1 rounded text-sm"
+//                   className="bg-red-500 text-white px-2 py-1 rounded text-sm w-full sm:w-auto"
 //                   onClick={() => removeField(field, index)}
 //                 >
 //                   Remove
@@ -596,7 +585,7 @@
 //             </label>
 //             {formData[type].map((detail, index) => (
 //               <div key={index} className="border p-4 rounded mb-4">
-//                 <div className="grid grid-cols-2 gap-3">
+//                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 //                   {Object.entries(detail).map(([key, value]) =>
 //                     key === "_id" ? null : (
 //                       <label key={key} className="block">
@@ -620,7 +609,7 @@
 //                 </div>
 //                 <button
 //                   type="button"
-//                   className="bg-red-500 text-white px-2 py-1 rounded text-sm mt-2"
+//                   className="bg-red-500 text-white px-2 py-1 rounded text-sm mt-2 w-full sm:w-auto"
 //                   onClick={() => removeTransportDetail(type, index)}
 //                 >
 //                   Remove {type === "trainDetails" ? "Train" : "Flight"} Details
@@ -733,12 +722,15 @@
 //         <div>
 //           <label className="block font-semibold mb-1">Boarding Points</label>
 //           {formData.boardingPoints.map((bp, index) => (
-//             <div key={index} className="flex gap-2 items-center mb-2">
+//             <div
+//               key={index}
+//               className="flex flex-col sm:flex-row gap-2 items-center mb-2"
+//             >
 //               <input
 //                 type="text"
 //                 placeholder="Station code (e.g., MAS)"
 //                 value={bp.stationCode}
-//                 className="p-3 border flex-1"
+//                 className="p-3 border w-full sm:flex-1"
 //                 onChange={(e) =>
 //                   handleChange(e, null, "boardingPoints", index, "stationCode")
 //                 }
@@ -747,14 +739,14 @@
 //                 type="text"
 //                 placeholder="Station name (e.g., MGR Chennai Central)"
 //                 value={bp.stationName}
-//                 className="p-3 border flex-1"
+//                 className="p-3 border w-full sm:flex-1"
 //                 onChange={(e) =>
 //                   handleChange(e, null, "boardingPoints", index, "stationName")
 //                 }
 //               />
 //               <button
 //                 type="button"
-//                 className="bg-red-500 text-white px-2 py-1 rounded text-sm"
+//                 className="bg-red-500 text-white px-2 py-1 rounded text-sm w-full sm:w-auto"
 //                 onClick={() => removeTransportDetail("boardingPoints", index)}
 //               >
 //                 Remove
@@ -775,26 +767,29 @@
 //         <div>
 //           <label className="block font-semibold capitalize mb-1">Add-ons</label>
 //           {formData.addons.map((addon, index) => (
-//             <div key={index} className="flex gap-2 items-center mb-2">
+//             <div
+//               key={index}
+//               className="flex flex-col sm:flex-row gap-2 items-center mb-2"
+//             >
 //               <input
 //                 type="text"
 //                 placeholder="Addon Name"
 //                 value={addon.name}
-//                 className="p-3 border flex-1"
+//                 className="p-3 border w-full sm:flex-1"
 //                 onChange={(e) => handleChange(e, null, "addons", index, "name")}
 //               />
 //               <input
 //                 type="number"
 //                 placeholder="Addon Amount"
 //                 value={addon.amount}
-//                 className="p-3 border flex-1"
+//                 className="p-3 border w-full sm:flex-1"
 //                 onChange={(e) =>
 //                   handleChange(e, null, "addons", index, "amount")
 //                 }
 //               />
 //               <button
 //                 type="button"
-//                 className="bg-red-500 text-white px-2 py-1 rounded text-sm"
+//                 className="bg-red-500 text-white px-2 py-1 rounded text-sm w-full sm:w-auto"
 //                 onClick={() => removeTransportDetail("addons", index)}
 //               >
 //                 Remove
@@ -886,8 +881,9 @@ const TourProfile = () => {
     lastBookingDate: "",
     completedTripsCount: "",
     addons: [{ name: "", amount: "" }],
-    remarks: "",
     boardingPoints: [defaultBoardingPoint],
+    deboardingPoints: [defaultBoardingPoint],
+    remarks: "",
   };
 
   const [formData, setFormData] = useState(initialForm);
@@ -926,6 +922,9 @@ const TourProfile = () => {
         boardingPoints: profileData.boardingPoints?.length
           ? profileData.boardingPoints
           : initialForm.boardingPoints,
+        deboardingPoints: profileData.deboardingPoints?.length
+          ? profileData.deboardingPoints
+          : initialForm.deboardingPoints,
         remarks: profileData.remarks || initialForm.remarks,
       });
       setBalances({
@@ -1113,11 +1112,13 @@ const TourProfile = () => {
         flightDetails: formData.flightDetails,
         addons: formData.addons,
         boardingPoints: formData.boardingPoints,
+        deboardingPoints: formData.deboardingPoints,
       };
+
       for (const [key, value] of Object.entries(arraysToAppend)) {
-        if (hasNonEmptyArray(value)) {
-          data.append(key, JSON.stringify(value));
-        }
+        // Updated logic to ensure empty deboardingPoints array is also sent
+        // The hasNonEmptyArray check is not needed if the field should always be sent
+        data.append(key, JSON.stringify(value));
       }
 
       if (images.titleImage) data.append("titleImage", images.titleImage);
@@ -1588,6 +1589,64 @@ const TourProfile = () => {
             }
           >
             + Add Boarding Point
+          </button>
+        </div>
+
+        {/* Deboarding Points */}
+        <div>
+          <label className="block font-semibold mb-1">Deboarding Points</label>
+          {formData.deboardingPoints.map((bp, index) => (
+            <div
+              key={index}
+              className="flex flex-col sm:flex-row gap-2 items-center mb-2"
+            >
+              <input
+                type="text"
+                placeholder="Station code (e.g., MAS)"
+                value={bp.stationCode}
+                className="p-3 border w-full sm:flex-1"
+                onChange={(e) =>
+                  handleChange(
+                    e,
+                    null,
+                    "deboardingPoints",
+                    index,
+                    "stationCode"
+                  )
+                }
+              />
+              <input
+                type="text"
+                placeholder="Station name (e.g., MGR Chennai Central)"
+                value={bp.stationName}
+                className="p-3 border w-full sm:flex-1"
+                onChange={(e) =>
+                  handleChange(
+                    e,
+                    null,
+                    "deboardingPoints",
+                    index,
+                    "stationName"
+                  )
+                }
+              />
+              <button
+                type="button"
+                className="bg-red-500 text-white px-2 py-1 rounded text-sm w-full sm:w-auto"
+                onClick={() => removeTransportDetail("deboardingPoints", index)}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            className="bg-blue-500 text-white px-4 py-1 rounded"
+            onClick={() =>
+              addTransportDetail("deboardingPoints", defaultBoardingPoint)
+            }
+          >
+            + Add Deboarding Point
           </button>
         </div>
 
