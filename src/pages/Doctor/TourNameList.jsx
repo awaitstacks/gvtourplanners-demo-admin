@@ -4,8 +4,13 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 const TourNameList = () => {
-  const { bookings, getBookings, updateTravellerDetails } =
-    useContext(TourContext);
+  const {
+    bookings,
+    getBookings,
+    updateTravellerDetails,
+    tourList,
+    getTourList,
+  } = useContext(TourContext);
 
   const [initialized, setInitialized] = useState(false);
   const [tableData, setTableData] = useState({
@@ -13,14 +18,22 @@ const TourNameList = () => {
     flightColumns: [],
     travellers: [],
   });
+  const [selectedTourId, setSelectedTourId] = useState("");
 
+  // Fetch the list of all tours for the dropdown
   useEffect(() => {
-    getBookings();
-  }, [getBookings]);
+    getTourList();
+  }, [getTourList]);
 
-  // Initialize merged table
+  // Fetch bookings for the selected tour
   useEffect(() => {
-    if (!initialized && bookings.length > 0) {
+    // getBookings is now passed the selectedTourId
+    getBookings(selectedTourId);
+  }, [selectedTourId, getBookings]);
+
+  // Re-initialize the table when bookings change
+  useEffect(() => {
+    if (bookings.length > 0) {
       const trainSet = new Set();
       const flightSet = new Set();
       const travellersList = [];
@@ -96,8 +109,16 @@ const TourNameList = () => {
         travellers: travellersList,
       });
       setInitialized(true);
+    } else {
+      // Reset state if no bookings are found
+      setTableData({
+        trainColumns: ["Train 1"],
+        flightColumns: ["Flight 1"],
+        travellers: [],
+      });
+      setInitialized(false);
     }
-  }, [bookings, initialized]);
+  }, [bookings]);
 
   const cloneState = (s) => JSON.parse(JSON.stringify(s));
 
@@ -260,7 +281,7 @@ const TourNameList = () => {
     if (!booking) return;
 
     await updateTravellerDetails(booking._id, traveller.id, payload);
-    getBookings();
+    getBookings(selectedTourId);
   };
 
   // Save ALL travellers
@@ -288,7 +309,7 @@ const TourNameList = () => {
     });
 
     await Promise.all(promises);
-    getBookings();
+    getBookings(selectedTourId);
     alert("All traveller details saved successfully!");
   };
 
@@ -298,19 +319,47 @@ const TourNameList = () => {
         Traveller Name List
       </h2>
 
-      {/* Export Button at Top */}
-      <div style={{ textAlign: "right", marginBottom: "16px" }}>
-        <button onClick={exportToPDF} style={pdfBtn}>
-          📄 Export to PDF
-        </button>
+      {/* Tour Selection Dropdown */}
+      <div style={{ marginBottom: "18px" }}>
+        <label
+          htmlFor="tour-select"
+          style={{ marginRight: "12px", fontWeight: "bold" }}
+        >
+          Select Tour:
+        </label>
+        <select
+          id="tour-select"
+          value={selectedTourId}
+          onChange={(e) => setSelectedTourId(e.target.value)}
+          style={{
+            padding: "8px",
+            borderRadius: "4px",
+            border: "1px solid #ccc",
+          }}
+        >
+          <option value="">-- Select a Tour --</option>
+          {tourList.map((tour) => (
+            <option key={tour._id} value={tour._id}>
+              {tour.title}
+            </option>
+          ))}
+        </select>
       </div>
 
       {tableData.travellers.length === 0 ? (
         <p style={{ textAlign: "center", color: "#777" }}>
-          No travellers found.
+          {selectedTourId
+            ? "No travellers found for this tour."
+            : "Please select a tour to view the traveller list."}
         </p>
       ) : (
         <>
+          <div style={{ textAlign: "right", marginBottom: "16px" }}>
+            <button onClick={exportToPDF} style={pdfBtn}>
+              📄 Export to PDF
+            </button>
+          </div>
+
           <div style={{ marginBottom: 12, display: "flex", gap: 12 }}>
             <button
               onClick={() => handleAddGlobalColumn("train")}

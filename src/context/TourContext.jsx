@@ -1,198 +1,4 @@
-// import { useState } from "react";
-// import { createContext } from "react";
-// import axios from "axios";
-// import { toast } from "react-toastify";
-// export const TourContext = createContext();
-// const TourContextProvider = (props) => {
-//   const backendUrl = import.meta.env.VITE_BACKEND_URL;
-//   const [ttoken, setttoken] = useState(
-//     localStorage.getItem("ttoken") ? localStorage.getItem("ttoken") : ""
-//   );
-//   const [bookings, setBookings] = useState([]);
-//   const [dashData, setDashData] = useState(false);
-//   const [profileData, setProfileData] = useState(false);
-
-//   const getBookings = async () => {
-//     try {
-//       const { data } = await axios.get(backendUrl + "/api/tour/bookings-tour", {
-//         headers: { ttoken },
-//       });
-//       if (data.success) {
-//         setBookings(data.bookings);
-//       } else {
-//         toast.error(data.message);
-//       }
-//     } catch (error) {
-//       console.log(error);
-//       toast.error(error.message);
-//     }
-//   };
-//   const updateTravellerDetails = async (
-//     bookingId,
-//     travellerId,
-//     travellerData
-//   ) => {
-//     try {
-//       const { data } = await axios.put(
-//         backendUrl + "/api/tour/update-traveller",
-//         {
-//           bookingId,
-//           travellerId,
-//           ...travellerData, // spread out trainSeats, flightSeats, staffRemarks
-//         },
-//         { headers: { ttoken } }
-//       );
-
-//       if (data.success) {
-//         toast.success("Traveller details updated");
-//         getBookings();
-//       } else {
-//         toast.error(data.message || "Failed to update traveller details");
-//       }
-//     } catch (error) {
-//       console.log(error);
-//       toast.error(error.message);
-//     }
-//   };
-
-//   const markAdvancePaid = async (bookingId) => {
-//     try {
-//       const { data } = await axios.put(
-//         backendUrl + "/api/tour/mark-advancepaid",
-
-//         { bookingId },
-//         { headers: { ttoken } } // ✅ fixed
-//       );
-//       if (data.success) {
-//         toast.success(data.message);
-//         getBookings();
-//       } else {
-//         toast.error(data.message);
-//       }
-//     } catch (error) {
-//       console.log(error);
-//       toast.error(error.message);
-//     }
-//   };
-
-//   const markBalancePaid = async (bookingId) => {
-//     try {
-//       const { data } = await axios.put(
-//         backendUrl + "/api/tour/mark-balancepaid",
-//         { bookingId },
-//         { headers: { ttoken } } // ✅ fixed
-//       );
-//       if (data.success) {
-//         toast.success(data.message);
-//         getBookings();
-//       } else {
-//         toast.error(data.message);
-//       }
-//     } catch (error) {
-//       console.log(error);
-//       toast.error(error.message);
-//     }
-//   };
-//   const completeBooking = async (bookingId) => {
-//     try {
-//       const { data } = await axios.post(
-//         backendUrl + "/api/tour/complete-bookingtour",
-//         { bookingId },
-//         { headers: { ttoken } }
-//       );
-//       if (data.success) {
-//         toast.success(data.message);
-//         getBookings();
-//       } else {
-//         toast.error(data.message);
-//       }
-//     } catch (error) {
-//       console.log(error);
-//       toast.error(error.message);
-//     }
-//   };
-//   const cancelBooking = async (bookingId) => {
-//     try {
-//       const { data } = await axios.post(
-//         backendUrl + "/api/tour/cancel-bookingtour",
-//         { bookingId },
-//         { headers: { ttoken } }
-//       );
-//       if (data.success) {
-//         toast.success(data.message);
-//         getBookings();
-//       } else {
-//         toast.error(data.message);
-//       }
-//     } catch (error) {
-//       console.log(error);
-//       toast.error(error.message);
-//     }
-//   };
-
-//   const getDashData = async () => {
-//     try {
-//       const { data } = await axios.get(
-//         backendUrl + "/api/tour/tour-dashboard",
-//         {
-//           headers: { ttoken },
-//         }
-//       );
-//       if (data.success) {
-//         setDashData(data.data);
-//         console.log(data.data);
-//       } else {
-//         toast.error(data.message);
-//       }
-//     } catch (error) {
-//       console.log(error);
-//       toast.error(error.message);
-//     }
-//   };
-//   const getProfileData = async () => {
-//     try {
-//       const { data } = await axios.get(backendUrl + "/api/tour/tour-profile", {
-//         headers: { ttoken },
-//       });
-//       if (data.success) {
-//         setProfileData(data.tourProfileData); // ✅ Corrected key
-//       } else {
-//         toast.error(data.message || "Failed to load profile");
-//       }
-//     } catch (error) {
-//       console.log(error);
-//       toast.error(error.message);
-//     }
-//   };
-
-//   const value = {
-//     ttoken,
-//     setttoken,
-//     backendUrl,
-//     bookings,
-//     setBookings,
-//     getBookings,
-//     markAdvancePaid,
-//     markBalancePaid,
-//     completeBooking,
-//     cancelBooking,
-//     dashData,
-//     setDashData,
-//     getDashData,
-//     profileData,
-//     setProfileData,
-//     getProfileData,
-//     updateTravellerDetails,
-//   };
-//   return (
-//     <TourContext.Provider value={value}>{props.children}</TourContext.Provider>
-//   );
-// };
-
-// export default TourContextProvider;
-
-import { useState, useCallback } from "react";
-import { createContext } from "react";
+import { useState, useCallback, createContext } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 
@@ -206,16 +12,17 @@ const TourContextProvider = (props) => {
   const [bookings, setBookings] = useState([]);
   const [dashData, setDashData] = useState(false);
   const [profileData, setProfileData] = useState(false);
+  const [tourList, setTourList] = useState([]);
 
   // ----------------- API Functions -----------------
 
-  const getBookings = useCallback(async () => {
+  const getTourList = useCallback(async () => {
     try {
-      const { data } = await axios.get(backendUrl + "/api/tour/bookings-tour", {
+      const { data } = await axios.get(`${backendUrl}/api/tour/list`, {
         headers: { ttoken },
       });
       if (data.success) {
-        setBookings(data.bookings);
+        setTourList(data.tours);
       } else {
         toast.error(data.message);
       }
@@ -225,23 +32,54 @@ const TourContextProvider = (props) => {
     }
   }, [backendUrl, ttoken]);
 
-  const getDashData = useCallback(async () => {
-    try {
-      const { data } = await axios.get(
-        backendUrl + "/api/tour/tour-dashboard",
-        { headers: { ttoken } }
-      );
-      if (data.success) {
-        setDashData(data.data);
-        console.log("Dashboard Data:", data.data);
-      } else {
-        toast.error(data.message);
+  const getBookings = useCallback(
+    async (tourId) => {
+      try {
+        if (!tourId) {
+          setBookings([]);
+          return;
+        }
+
+        const { data } = await axios.get(
+          `${backendUrl}/api/tour/bookings-tour/${tourId}`,
+          {
+            headers: { ttoken },
+          }
+        );
+
+        if (data.success) {
+          setBookings(data.bookings);
+        } else {
+          toast.error(data.message);
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error(error.message);
       }
-    } catch (error) {
-      console.error(error);
-      toast.error(error.message);
-    }
-  }, [backendUrl, ttoken]);
+    },
+    [backendUrl, ttoken]
+  );
+
+  const getDashData = useCallback(
+    async (tourId) => {
+      try {
+        const { data } = await axios.get(
+          backendUrl + `/api/tour/tour-dashboard/${tourId}`,
+          { headers: { ttoken } }
+        );
+        if (data.success) {
+          setDashData(data.data);
+          console.log("Dashboard Data:", data.data);
+        } else {
+          toast.error(data.message);
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error(error.message);
+      }
+    },
+    [backendUrl, ttoken]
+  );
 
   const updateTravellerDetails = async (
     bookingId,
@@ -267,16 +105,16 @@ const TourContextProvider = (props) => {
     }
   };
 
-  const markAdvancePaid = async (bookingId) => {
+  const markAdvancePaid = async (bookingId, tourId) => {
     try {
       const { data } = await axios.put(
         backendUrl + "/api/tour/mark-advancepaid",
-        { bookingId },
+        { bookingId, tourId }, // Include tourId here
         { headers: { ttoken } }
       );
       if (data.success) {
         toast.success(data.message);
-        getBookings();
+        getBookings(tourId);
       } else {
         toast.error(data.message);
       }
@@ -286,16 +124,16 @@ const TourContextProvider = (props) => {
     }
   };
 
-  const markBalancePaid = async (bookingId) => {
+  const markBalancePaid = async (bookingId, tourId) => {
     try {
       const { data } = await axios.put(
         backendUrl + "/api/tour/mark-balancepaid",
-        { bookingId },
+        { bookingId, tourId }, // Include the tourId in the request body
         { headers: { ttoken } }
       );
       if (data.success) {
         toast.success(data.message);
-        getBookings();
+        getBookings(tourId);
       } else {
         toast.error(data.message);
       }
@@ -305,16 +143,16 @@ const TourContextProvider = (props) => {
     }
   };
 
-  const completeBooking = async (bookingId) => {
+  const completeBooking = async (bookingId, tourId) => {
     try {
       const { data } = await axios.post(
         backendUrl + "/api/tour/complete-bookingtour",
-        { bookingId },
+        { bookingId, tourId }, // Include tourId in the request body
         { headers: { ttoken } }
       );
       if (data.success) {
         toast.success(data.message);
-        getBookings();
+        getBookings(tourId); // Re-fetch bookings for the specific tour
       } else {
         toast.error(data.message);
       }
@@ -343,27 +181,32 @@ const TourContextProvider = (props) => {
     }
   };
 
-  const getProfileData = async () => {
+  const getProfileData = async (tourId) => {
     try {
-      const { data } = await axios.get(backendUrl + "/api/tour/tour-profile", {
-        headers: { ttoken },
-      });
+      const { data } = await axios.get(
+        backendUrl + `/api/tour/tour-profile/${tourId}`,
+        {
+          headers: { ttoken },
+        }
+      );
       if (data.success) {
         setProfileData(data.tourProfileData);
       } else {
+        setProfileData(null); // Clear previous profile data on error
         toast.error(data.message || "Failed to load profile");
       }
     } catch (error) {
       console.error(error);
+      setProfileData(null); // Clear profile data on network or other error
       toast.error(error.message);
     }
   };
 
-  const markAdvanceReceiptSent = async (bookingId) => {
+  const markAdvanceReceiptSent = async (bookingId, tourId) => {
     try {
       const { data } = await axios.put(
         backendUrl + "/api/tour/mark-advance-receipt",
-        { bookingId },
+        { bookingId, tourId }, // Include tourId in the request body
         { headers: { ttoken } }
       );
       if (data.success) {
@@ -378,11 +221,11 @@ const TourContextProvider = (props) => {
     }
   };
 
-  const markBalanceReceiptSent = async (bookingId) => {
+  const markBalanceReceiptSent = async (bookingId, tourId) => {
     try {
       const { data } = await axios.put(
         backendUrl + "/api/tour/mark-balance-receipt",
-        { bookingId },
+        { bookingId, tourId }, // Include tourId in the request body
         { headers: { ttoken } }
       );
       if (data.success) {
@@ -396,7 +239,6 @@ const TourContextProvider = (props) => {
       toast.error(error.message);
     }
   };
-
   // ----------------- Context Value -----------------
   const value = {
     ttoken,
@@ -418,6 +260,8 @@ const TourContextProvider = (props) => {
     setProfileData,
     getProfileData,
     updateTravellerDetails,
+    tourList,
+    getTourList,
   };
 
   return (

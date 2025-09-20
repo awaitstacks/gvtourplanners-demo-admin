@@ -11,21 +11,37 @@ import { toast } from "react-toastify";
 
 const TourDashboard = () => {
   const {
+    tourList, // This is a new prop from your context, assumed to be available
+    getTourList, // This is also new, to fetch the list of tours
     dashData,
     bookings,
     getDashData,
     getBookings,
     markAdvanceReceiptSent,
     markBalanceReceiptSent,
+    ttoken, // Assuming ttoken is in your context for authentication
   } = useContext(TourContext);
 
-  // Local state to track dismissed bookings (only for receipt pending lists)
+  // State for the selected tour ID
+  const [selectedTourId, setSelectedTourId] = useState("");
+
+  // Local state to track dismissed bookings (for receipt pending lists)
   const [dismissedBookings, setDismissedBookings] = useState(new Set());
 
+  // Step 1: Fetch the list of all tours when the component mounts
   useEffect(() => {
-    getDashData();
-    getBookings();
-  }, [getDashData, getBookings]);
+    if (ttoken) {
+      getTourList();
+    }
+  }, [ttoken, getTourList]);
+
+  // Step 2: Fetch dashboard data and bookings when a tour is selected
+  useEffect(() => {
+    if (ttoken && selectedTourId) {
+      getDashData(selectedTourId);
+      getBookings(selectedTourId);
+    }
+  }, [ttoken, selectedTourId, getDashData, getBookings]);
 
   // ---- Stats Calculations ----
   const stats = useMemo(() => {
@@ -88,16 +104,14 @@ const TourDashboard = () => {
     };
   }, [bookings]);
 
-  if (!dashData && (!bookings || bookings.length === 0)) {
-    return (
-      <div className="p-6 text-center text-gray-500">
-        <p>Loading dashboard data...</p>
-      </div>
-    );
-  }
-
   // ---- Handle Mark as Receipt Complete ----
   const handleDismiss = async (booking, type) => {
+    // Check if a tour is selected before allowing action
+    if (!selectedTourId) {
+      toast.error("Please select a tour first.");
+      return;
+    }
+
     const confirm = window.confirm(
       "Are you sure you want to mark this receipt as complete?"
     );
@@ -111,7 +125,7 @@ const TourDashboard = () => {
           );
           return;
         }
-        await markAdvanceReceiptSent(booking._id);
+        await markAdvanceReceiptSent(booking._id, selectedTourId); // Pass tourId
       }
 
       if (type === "balance") {
@@ -123,7 +137,7 @@ const TourDashboard = () => {
           toast.error("❌ Cannot complete. Balance payment is not paid yet.");
           return;
         }
-        await markBalanceReceiptSent(booking._id);
+        await markBalanceReceiptSent(booking._id, selectedTourId); // Pass tourId
       }
 
       setDismissedBookings((prev) => new Set(prev).add(booking._id));
@@ -206,58 +220,100 @@ const TourDashboard = () => {
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">Tour Dashboard</h1>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <div className="bg-white shadow rounded-2xl p-5 flex items-center gap-4">
-          <Users className="text-blue-500 w-8 h-8" />
-          <div>
-            <p className="text-sm text-gray-500">
-              Total Bookings (Unique Users)
-            </p>
-            <p className="text-xl font-semibold">{stats.totalBookings}</p>
-          </div>
-        </div>
-        <div className="bg-white shadow rounded-2xl p-5 flex items-center gap-4">
-          <Users className="text-indigo-500 w-8 h-8" />
-          <div>
-            <p className="text-sm text-gray-500">Total Travellers</p>
-            <p className="text-xl font-semibold">{stats.totalTravellers}</p>
-          </div>
-        </div>
-        <div className="bg-white shadow rounded-2xl p-5 flex items-center gap-4">
-          <CalendarCheck className="text-green-500 w-8 h-8" />
-          <div>
-            <p className="text-sm text-gray-500">Completed Bookings</p>
-            <p className="text-xl font-semibold">{stats.completedBookings}</p>
-          </div>
-        </div>
-        <div className="bg-white shadow rounded-2xl p-5 flex items-center gap-4">
-          <Clock className="text-orange-500 w-8 h-8" />
-          <div>
-            <p className="text-sm text-gray-500">Pending Bookings</p>
-            <p className="text-xl font-semibold">{stats.pendingBookings}</p>
-          </div>
-        </div>
+      {/* Dropdown Menu for Tour Selection */}
+      <div className="mb-6">
+        <label
+          htmlFor="tour-select"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          Select a Tour:
+        </label>
+        <select
+          id="tour-select"
+          value={selectedTourId}
+          onChange={(e) => setSelectedTourId(e.target.value)}
+          className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+        >
+          <option value="">-- Select a Tour --</option>
+          {tourList.map((tour) => (
+            <option key={tour._id} value={tour._id}>
+              {tour.title}
+            </option>
+          ))}
+        </select>
       </div>
 
-      {/* Receipt Pending Lists */}
-      <div className="bg-gray-50 rounded-2xl p-6 mb-6">
-        <h2 className="text-lg font-semibold mb-4">Advance Receipt Pending</h2>
-        {renderBookingCards(stats.advancePending, "advance")}
-      </div>
+      {/* Conditionally render content based on selectedTourId */}
+      {!selectedTourId ? (
+        <div className="p-6 text-center text-gray-500">
+          <p>Please select a tour to view dashboard data.</p>
+        </div>
+      ) : (
+        <>
+          {/* Stats */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <div className="bg-white shadow rounded-2xl p-5 flex items-center gap-4">
+              <Users className="text-blue-500 w-8 h-8" />
+              <div>
+                <p className="text-sm text-gray-500">
+                  Total Bookings (Unique Users)
+                </p>
+                <p className="text-xl font-semibold">
+                  {dashData?.totalUsers || 0}
+                </p>
+              </div>
+            </div>
+            <div className="bg-white shadow rounded-2xl p-5 flex items-center gap-4">
+              <Users className="text-indigo-500 w-8 h-8" />
+              <div>
+                <p className="text-sm text-gray-500">Total Travellers</p>
+                <p className="text-xl font-semibold">
+                  {dashData?.totalTravellers || 0}
+                </p>
+              </div>
+            </div>
+            <div className="bg-white shadow rounded-2xl p-5 flex items-center gap-4">
+              <CalendarCheck className="text-green-500 w-8 h-8" />
+              <div>
+                <p className="text-sm text-gray-500">Completed Bookings</p>
+                <p className="text-xl font-semibold">
+                  {stats.completedBookings}
+                </p>
+              </div>
+            </div>
+            <div className="bg-white shadow rounded-2xl p-5 flex items-center gap-4">
+              <Clock className="text-orange-500 w-8 h-8" />
+              <div>
+                <p className="text-sm text-gray-500">Pending Bookings</p>
+                <p className="text-xl font-semibold">{stats.pendingBookings}</p>
+              </div>
+            </div>
+          </div>
 
-      <div className="bg-gray-50 rounded-2xl p-6 mb-6">
-        <h2 className="text-lg font-semibold mb-4">Balance Receipt Pending</h2>
-        {renderBookingCards(stats.balancePending, "balance")}
-      </div>
+          {/* Receipt Pending Lists */}
+          <div className="bg-gray-50 rounded-2xl p-6 mb-6">
+            <h2 className="text-lg font-semibold mb-4">
+              Advance Receipt Pending
+            </h2>
+            {renderBookingCards(stats.advancePending, "advance")}
+          </div>
 
-      {/* Uncompleted Bookings */}
-      <div className="bg-gray-50 rounded-2xl p-6 mt-6">
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          Uncompleted Booking List
-        </h2>
-        {renderBookingCards(stats.uncompleted, "uncompleted")}
-      </div>
+          <div className="bg-gray-50 rounded-2xl p-6 mb-6">
+            <h2 className="text-lg font-semibold mb-4">
+              Balance Receipt Pending
+            </h2>
+            {renderBookingCards(stats.balancePending, "balance")}
+          </div>
+
+          {/* Uncompleted Bookings */}
+          <div className="bg-gray-50 rounded-2xl p-6 mt-6">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              Uncompleted Booking List
+            </h2>
+            {renderBookingCards(stats.uncompleted, "uncompleted")}
+          </div>
+        </>
+      )}
     </div>
   );
 };

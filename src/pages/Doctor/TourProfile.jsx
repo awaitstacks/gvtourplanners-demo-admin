@@ -1,12 +1,17 @@
-// import React, { useState, useContext, useEffect } from "react";
-// import { useLocation } from "react-router-dom";
+// import React, { useState, useContext, useEffect, useCallback } from "react";
 // import axios from "axios";
 // import { TourContext } from "../../context/TourContext";
 // import { toast } from "react-toastify";
 
 // const TourProfile = () => {
-//   const { backendUrl, ttoken, profileData, getProfileData } =
-//     useContext(TourContext);
+//   const {
+//     backendUrl,
+//     ttoken,
+//     tourList,
+//     getTourList,
+//     profileData,
+//     getProfileData,
+//   } = useContext(TourContext);
 
 //   const defaultTrain = {
 //     trainNo: "",
@@ -59,8 +64,9 @@
 //     lastBookingDate: "",
 //     completedTripsCount: "",
 //     addons: [{ name: "", amount: "" }],
-//     remarks: "",
 //     boardingPoints: [defaultBoardingPoint],
+//     deboardingPoints: [defaultBoardingPoint],
+//     remarks: "",
 //   };
 
 //   const [formData, setFormData] = useState(initialForm);
@@ -77,114 +83,171 @@
 //     balanceChildWithoutBerth: "",
 //   });
 
-//   const location = useLocation();
+//   const [selectedTourId, setSelectedTourId] = useState("");
+//   const [isLoading, setIsLoading] = useState(false);
+//   const [fetchCount, setFetchCount] = useState(0); // Debug: Track fetch calls
 
+//   // Fetch tours for dropdown (run once on mount)
 //   useEffect(() => {
-//     if (location.pathname === "/tour-profile") {
-//       getProfileData();
-//     }
-//   }, [location.pathname]);
+//     console.log(
+//       "Fetching tour list at",
+//       new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+//     );
+//     setIsLoading(true);
+//     getTourList()
+//       .then(() => {
+//         console.log("Tour list fetched, count:", fetchCount + 1);
+//         setFetchCount((prev) => prev + 1);
+//       })
+//       .catch((error) => {
+//         console.error("Tour list fetch error:", error);
+//       })
+//       .finally(() => setIsLoading(false));
+//   }, [getTourList]); // Ensure getTourList is stable from context
 
+//   // Fetch profile on selection (only if profileData doesn't match)
 //   useEffect(() => {
-//     if (profileData) {
-//       setFormData({
-//         ...initialForm,
-//         ...profileData,
-//         duration: profileData.duration || initialForm.duration,
-//         price: profileData.price || initialForm.price,
-//         advanceAmount: profileData.advanceAmount || initialForm.advanceAmount,
-//         addons: profileData.addons?.length
-//           ? profileData.addons
-//           : initialForm.addons,
-//         boardingPoints: profileData.boardingPoints?.length
-//           ? profileData.boardingPoints
-//           : initialForm.boardingPoints,
-//         remarks: profileData.remarks || initialForm.remarks,
-//       });
-//       setBalances({
-//         balanceDouble: profileData.balanceDouble,
-//         balanceTriple: profileData.balanceTriple,
-//         balanceChildWithBerth: profileData.balanceChildWithBerth,
-//         balanceChildWithoutBerth: profileData.balanceChildWithoutBerth,
-//       });
+//     if (
+//       selectedTourId &&
+//       (!profileData || profileData._id !== selectedTourId)
+//     ) {
+//       console.log(
+//         "Fetching profile for tourId:",
+//         selectedTourId,
+//         "at",
+//         new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+//       );
+//       setIsLoading(true);
+//       getProfileData(selectedTourId)
+//         .then(() => {
+//           console.log(
+//             "Profile data fetched for tourId:",
+//             selectedTourId,
+//             "count:",
+//             fetchCount + 1
+//           );
+//           setFetchCount((prev) => prev + 1);
+//         })
+//         .catch((error) => {
+//           console.error(
+//             "Profile fetch error for tourId:",
+//             selectedTourId,
+//             error
+//           );
+//         })
+//         .finally(() => setIsLoading(false));
 //     }
-//   }, [profileData]);
+//   }, [selectedTourId, getProfileData, profileData?._id]);
 
+//   // Update form data and balances when profileData changes
+//   useEffect(() => {
+//     if (profileData && selectedTourId) {
+//       console.log(
+//         "Updating formData with profileData:",
+//         profileData,
+//         "at",
+//         new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+//       );
+//       const shouldUpdate = !formData._id || formData._id !== profileData._id;
+//       if (shouldUpdate) {
+//         setFormData((prev) => ({
+//           ...initialForm,
+//           ...profileData,
+//           duration: profileData.duration || initialForm.duration,
+//           price: profileData.price || initialForm.price,
+//           advanceAmount: profileData.advanceAmount || initialForm.advanceAmount,
+//           addons: profileData.addons?.length
+//             ? profileData.addons
+//             : initialForm.addons,
+//           boardingPoints: profileData.boardingPoints?.length
+//             ? profileData.boardingPoints
+//             : initialForm.boardingPoints,
+//           deboardingPoints: profileData.deboardingPoints?.length
+//             ? profileData.deboardingPoints
+//             : initialForm.deboardingPoints,
+//           remarks: profileData.remarks || initialForm.remarks,
+//         }));
+//         setBalances({
+//           balanceDouble: profileData.balanceDouble || "",
+//           balanceTriple: profileData.balanceTriple || "",
+//           balanceChildWithBerth: profileData.balanceChildWithBerth || "",
+//           balanceChildWithoutBerth: profileData.balanceChildWithoutBerth || "",
+//         });
+//       }
+//     }
+//   }, [profileData, selectedTourId]);
+
+//   // Recalculate balances when prices or advances change
 //   useEffect(() => {
 //     const { price, advanceAmount } = formData;
 //     if (price && advanceAmount) {
-//       const adultAdvance = Number(advanceAmount.adult);
-//       const childAdvance = Number(advanceAmount.child);
-
-//       const newBalances = {
-//         balanceDouble: Number(price.doubleSharing) - adultAdvance,
-//         balanceTriple: Number(price.tripleSharing) - adultAdvance,
-//         balanceChildWithBerth: Number(price.childWithBerth) - childAdvance,
+//       const adultAdvance = Number(advanceAmount.adult) || 0;
+//       const childAdvance = Number(advanceAmount.child) || 0;
+//       setBalances({
+//         balanceDouble: Number(price.doubleSharing) - adultAdvance || "",
+//         balanceTriple: Number(price.tripleSharing) - adultAdvance || "",
+//         balanceChildWithBerth:
+//           Number(price.childWithBerth) - childAdvance || "",
 //         balanceChildWithoutBerth:
-//           Number(price.childWithoutBerth) - childAdvance,
-//       };
-
-//       setBalances(newBalances);
+//           Number(price.childWithoutBerth) - childAdvance || "",
+//       });
 //     }
 //   }, [formData.price, formData.advanceAmount]);
 
-//   const handleChange = (
-//     e,
-//     field,
-//     nestedField = null,
-//     index = null,
-//     subField = null
-//   ) => {
-//     const value = e.target.value;
-//     if (nestedField && index !== null) {
-//       setFormData((prev) => {
-//         const updated = [...prev[nestedField]];
-//         updated[index][subField] = value;
-//         return { ...prev, [nestedField]: updated };
-//       });
-//     } else if (typeof field === "object") {
-//       setFormData((prev) => ({
-//         ...prev,
-//         [field.main]: {
-//           ...prev[field.main],
-//           [field.sub]: value,
-//         },
-//       }));
-//     } else if (index !== null) {
-//       setFormData((prev) => {
-//         const updated = [...prev[field]];
-//         updated[index] = value;
-//         return { ...prev, [field]: updated };
-//       });
-//     } else {
-//       setFormData((prev) => ({ ...prev, [field]: value }));
-//     }
-//   };
+//   const handleChange = useCallback(
+//     (e, field, nestedField = null, index = null, subField = null) => {
+//       const value = e.target.value;
+//       if (nestedField && index !== null) {
+//         setFormData((prev) => {
+//           const updated = [...prev[nestedField]];
+//           updated[index] = { ...updated[index], [subField]: value };
+//           return { ...prev, [nestedField]: updated };
+//         });
+//       } else if (typeof field === "object") {
+//         setFormData((prev) => ({
+//           ...prev,
+//           [field.main]: {
+//             ...prev[field.main],
+//             [field.sub]: value,
+//           },
+//         }));
+//       } else if (index !== null) {
+//         setFormData((prev) => {
+//           const updated = [...prev[field]];
+//           updated[index] = value;
+//           return { ...prev, [field]: updated };
+//         });
+//       } else {
+//         setFormData((prev) => ({ ...prev, [field]: value }));
+//       }
+//     },
+//     []
+//   );
 
-//   const addField = (field, template = "") => {
+//   const addField = useCallback((field, template = "") => {
 //     setFormData((prev) => ({ ...prev, [field]: [...prev[field], template] }));
-//   };
+//   }, []);
 
-//   const removeField = (field, index) => {
+//   const removeField = useCallback((field, index) => {
 //     setFormData((prev) => ({
 //       ...prev,
 //       [field]: prev[field].filter((_, i) => i !== index),
 //     }));
-//   };
+//   }, []);
 
-//   const addTransportDetail = (field, template) => {
+//   const addTransportDetail = useCallback((field, template) => {
 //     setFormData((prev) => ({
 //       ...prev,
 //       [field]: [...prev[field], { ...template }],
 //     }));
-//   };
+//   }, []);
 
-//   const removeTransportDetail = (field, index) => {
+//   const removeTransportDetail = useCallback((field, index) => {
 //     setFormData((prev) => ({
 //       ...prev,
 //       [field]: prev[field].filter((_, i) => i !== index),
 //     }));
-//   };
+//   }, []);
 
 //   const handleImageChange = (e, field) => {
 //     if (field === "galleryImages") {
@@ -207,7 +270,11 @@
 
 //     for (const [key, value] of Object.entries(numberFields)) {
 //       if (value && isNaN(Number(value))) {
-//         toast.error(`${key.replace(".", " ").capitalize()} must be a number.`);
+//         toast.error(
+//           `${key
+//             .replace(".", " ")
+//             .replace(/\b\w/g, (c) => c.toUpperCase())} must be a number.`
+//         );
 //         return false;
 //       }
 //     }
@@ -220,29 +287,23 @@
 //   };
 
 //   const resetForm = () => {
+//     setSelectedTourId("");
 //     setFormData(initialForm);
 //     setImages({ titleImage: null, mapImage: null, galleryImages: [] });
 //   };
 
-//   const hasNonEmptyArray = (arr) => {
-//     if (!arr || arr.length === 0) return false;
-//     return arr.some((item) => {
-//       if (typeof item === "string") return item.trim() !== "";
-//       if (typeof item === "object") {
-//         return Object.values(item).some(
-//           (v) => v !== null && v !== undefined && v.toString().trim() !== ""
-//         );
-//       }
-//       return false;
-//     });
-//   };
-
 //   const handleSubmit = async (e) => {
 //     e.preventDefault();
+//     if (!selectedTourId) {
+//       toast.error("Please select a tour to update.");
+//       return;
+//     }
 //     if (!validateFormData()) return;
 
+//     setIsLoading(true);
 //     try {
 //       const data = new FormData();
+//       data.append("tourId", selectedTourId);
 
 //       const fieldsToAppend = {
 //         title: formData.title,
@@ -252,7 +313,7 @@
 //         remarks: formData.remarks,
 //       };
 //       for (const [key, value] of Object.entries(fieldsToAppend)) {
-//         if (value?.toString().trim()) {
+//         if (value !== null && value !== undefined && value.toString().trim()) {
 //           data.append(key, value);
 //         }
 //       }
@@ -263,18 +324,20 @@
 //         advanceAmount: formData.advanceAmount,
 //       };
 //       for (const [key, value] of Object.entries(objectsToAppend)) {
-//         if (hasNonEmptyArray(Object.values(value))) {
-//           data.append(key, JSON.stringify(value));
-//         }
+//         data.append(key, JSON.stringify(value));
 //       }
 
-//       data.append("balanceDouble", balances.balanceDouble);
-//       data.append("balanceTriple", balances.balanceTriple);
-//       data.append("balanceChildWithBerth", balances.balanceChildWithBerth);
-//       data.append(
-//         "balanceChildWithoutBerth",
-//         balances.balanceChildWithoutBerth
-//       );
+//       if (!isNaN(balances.balanceDouble))
+//         data.append("balanceDouble", balances.balanceDouble);
+//       if (!isNaN(balances.balanceTriple))
+//         data.append("balanceTriple", balances.balanceTriple);
+//       if (!isNaN(balances.balanceChildWithBerth))
+//         data.append("balanceChildWithBerth", balances.balanceChildWithBerth);
+//       if (!isNaN(balances.balanceChildWithoutBerth))
+//         data.append(
+//           "balanceChildWithoutBerth",
+//           balances.balanceChildWithoutBerth
+//         );
 
 //       const arraysToAppend = {
 //         destination: formData.destination,
@@ -286,11 +349,11 @@
 //         flightDetails: formData.flightDetails,
 //         addons: formData.addons,
 //         boardingPoints: formData.boardingPoints,
+//         deboardingPoints: formData.deboardingPoints,
 //       };
+
 //       for (const [key, value] of Object.entries(arraysToAppend)) {
-//         if (hasNonEmptyArray(value)) {
-//           data.append(key, JSON.stringify(value));
-//         }
+//         data.append(key, JSON.stringify(value));
 //       }
 
 //       if (images.titleImage) data.append("titleImage", images.titleImage);
@@ -313,18 +376,23 @@
 //       );
 
 //       toast.dismiss();
-
 //       if (res.data.success) {
 //         toast.success("Tour profile updated successfully!");
 //         resetForm();
-//         getProfileData();
+//         getTourList();
 //       } else {
 //         toast.error("Failed to update profile: " + res.data.message);
 //       }
 //     } catch (error) {
 //       toast.dismiss();
-//       console.error("Update Error:", error);
+//       console.error(
+//         "Update Error at",
+//         new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
+//         error
+//       );
 //       toast.error("Something went wrong while updating profile.");
+//     } finally {
+//       setIsLoading(false);
 //     }
 //   };
 
@@ -333,6 +401,26 @@
 //       <h1 className="text-xl sm:text-2xl font-bold mb-6">
 //         Update Tour Profile
 //       </h1>
+//       <div className="mb-6">
+//         <label className="block font-semibold mb-1">
+//           Select a Tour to Edit
+//         </label>
+//         <select
+//           value={selectedTourId}
+//           onChange={(e) => setSelectedTourId(e.target.value)}
+//           className="w-full p-3 border"
+//           disabled={isLoading}
+//         >
+//           <option value="">-- Please Select a Tour --</option>
+//           {tourList.map((tour) => (
+//             <option key={tour._id} value={tour._id}>
+//               {tour.title}
+//             </option>
+//           ))}
+//         </select>
+//         {isLoading && <p className="text-gray-500 mt-2">Loading...</p>}
+//       </div>
+
 //       <form onSubmit={handleSubmit} className="space-y-6">
 //         <input
 //           type="text"
@@ -340,6 +428,7 @@
 //           className="w-full p-3 border"
 //           value={formData.title}
 //           onChange={(e) => handleChange(e, "title")}
+//           disabled={isLoading}
 //         />
 //         <div>
 //           <div className="flex-1 flex flex-col gap-1">
@@ -348,14 +437,11 @@
 //               onChange={(e) => handleChange(e, "batch")}
 //               value={formData.batch}
 //               className="border rounded px-3 py-2"
-//               name=""
-//               id=""
+//               disabled={isLoading}
 //             >
-//               <option value="Spritual Plus Sightseeing">
-//                 Select tour category
-//               </option>
+//               <option value="">Select tour category</option>
 //               <option value="Devotional">Devotional</option>
-//               <option value="Religious ">Religious</option>
+//               <option value="Religious">Religious</option>
 //               <option value="Honeymoon">Honeymoon</option>
 //               <option value="Jolly">Jolly</option>
 //               <option value="Spritual">Spritual</option>
@@ -376,6 +462,7 @@
 //               onChange={(e) =>
 //                 handleChange(e, { main: "duration", sub: "days" })
 //               }
+//               disabled={isLoading}
 //             />
 //           </label>
 //           <label className="block">
@@ -388,6 +475,7 @@
 //               onChange={(e) =>
 //                 handleChange(e, { main: "duration", sub: "nights" })
 //               }
+//               disabled={isLoading}
 //             />
 //           </label>
 //         </div>
@@ -406,6 +494,7 @@
 //                   onChange={(e) =>
 //                     handleChange(e, { main: "advanceAmount", sub: "adult" })
 //                   }
+//                   disabled={isLoading}
 //                 />
 //               </label>
 //               <label className="block">
@@ -418,6 +507,7 @@
 //                   onChange={(e) =>
 //                     handleChange(e, { main: "advanceAmount", sub: "child" })
 //                   }
+//                   disabled={isLoading}
 //                 />
 //               </label>
 //             </div>
@@ -435,6 +525,7 @@
 //                   onChange={(e) =>
 //                     handleChange(e, { main: "price", sub: "doubleSharing" })
 //                   }
+//                   disabled={isLoading}
 //                 />
 //               </label>
 //               <label className="block">
@@ -447,6 +538,7 @@
 //                   onChange={(e) =>
 //                     handleChange(e, { main: "price", sub: "tripleSharing" })
 //                   }
+//                   disabled={isLoading}
 //                 />
 //               </label>
 //               <label className="block">
@@ -459,6 +551,7 @@
 //                   onChange={(e) =>
 //                     handleChange(e, { main: "price", sub: "childWithBerth" })
 //                   }
+//                   disabled={isLoading}
 //                 />
 //               </label>
 //               <label className="block">
@@ -471,6 +564,7 @@
 //                   onChange={(e) =>
 //                     handleChange(e, { main: "price", sub: "childWithoutBerth" })
 //                   }
+//                   disabled={isLoading}
 //                 />
 //               </label>
 //             </div>
@@ -492,6 +586,7 @@
 //                       ? "N/A"
 //                       : balances.balanceDouble
 //                   }
+//                   disabled={isLoading}
 //                 />
 //               </label>
 //               <label className="block">
@@ -505,6 +600,7 @@
 //                       ? "N/A"
 //                       : balances.balanceTriple
 //                   }
+//                   disabled={isLoading}
 //                 />
 //               </label>
 //               <label className="block">
@@ -518,6 +614,7 @@
 //                       ? "N/A"
 //                       : balances.balanceChildWithBerth
 //                   }
+//                   disabled={isLoading}
 //                 />
 //               </label>
 //               <label className="block">
@@ -531,6 +628,7 @@
 //                       ? "N/A"
 //                       : balances.balanceChildWithoutBerth
 //                   }
+//                   disabled={isLoading}
 //                 />
 //               </label>
 //             </div>
@@ -548,7 +646,7 @@
 //             <label className="block font-semibold capitalize mb-1">
 //               {field}
 //             </label>
-//             {formData[field].map((item, index) => (
+//             {formData[field]?.map((item, index) => (
 //               <div
 //                 key={index}
 //                 className="flex flex-col sm:flex-row gap-2 items-center mb-2"
@@ -558,11 +656,13 @@
 //                   placeholder={`${field} ${index + 1}`}
 //                   className="w-full p-3 border"
 //                   onChange={(e) => handleChange(e, field, null, index, null)}
+//                   disabled={isLoading}
 //                 />
 //                 <button
 //                   type="button"
 //                   className="bg-red-500 text-white px-2 py-1 rounded text-sm w-full sm:w-auto"
 //                   onClick={() => removeField(field, index)}
+//                   disabled={isLoading}
 //                 >
 //                   Remove
 //                 </button>
@@ -572,6 +672,7 @@
 //               type="button"
 //               className="bg-blue-500 text-white px-4 py-1 rounded"
 //               onClick={() => addField(field, "")}
+//               disabled={isLoading}
 //             >
 //               + Add {field}
 //             </button>
@@ -583,7 +684,7 @@
 //             <label className="block font-semibold mb-1 capitalize">
 //               {type}
 //             </label>
-//             {formData[type].map((detail, index) => (
+//             {formData[type]?.map((detail, index) => (
 //               <div key={index} className="border p-4 rounded mb-4">
 //                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 //                   {Object.entries(detail).map(([key, value]) =>
@@ -602,6 +703,7 @@
 //                           onChange={(e) =>
 //                             handleChange(e, null, type, index, key)
 //                           }
+//                           disabled={isLoading}
 //                         />
 //                       </label>
 //                     )
@@ -611,6 +713,7 @@
 //                   type="button"
 //                   className="bg-red-500 text-white px-2 py-1 rounded text-sm mt-2 w-full sm:w-auto"
 //                   onClick={() => removeTransportDetail(type, index)}
+//                   disabled={isLoading}
 //                 >
 //                   Remove {type === "trainDetails" ? "Train" : "Flight"} Details
 //                 </button>
@@ -625,6 +728,7 @@
 //                   type === "trainDetails" ? defaultTrain : defaultFlight
 //                 )
 //               }
+//               disabled={isLoading}
 //             >
 //               + Add {type === "trainDetails" ? "Train" : "Flight"} Details
 //             </button>
@@ -638,6 +742,7 @@
 //             className="w-full p-3 border"
 //             value={formData.lastBookingDate}
 //             onChange={(e) => handleChange(e, "lastBookingDate")}
+//             disabled={isLoading}
 //           />
 //         </label>
 
@@ -649,11 +754,11 @@
 //             placeholder="Completed Trips Count"
 //             value={formData.completedTripsCount}
 //             onChange={(e) => handleChange(e, "completedTripsCount")}
+//             disabled={isLoading}
 //           />
 //         </label>
 
 //         <div className="space-y-4">
-//           {/* Title Image */}
 //           <div>
 //             <label className="block font-semibold mb-1">Title Image</label>
 //             <input
@@ -661,6 +766,7 @@
 //               accept="image/*"
 //               onChange={(e) => handleImageChange(e, "titleImage")}
 //               className="block w-full text-sm text-gray-700 border border-gray-300 rounded p-2"
+//               disabled={isLoading}
 //             />
 //             {images.titleImage && (
 //               <p className="text-green-600 mt-1">
@@ -669,7 +775,6 @@
 //             )}
 //           </div>
 
-//           {/* Map Image */}
 //           <div>
 //             <label className="block font-semibold mb-1">Map Image</label>
 //             <input
@@ -677,6 +782,7 @@
 //               accept="image/*"
 //               onChange={(e) => handleImageChange(e, "mapImage")}
 //               className="block w-full text-sm text-gray-700 border border-gray-300 rounded p-2"
+//               disabled={isLoading}
 //             />
 //             {images.mapImage && (
 //               <p className="text-green-600 mt-1">
@@ -685,7 +791,6 @@
 //             )}
 //           </div>
 
-//           {/* Gallery Images */}
 //           <div>
 //             <label className="block font-semibold mb-1">
 //               Gallery Images (Up to 3 images)
@@ -696,6 +801,7 @@
 //               accept="image/*"
 //               onChange={(e) => handleImageChange(e, "galleryImages")}
 //               className="block w-full text-sm text-gray-700 border border-gray-300 rounded p-2"
+//               disabled={isLoading}
 //             />
 //             {images.galleryImages.length > 0 && (
 //               <ul className="text-green-600 mt-1 list-disc pl-5">
@@ -707,7 +813,6 @@
 //           </div>
 //         </div>
 
-//         {/* Remarks */}
 //         <div>
 //           <label className="block font-semibold mb-1">Remarks</label>
 //           <textarea
@@ -715,13 +820,13 @@
 //             placeholder="Enter any notes or special information"
 //             value={formData.remarks}
 //             onChange={(e) => handleChange(e, "remarks")}
+//             disabled={isLoading}
 //           />
 //         </div>
 
-//         {/* Boarding Points */}
 //         <div>
 //           <label className="block font-semibold mb-1">Boarding Points</label>
-//           {formData.boardingPoints.map((bp, index) => (
+//           {formData.boardingPoints?.map((bp, index) => (
 //             <div
 //               key={index}
 //               className="flex flex-col sm:flex-row gap-2 items-center mb-2"
@@ -734,6 +839,7 @@
 //                 onChange={(e) =>
 //                   handleChange(e, null, "boardingPoints", index, "stationCode")
 //                 }
+//                 disabled={isLoading}
 //               />
 //               <input
 //                 type="text"
@@ -743,11 +849,13 @@
 //                 onChange={(e) =>
 //                   handleChange(e, null, "boardingPoints", index, "stationName")
 //                 }
+//                 disabled={isLoading}
 //               />
 //               <button
 //                 type="button"
 //                 className="bg-red-500 text-white px-2 py-1 rounded text-sm w-full sm:w-auto"
 //                 onClick={() => removeTransportDetail("boardingPoints", index)}
+//                 disabled={isLoading}
 //               >
 //                 Remove
 //               </button>
@@ -759,14 +867,76 @@
 //             onClick={() =>
 //               addTransportDetail("boardingPoints", defaultBoardingPoint)
 //             }
+//             disabled={isLoading}
 //           >
 //             + Add Boarding Point
 //           </button>
 //         </div>
 
 //         <div>
+//           <label className="block font-semibold mb-1">Deboarding Points</label>
+//           {formData.deboardingPoints?.map((bp, index) => (
+//             <div
+//               key={index}
+//               className="flex flex-col sm:flex-row gap-2 items-center mb-2"
+//             >
+//               <input
+//                 type="text"
+//                 placeholder="Station code (e.g., MAS)"
+//                 value={bp.stationCode}
+//                 className="p-3 border w-full sm:flex-1"
+//                 onChange={(e) =>
+//                   handleChange(
+//                     e,
+//                     null,
+//                     "deboardingPoints",
+//                     index,
+//                     "stationCode"
+//                   )
+//                 }
+//                 disabled={isLoading}
+//               />
+//               <input
+//                 type="text"
+//                 placeholder="Station name (e.g., MGR Chennai Central)"
+//                 value={bp.stationName}
+//                 className="p-3 border w-full sm:flex-1"
+//                 onChange={(e) =>
+//                   handleChange(
+//                     e,
+//                     null,
+//                     "deboardingPoints",
+//                     index,
+//                     "stationName"
+//                   )
+//                 }
+//                 disabled={isLoading}
+//               />
+//               <button
+//                 type="button"
+//                 className="bg-red-500 text-white px-2 py-1 rounded text-sm w-full sm:w-auto"
+//                 onClick={() => removeTransportDetail("deboardingPoints", index)}
+//                 disabled={isLoading}
+//               >
+//                 Remove
+//               </button>
+//             </div>
+//           ))}
+//           <button
+//             type="button"
+//             className="bg-blue-500 text-white px-4 py-1 rounded"
+//             onClick={() =>
+//               addTransportDetail("deboardingPoints", defaultBoardingPoint)
+//             }
+//             disabled={isLoading}
+//           >
+//             + Add Deboarding Point
+//           </button>
+//         </div>
+
+//         <div>
 //           <label className="block font-semibold capitalize mb-1">Add-ons</label>
-//           {formData.addons.map((addon, index) => (
+//           {formData.addons?.map((addon, index) => (
 //             <div
 //               key={index}
 //               className="flex flex-col sm:flex-row gap-2 items-center mb-2"
@@ -777,6 +947,7 @@
 //                 value={addon.name}
 //                 className="p-3 border w-full sm:flex-1"
 //                 onChange={(e) => handleChange(e, null, "addons", index, "name")}
+//                 disabled={isLoading}
 //               />
 //               <input
 //                 type="number"
@@ -786,11 +957,13 @@
 //                 onChange={(e) =>
 //                   handleChange(e, null, "addons", index, "amount")
 //                 }
+//                 disabled={isLoading}
 //               />
 //               <button
 //                 type="button"
 //                 className="bg-red-500 text-white px-2 py-1 rounded text-sm w-full sm:w-auto"
 //                 onClick={() => removeTransportDetail("addons", index)}
+//                 disabled={isLoading}
 //               >
 //                 Remove
 //               </button>
@@ -802,6 +975,7 @@
 //             onClick={() =>
 //               addTransportDetail("addons", { name: "", amount: "" })
 //             }
+//             disabled={isLoading}
 //           >
 //             + Add Add-on
 //           </button>
@@ -810,8 +984,9 @@
 //         <button
 //           type="submit"
 //           className="bg-green-600 text-white px-6 py-2 rounded shadow"
+//           disabled={isLoading}
 //         >
-//           Save Changes
+//           {isLoading ? "Saving..." : "Save Changes"}
 //         </button>
 //       </form>
 //     </div>
@@ -819,16 +994,22 @@
 // };
 
 // export default TourProfile;
+//Crictical copy above do not delete
 
-import React, { useState, useContext, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import React, { useState, useContext, useEffect, useCallback } from "react";
 import axios from "axios";
 import { TourContext } from "../../context/TourContext";
 import { toast } from "react-toastify";
 
 const TourProfile = () => {
-  const { backendUrl, ttoken, profileData, getProfileData } =
-    useContext(TourContext);
+  const {
+    backendUrl,
+    ttoken,
+    tourList,
+    getTourList,
+    profileData,
+    getProfileData,
+  } = useContext(TourContext);
 
   const defaultTrain = {
     trainNo: "",
@@ -900,117 +1081,170 @@ const TourProfile = () => {
     balanceChildWithoutBerth: "",
   });
 
-  const location = useLocation();
+  const [selectedTourId, setSelectedTourId] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [fetchCount, setFetchCount] = useState(0); // Debug: Track fetch calls
 
+  // Fetch tours for dropdown (run once on mount)
   useEffect(() => {
-    if (location.pathname === "/tour-profile") {
-      getProfileData();
-    }
-  }, [location.pathname]);
+    console.log(
+      "Fetching tour list at",
+      new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+    );
+    setIsLoading(true);
+    getTourList()
+      .then(() => {
+        console.log("Tour list fetched, count:", fetchCount + 1);
+        setFetchCount((prev) => prev + 1);
+      })
+      .catch((error) => {
+        console.error("Tour list fetch error:", error);
+      })
+      .finally(() => setIsLoading(false));
+  }, [getTourList]);
 
+  // Fetch profile on selection (only if profileData doesn't match)
   useEffect(() => {
-    if (profileData) {
-      setFormData({
-        ...initialForm,
-        ...profileData,
-        duration: profileData.duration || initialForm.duration,
-        price: profileData.price || initialForm.price,
-        advanceAmount: profileData.advanceAmount || initialForm.advanceAmount,
-        addons: profileData.addons?.length
-          ? profileData.addons
-          : initialForm.addons,
-        boardingPoints: profileData.boardingPoints?.length
-          ? profileData.boardingPoints
-          : initialForm.boardingPoints,
-        deboardingPoints: profileData.deboardingPoints?.length
-          ? profileData.deboardingPoints
-          : initialForm.deboardingPoints,
-        remarks: profileData.remarks || initialForm.remarks,
-      });
-      setBalances({
-        balanceDouble: profileData.balanceDouble,
-        balanceTriple: profileData.balanceTriple,
-        balanceChildWithBerth: profileData.balanceChildWithBerth,
-        balanceChildWithoutBerth: profileData.balanceChildWithoutBerth,
-      });
+    if (
+      selectedTourId &&
+      (!profileData || profileData._id !== selectedTourId)
+    ) {
+      console.log(
+        "Fetching profile for tourId:",
+        selectedTourId,
+        "at",
+        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+      );
+      setIsLoading(true);
+      getProfileData(selectedTourId)
+        .then(() => {
+          console.log(
+            "Profile data fetched for tourId:",
+            selectedTourId,
+            "count:",
+            fetchCount + 1
+          );
+          setFetchCount((prev) => prev + 1);
+        })
+        .catch((error) => {
+          console.error(
+            "Profile fetch error for tourId:",
+            selectedTourId,
+            error
+          );
+        })
+        .finally(() => setIsLoading(false));
     }
-  }, [profileData]);
+  }, [selectedTourId, getProfileData, profileData?._id]);
 
+  // Update form data and balances when profileData changes
+  useEffect(() => {
+    if (profileData && selectedTourId) {
+      console.log(
+        "Updating formData with profileData:",
+        profileData,
+        "at",
+        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+      );
+      const shouldUpdate = !formData._id || formData._id !== profileData._id;
+      if (shouldUpdate) {
+        setFormData((prev) => ({
+          ...prev,
+          ...profileData,
+          duration: profileData.duration || prev.duration,
+          price: profileData.price || prev.price,
+          advanceAmount: profileData.advanceAmount || prev.advanceAmount,
+          addons: profileData.addons?.length ? profileData.addons : prev.addons,
+          boardingPoints: profileData.boardingPoints?.length
+            ? profileData.boardingPoints
+            : prev.boardingPoints,
+          deboardingPoints: profileData.deboardingPoints?.length
+            ? profileData.deboardingPoints
+            : prev.deboardingPoints,
+          remarks: profileData.remarks || prev.remarks,
+        }));
+        setBalances({
+          balanceDouble: profileData.balanceDouble || "",
+          balanceTriple: profileData.balanceTriple || "",
+          balanceChildWithBerth: profileData.balanceChildWithBerth || "",
+          balanceChildWithoutBerth: profileData.balanceChildWithoutBerth || "",
+        });
+      }
+    }
+  }, [profileData, selectedTourId]);
+
+  // Recalculate balances when prices or advances change
   useEffect(() => {
     const { price, advanceAmount } = formData;
     if (price && advanceAmount) {
-      const adultAdvance = Number(advanceAmount.adult);
-      const childAdvance = Number(advanceAmount.child);
-
-      const newBalances = {
-        balanceDouble: Number(price.doubleSharing) - adultAdvance,
-        balanceTriple: Number(price.tripleSharing) - adultAdvance,
-        balanceChildWithBerth: Number(price.childWithBerth) - childAdvance,
+      const adultAdvance = Number(advanceAmount.adult) || 0;
+      const childAdvance = Number(advanceAmount.child) || 0;
+      setBalances({
+        balanceDouble: Number(price.doubleSharing) - adultAdvance || "",
+        balanceTriple: Number(price.tripleSharing) - adultAdvance || "",
+        balanceChildWithBerth:
+          Number(price.childWithBerth) - childAdvance || "",
         balanceChildWithoutBerth:
-          Number(price.childWithoutBerth) - childAdvance,
-      };
-
-      setBalances(newBalances);
+          Number(price.childWithoutBerth) - childAdvance || "",
+      });
     }
   }, [formData.price, formData.advanceAmount]);
 
-  const handleChange = (
-    e,
-    field,
-    nestedField = null,
-    index = null,
-    subField = null
-  ) => {
-    const value = e.target.value;
-    if (nestedField && index !== null) {
-      setFormData((prev) => {
-        const updated = [...prev[nestedField]];
-        updated[index][subField] = value;
-        return { ...prev, [nestedField]: updated };
-      });
-    } else if (typeof field === "object") {
-      setFormData((prev) => ({
-        ...prev,
-        [field.main]: {
-          ...prev[field.main],
-          [field.sub]: value,
-        },
-      }));
-    } else if (index !== null) {
-      setFormData((prev) => {
-        const updated = [...prev[field]];
-        updated[index] = value;
-        return { ...prev, [field]: updated };
-      });
-    } else {
-      setFormData((prev) => ({ ...prev, [field]: value }));
-    }
-  };
+  const handleChange = useCallback(
+    (e, field, nestedField = null, index = null, subField = null) => {
+      const value = e.target.value;
+      console.log("Changing field:", field, "value:", value); // Debug log
+      if (nestedField && index !== null) {
+        setFormData((prev) => {
+          const updated = [...prev[nestedField]];
+          updated[index] = { ...updated[index], [subField]: value };
+          return { ...prev, [nestedField]: updated };
+        });
+      } else if (typeof field === "object") {
+        setFormData((prev) => ({
+          ...prev,
+          [field.main]: {
+            ...prev[field.main],
+            [field.sub]: value,
+          },
+        }));
+      } else if (index !== null) {
+        setFormData((prev) => {
+          const updated = [...prev[field]];
+          updated[index] = value;
+          return { ...prev, [field]: updated };
+        });
+      } else {
+        setFormData((prev) => ({ ...prev, [field]: value }));
+      }
+    },
+    []
+  );
 
-  const addField = (field, template = "") => {
+  const addField = useCallback((field, template = "") => {
     setFormData((prev) => ({ ...prev, [field]: [...prev[field], template] }));
-  };
+  }, []);
 
-  const removeField = (field, index) => {
+  const removeField = useCallback((field, index) => {
     setFormData((prev) => ({
       ...prev,
       [field]: prev[field].filter((_, i) => i !== index),
     }));
-  };
+  }, []);
 
-  const addTransportDetail = (field, template) => {
+  const addTransportDetail = useCallback((field, template) => {
     setFormData((prev) => ({
       ...prev,
       [field]: [...prev[field], { ...template }],
     }));
-  };
+  }, []);
 
-  const removeTransportDetail = (field, index) => {
+  const removeTransportDetail = useCallback((field, index) => {
     setFormData((prev) => ({
       ...prev,
       [field]: prev[field].filter((_, i) => i !== index),
     }));
-  };
+  }, []);
 
   const handleImageChange = (e, field) => {
     if (field === "galleryImages") {
@@ -1033,7 +1267,11 @@ const TourProfile = () => {
 
     for (const [key, value] of Object.entries(numberFields)) {
       if (value && isNaN(Number(value))) {
-        toast.error(`${key.replace(".", " ").capitalize()} must be a number.`);
+        toast.error(
+          `${key
+            .replace(".", " ")
+            .replace(/\b\w/g, (c) => c.toUpperCase())} must be a number.`
+        );
         return false;
       }
     }
@@ -1046,41 +1284,33 @@ const TourProfile = () => {
   };
 
   const resetForm = () => {
+    setSelectedTourId("");
     setFormData(initialForm);
     setImages({ titleImage: null, mapImage: null, galleryImages: [] });
   };
 
-  const hasNonEmptyArray = (arr) => {
-    if (!arr || arr.length === 0) return false;
-    return arr.some((item) => {
-      if (typeof item === "string") return item.trim() !== "";
-      if (typeof item === "object") {
-        return Object.values(item).some(
-          (v) => v !== null && v !== undefined && v.toString().trim() !== ""
-        );
-      }
-      return false;
-    });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!selectedTourId) {
+      toast.error("Please select a tour to update.");
+      return;
+    }
     if (!validateFormData()) return;
 
+    setIsLoading(true);
     try {
       const data = new FormData();
+      data.append("tourId", selectedTourId);
 
       const fieldsToAppend = {
         title: formData.title,
         batch: formData.batch,
         lastBookingDate: formData.lastBookingDate,
         completedTripsCount: formData.completedTripsCount,
-        remarks: formData.remarks,
+        remarks: formData.remarks, // Always include remarks, even if empty
       };
       for (const [key, value] of Object.entries(fieldsToAppend)) {
-        if (value?.toString().trim()) {
-          data.append(key, value);
-        }
+        data.append(key, value || ""); // Always append, even if empty
       }
 
       const objectsToAppend = {
@@ -1089,18 +1319,20 @@ const TourProfile = () => {
         advanceAmount: formData.advanceAmount,
       };
       for (const [key, value] of Object.entries(objectsToAppend)) {
-        if (hasNonEmptyArray(Object.values(value))) {
-          data.append(key, JSON.stringify(value));
-        }
+        data.append(key, JSON.stringify(value));
       }
 
-      data.append("balanceDouble", balances.balanceDouble);
-      data.append("balanceTriple", balances.balanceTriple);
-      data.append("balanceChildWithBerth", balances.balanceChildWithBerth);
-      data.append(
-        "balanceChildWithoutBerth",
-        balances.balanceChildWithoutBerth
-      );
+      if (!isNaN(balances.balanceDouble))
+        data.append("balanceDouble", balances.balanceDouble);
+      if (!isNaN(balances.balanceTriple))
+        data.append("balanceTriple", balances.balanceTriple);
+      if (!isNaN(balances.balanceChildWithBerth))
+        data.append("balanceChildWithBerth", balances.balanceChildWithBerth);
+      if (!isNaN(balances.balanceChildWithoutBerth))
+        data.append(
+          "balanceChildWithoutBerth",
+          balances.balanceChildWithoutBerth
+        );
 
       const arraysToAppend = {
         destination: formData.destination,
@@ -1116,8 +1348,6 @@ const TourProfile = () => {
       };
 
       for (const [key, value] of Object.entries(arraysToAppend)) {
-        // Updated logic to ensure empty deboardingPoints array is also sent
-        // The hasNonEmptyArray check is not needed if the field should always be sent
         data.append(key, JSON.stringify(value));
       }
 
@@ -1141,18 +1371,23 @@ const TourProfile = () => {
       );
 
       toast.dismiss();
-
       if (res.data.success) {
         toast.success("Tour profile updated successfully!");
         resetForm();
-        getProfileData();
+        getTourList();
       } else {
         toast.error("Failed to update profile: " + res.data.message);
       }
     } catch (error) {
       toast.dismiss();
-      console.error("Update Error:", error);
+      console.error(
+        "Update Error at",
+        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
+        error
+      );
       toast.error("Something went wrong while updating profile.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -1161,6 +1396,26 @@ const TourProfile = () => {
       <h1 className="text-xl sm:text-2xl font-bold mb-6">
         Update Tour Profile
       </h1>
+      <div className="mb-6">
+        <label className="block font-semibold mb-1">
+          Select a Tour to Edit
+        </label>
+        <select
+          value={selectedTourId}
+          onChange={(e) => setSelectedTourId(e.target.value)}
+          className="w-full p-3 border"
+          disabled={isLoading}
+        >
+          <option value="">-- Please Select a Tour --</option>
+          {tourList.map((tour) => (
+            <option key={tour._id} value={tour._id}>
+              {tour.title}
+            </option>
+          ))}
+        </select>
+        {isLoading && <p className="text-gray-500 mt-2">Loading...</p>}
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-6">
         <input
           type="text"
@@ -1168,6 +1423,7 @@ const TourProfile = () => {
           className="w-full p-3 border"
           value={formData.title}
           onChange={(e) => handleChange(e, "title")}
+          disabled={isLoading}
         />
         <div>
           <div className="flex-1 flex flex-col gap-1">
@@ -1176,14 +1432,11 @@ const TourProfile = () => {
               onChange={(e) => handleChange(e, "batch")}
               value={formData.batch}
               className="border rounded px-3 py-2"
-              name=""
-              id=""
+              disabled={isLoading}
             >
-              <option value="Spritual Plus Sightseeing">
-                Select tour category
-              </option>
+              <option value="">Select tour category</option>
               <option value="Devotional">Devotional</option>
-              <option value="Religious ">Religious</option>
+              <option value="Religious">Religious</option>
               <option value="Honeymoon">Honeymoon</option>
               <option value="Jolly">Jolly</option>
               <option value="Spritual">Spritual</option>
@@ -1204,6 +1457,7 @@ const TourProfile = () => {
               onChange={(e) =>
                 handleChange(e, { main: "duration", sub: "days" })
               }
+              disabled={isLoading}
             />
           </label>
           <label className="block">
@@ -1216,6 +1470,7 @@ const TourProfile = () => {
               onChange={(e) =>
                 handleChange(e, { main: "duration", sub: "nights" })
               }
+              disabled={isLoading}
             />
           </label>
         </div>
@@ -1234,6 +1489,7 @@ const TourProfile = () => {
                   onChange={(e) =>
                     handleChange(e, { main: "advanceAmount", sub: "adult" })
                   }
+                  disabled={isLoading}
                 />
               </label>
               <label className="block">
@@ -1246,6 +1502,7 @@ const TourProfile = () => {
                   onChange={(e) =>
                     handleChange(e, { main: "advanceAmount", sub: "child" })
                   }
+                  disabled={isLoading}
                 />
               </label>
             </div>
@@ -1263,6 +1520,7 @@ const TourProfile = () => {
                   onChange={(e) =>
                     handleChange(e, { main: "price", sub: "doubleSharing" })
                   }
+                  disabled={isLoading}
                 />
               </label>
               <label className="block">
@@ -1275,6 +1533,7 @@ const TourProfile = () => {
                   onChange={(e) =>
                     handleChange(e, { main: "price", sub: "tripleSharing" })
                   }
+                  disabled={isLoading}
                 />
               </label>
               <label className="block">
@@ -1287,6 +1546,7 @@ const TourProfile = () => {
                   onChange={(e) =>
                     handleChange(e, { main: "price", sub: "childWithBerth" })
                   }
+                  disabled={isLoading}
                 />
               </label>
               <label className="block">
@@ -1299,6 +1559,7 @@ const TourProfile = () => {
                   onChange={(e) =>
                     handleChange(e, { main: "price", sub: "childWithoutBerth" })
                   }
+                  disabled={isLoading}
                 />
               </label>
             </div>
@@ -1320,6 +1581,7 @@ const TourProfile = () => {
                       ? "N/A"
                       : balances.balanceDouble
                   }
+                  disabled={isLoading}
                 />
               </label>
               <label className="block">
@@ -1333,6 +1595,7 @@ const TourProfile = () => {
                       ? "N/A"
                       : balances.balanceTriple
                   }
+                  disabled={isLoading}
                 />
               </label>
               <label className="block">
@@ -1346,6 +1609,7 @@ const TourProfile = () => {
                       ? "N/A"
                       : balances.balanceChildWithBerth
                   }
+                  disabled={isLoading}
                 />
               </label>
               <label className="block">
@@ -1359,6 +1623,7 @@ const TourProfile = () => {
                       ? "N/A"
                       : balances.balanceChildWithoutBerth
                   }
+                  disabled={isLoading}
                 />
               </label>
             </div>
@@ -1376,7 +1641,7 @@ const TourProfile = () => {
             <label className="block font-semibold capitalize mb-1">
               {field}
             </label>
-            {formData[field].map((item, index) => (
+            {formData[field]?.map((item, index) => (
               <div
                 key={index}
                 className="flex flex-col sm:flex-row gap-2 items-center mb-2"
@@ -1386,11 +1651,13 @@ const TourProfile = () => {
                   placeholder={`${field} ${index + 1}`}
                   className="w-full p-3 border"
                   onChange={(e) => handleChange(e, field, null, index, null)}
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
                   className="bg-red-500 text-white px-2 py-1 rounded text-sm w-full sm:w-auto"
                   onClick={() => removeField(field, index)}
+                  disabled={isLoading}
                 >
                   Remove
                 </button>
@@ -1400,6 +1667,7 @@ const TourProfile = () => {
               type="button"
               className="bg-blue-500 text-white px-4 py-1 rounded"
               onClick={() => addField(field, "")}
+              disabled={isLoading}
             >
               + Add {field}
             </button>
@@ -1411,7 +1679,7 @@ const TourProfile = () => {
             <label className="block font-semibold mb-1 capitalize">
               {type}
             </label>
-            {formData[type].map((detail, index) => (
+            {formData[type]?.map((detail, index) => (
               <div key={index} className="border p-4 rounded mb-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {Object.entries(detail).map(([key, value]) =>
@@ -1430,6 +1698,7 @@ const TourProfile = () => {
                           onChange={(e) =>
                             handleChange(e, null, type, index, key)
                           }
+                          disabled={isLoading}
                         />
                       </label>
                     )
@@ -1439,6 +1708,7 @@ const TourProfile = () => {
                   type="button"
                   className="bg-red-500 text-white px-2 py-1 rounded text-sm mt-2 w-full sm:w-auto"
                   onClick={() => removeTransportDetail(type, index)}
+                  disabled={isLoading}
                 >
                   Remove {type === "trainDetails" ? "Train" : "Flight"} Details
                 </button>
@@ -1453,6 +1723,7 @@ const TourProfile = () => {
                   type === "trainDetails" ? defaultTrain : defaultFlight
                 )
               }
+              disabled={isLoading}
             >
               + Add {type === "trainDetails" ? "Train" : "Flight"} Details
             </button>
@@ -1466,6 +1737,7 @@ const TourProfile = () => {
             className="w-full p-3 border"
             value={formData.lastBookingDate}
             onChange={(e) => handleChange(e, "lastBookingDate")}
+            disabled={isLoading}
           />
         </label>
 
@@ -1477,11 +1749,11 @@ const TourProfile = () => {
             placeholder="Completed Trips Count"
             value={formData.completedTripsCount}
             onChange={(e) => handleChange(e, "completedTripsCount")}
+            disabled={isLoading}
           />
         </label>
 
         <div className="space-y-4">
-          {/* Title Image */}
           <div>
             <label className="block font-semibold mb-1">Title Image</label>
             <input
@@ -1489,6 +1761,7 @@ const TourProfile = () => {
               accept="image/*"
               onChange={(e) => handleImageChange(e, "titleImage")}
               className="block w-full text-sm text-gray-700 border border-gray-300 rounded p-2"
+              disabled={isLoading}
             />
             {images.titleImage && (
               <p className="text-green-600 mt-1">
@@ -1497,7 +1770,6 @@ const TourProfile = () => {
             )}
           </div>
 
-          {/* Map Image */}
           <div>
             <label className="block font-semibold mb-1">Map Image</label>
             <input
@@ -1505,6 +1777,7 @@ const TourProfile = () => {
               accept="image/*"
               onChange={(e) => handleImageChange(e, "mapImage")}
               className="block w-full text-sm text-gray-700 border border-gray-300 rounded p-2"
+              disabled={isLoading}
             />
             {images.mapImage && (
               <p className="text-green-600 mt-1">
@@ -1513,7 +1786,6 @@ const TourProfile = () => {
             )}
           </div>
 
-          {/* Gallery Images */}
           <div>
             <label className="block font-semibold mb-1">
               Gallery Images (Up to 3 images)
@@ -1524,6 +1796,7 @@ const TourProfile = () => {
               accept="image/*"
               onChange={(e) => handleImageChange(e, "galleryImages")}
               className="block w-full text-sm text-gray-700 border border-gray-300 rounded p-2"
+              disabled={isLoading}
             />
             {images.galleryImages.length > 0 && (
               <ul className="text-green-600 mt-1 list-disc pl-5">
@@ -1535,7 +1808,6 @@ const TourProfile = () => {
           </div>
         </div>
 
-        {/* Remarks */}
         <div>
           <label className="block font-semibold mb-1">Remarks</label>
           <textarea
@@ -1543,13 +1815,13 @@ const TourProfile = () => {
             placeholder="Enter any notes or special information"
             value={formData.remarks}
             onChange={(e) => handleChange(e, "remarks")}
+            disabled={isLoading}
           />
         </div>
 
-        {/* Boarding Points */}
         <div>
           <label className="block font-semibold mb-1">Boarding Points</label>
-          {formData.boardingPoints.map((bp, index) => (
+          {formData.boardingPoints?.map((bp, index) => (
             <div
               key={index}
               className="flex flex-col sm:flex-row gap-2 items-center mb-2"
@@ -1562,6 +1834,7 @@ const TourProfile = () => {
                 onChange={(e) =>
                   handleChange(e, null, "boardingPoints", index, "stationCode")
                 }
+                disabled={isLoading}
               />
               <input
                 type="text"
@@ -1571,11 +1844,13 @@ const TourProfile = () => {
                 onChange={(e) =>
                   handleChange(e, null, "boardingPoints", index, "stationName")
                 }
+                disabled={isLoading}
               />
               <button
                 type="button"
                 className="bg-red-500 text-white px-2 py-1 rounded text-sm w-full sm:w-auto"
                 onClick={() => removeTransportDetail("boardingPoints", index)}
+                disabled={isLoading}
               >
                 Remove
               </button>
@@ -1587,15 +1862,15 @@ const TourProfile = () => {
             onClick={() =>
               addTransportDetail("boardingPoints", defaultBoardingPoint)
             }
+            disabled={isLoading}
           >
             + Add Boarding Point
           </button>
         </div>
 
-        {/* Deboarding Points */}
         <div>
           <label className="block font-semibold mb-1">Deboarding Points</label>
-          {formData.deboardingPoints.map((bp, index) => (
+          {formData.deboardingPoints?.map((bp, index) => (
             <div
               key={index}
               className="flex flex-col sm:flex-row gap-2 items-center mb-2"
@@ -1614,6 +1889,7 @@ const TourProfile = () => {
                     "stationCode"
                   )
                 }
+                disabled={isLoading}
               />
               <input
                 type="text"
@@ -1629,11 +1905,13 @@ const TourProfile = () => {
                     "stationName"
                   )
                 }
+                disabled={isLoading}
               />
               <button
                 type="button"
                 className="bg-red-500 text-white px-2 py-1 rounded text-sm w-full sm:w-auto"
                 onClick={() => removeTransportDetail("deboardingPoints", index)}
+                disabled={isLoading}
               >
                 Remove
               </button>
@@ -1645,6 +1923,7 @@ const TourProfile = () => {
             onClick={() =>
               addTransportDetail("deboardingPoints", defaultBoardingPoint)
             }
+            disabled={isLoading}
           >
             + Add Deboarding Point
           </button>
@@ -1652,7 +1931,7 @@ const TourProfile = () => {
 
         <div>
           <label className="block font-semibold capitalize mb-1">Add-ons</label>
-          {formData.addons.map((addon, index) => (
+          {formData.addons?.map((addon, index) => (
             <div
               key={index}
               className="flex flex-col sm:flex-row gap-2 items-center mb-2"
@@ -1663,6 +1942,7 @@ const TourProfile = () => {
                 value={addon.name}
                 className="p-3 border w-full sm:flex-1"
                 onChange={(e) => handleChange(e, null, "addons", index, "name")}
+                disabled={isLoading}
               />
               <input
                 type="number"
@@ -1672,11 +1952,13 @@ const TourProfile = () => {
                 onChange={(e) =>
                   handleChange(e, null, "addons", index, "amount")
                 }
+                disabled={isLoading}
               />
               <button
                 type="button"
                 className="bg-red-500 text-white px-2 py-1 rounded text-sm w-full sm:w-auto"
                 onClick={() => removeTransportDetail("addons", index)}
+                disabled={isLoading}
               >
                 Remove
               </button>
@@ -1688,6 +1970,7 @@ const TourProfile = () => {
             onClick={() =>
               addTransportDetail("addons", { name: "", amount: "" })
             }
+            disabled={isLoading}
           >
             + Add Add-on
           </button>
@@ -1696,8 +1979,9 @@ const TourProfile = () => {
         <button
           type="submit"
           className="bg-green-600 text-white px-6 py-2 rounded shadow"
+          disabled={isLoading}
         >
-          Save Changes
+          {isLoading ? "Saving..." : "Save Changes"}
         </button>
       </form>
     </div>
