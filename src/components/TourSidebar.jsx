@@ -1,114 +1,202 @@
-import React, { useContext } from "react";
-
+import React, { useContext, useState } from "react";
 import { TourContext } from "../context/TourContext";
 import { TourAdminContext } from "../context/TourAdminContext";
 import { NavLink } from "react-router-dom";
 import { assets } from "../assets/assets.js";
+import { Menu, X } from "lucide-react";
 
 const TourSidebar = () => {
   const { aToken } = useContext(TourAdminContext);
   const { ttoken } = useContext(TourContext);
+  const [isOpen, setIsOpen] = useState(false); // State for mobile sidebar toggle
+
+  const toggleSidebar = () => {
+    setIsOpen(!isOpen);
+  };
+
   return (
-    <div className="min-h-screen bg-white border-r">
-      {aToken && (
-        <ul className="text-[#515151] mt-5">
-          <NavLink
-            className={({ isActive }) =>
-              `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${
-                isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
-              }`
-            }
-            to={"/admin-dashboard"}
-          >
-            <img src={assets.home_icon} alt="" />
-            <p className="hidden md:block">Dashboard</p>
-          </NavLink>
-          <NavLink
-            className={({ isActive }) =>
-              `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${
-                isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
-              }`
-            }
-            to={"/all-bookings"}
-          >
-            <img src={assets.appointment_icon} alt="" />
-            <p className="hidden md:block">Bookings</p>
-          </NavLink>
-          <NavLink
-            className={({ isActive }) =>
-              `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${
-                isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
-              }`
-            }
-            to={"/add-tour"}
-          >
-            <img src={assets.add_icon} alt="" />
-            <p className="hidden md:block">Add Tour </p>
-          </NavLink>
-          <NavLink
-            className={({ isActive }) =>
-              `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${
-                isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
-              }`
-            }
-            to={"/tour-list"}
-          >
-            <img src={assets.people_icon} alt="" />
-            <p className="hidden md:block">Tour controls and data</p>
-          </NavLink>
-        </ul>
-      )}
-      {ttoken && (
-        <ul className="text-[#515151] mt-5">
-          <NavLink
-            className={({ isActive }) =>
-              `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${
-                isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
-              }`
-            }
-            to={"/tour-dashboard"}
-          >
-            <img src={assets.home_icon} alt="" />
-            <p className="hidden md:block">Dashboard</p>
-          </NavLink>
-          <NavLink
-            className={({ isActive }) =>
-              `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${
-                isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
-              }`
-            }
-            to={"/tour-bookings"}
-          >
-            <img src={assets.appointment_icon} alt="" />
-            <p className="hidden md:block">Bookings</p>
-          </NavLink>
+    <>
+      {/* Mobile Toggle Button */}
+      <button
+        className={`md:hidden fixed left-4 z-50 p-2 bg-primary text-white rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 ${
+          isOpen ? "top-102" : "top-16"
+        }`}
+        onClick={toggleSidebar}
+        aria-label={isOpen ? "Close sidebar" : "Open sidebar"}
+      >
+        {isOpen ? <X size={20} /> : <Menu size={20} />}
+      </button>
 
-          <NavLink
-            className={({ isActive }) =>
-              `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${
-                isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
-              }`
-            }
-            to={"/tour-profile"}
-          >
-            <img src={assets.people_icon} alt="" />
-            <p className="hidden md:block">Profile</p>
-          </NavLink>
-
-          <NavLink
-            className={({ isActive }) =>
-              `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${
-                isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
-              }`
-            }
-            to={"/tour-namelist"}
-          >
-            <img src={assets.people_icon} alt="" />
-            <p className="hidden md:block">Name list</p>
-          </NavLink>
-        </ul>
-      )}
-    </div>
+      {/* Sidebar */}
+      <div
+        className={`min-h-screen bg-white border-r fixed md:static top-7 left-3 h-full z-40 transition-transform duration-300 ease-in-out ${
+          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        } w-16 sm:w-20 md:w-72`}
+      >
+        {aToken && (
+          <ul className="text-[#515151] mt-16 md:mt-5">
+            <NavLink
+              className={({ isActive }) =>
+                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
+                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
+                }`
+              }
+              to="/admin-dashboard"
+              aria-label="Dashboard"
+            >
+              <img
+                src={assets.home_icon}
+                alt="Dashboard icon"
+                className="w-6 h-6 sm:w-7 sm:h-7"
+              />
+              <p className="hidden md:block text-sm sm:text-base">Dashboard</p>
+              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                Dashboard
+              </span>
+            </NavLink>
+            <NavLink
+              className={({ isActive }) =>
+                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
+                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
+                }`
+              }
+              to="/all-bookings"
+              aria-label="Bookings"
+            >
+              <img
+                src={assets.appointment_icon}
+                alt="Bookings icon"
+                className="w-6 h-6 sm:w-7 sm:h-7"
+              />
+              <p className="hidden md:block text-sm sm:text-base">Bookings</p>
+              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                Bookings
+              </span>
+            </NavLink>
+            <NavLink
+              className={({ isActive }) =>
+                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
+                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
+                }`
+              }
+              to="/add-tour"
+              aria-label="Add Tour"
+            >
+              <img
+                src={assets.add_icon}
+                alt="Add Tour icon"
+                className="w-6 h-6 sm:w-7 sm:h-7"
+              />
+              <p className="hidden md:block text-sm sm:text-base">Add Tour</p>
+              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                Add Tour
+              </span>
+            </NavLink>
+            <NavLink
+              className={({ isActive }) =>
+                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
+                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
+                }`
+              }
+              to="/tour-list"
+              aria-label="Tour Controls and Data"
+            >
+              <img
+                src={assets.people_icon}
+                alt="Tour Controls icon"
+                className="w-6 h-6 sm:w-7 sm:h-7"
+              />
+              <p className="hidden md:block text-sm sm:text-base">
+                Tour Controls and Data
+              </p>
+              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                Tour Controls and Data
+              </span>
+            </NavLink>
+          </ul>
+        )}
+        {ttoken && (
+          <ul className="text-[#515151] mt-16 md:mt-5">
+            <NavLink
+              className={({ isActive }) =>
+                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
+                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
+                }`
+              }
+              to="/tour-dashboard"
+              aria-label="Dashboard"
+            >
+              <img
+                src={assets.home_icon}
+                alt="Dashboard icon"
+                className="w-6 h-6 sm:w-7 sm:h-7"
+              />
+              <p className="hidden md:block text-sm sm:text-base">Dashboard</p>
+              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                Dashboard
+              </span>
+            </NavLink>
+            <NavLink
+              className={({ isActive }) =>
+                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
+                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
+                }`
+              }
+              to="/tour-bookings"
+              aria-label="Bookings"
+            >
+              <img
+                src={assets.appointment_icon}
+                alt="Bookings icon"
+                className="w-6 h-6 sm:w-7 sm:h-7"
+              />
+              <p className="hidden md:block text-sm sm:text-base">Bookings</p>
+              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                Bookings
+              </span>
+            </NavLink>
+            <NavLink
+              className={({ isActive }) =>
+                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
+                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
+                }`
+              }
+              to="/tour-profile"
+              aria-label="Profile"
+            >
+              <img
+                src={assets.people_icon}
+                alt="Profile icon"
+                className="w-6 h-6 sm:w-7 sm:h-7"
+              />
+              <p className="hidden md:block text-sm sm:text-base">Profile</p>
+              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                Profile
+              </span>
+            </NavLink>
+            <NavLink
+              className={({ isActive }) =>
+                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
+                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
+                }`
+              }
+              to="/tour-namelist"
+              aria-label="Name List"
+            >
+              <img
+                src={assets.people_icon}
+                alt="Name List icon"
+                className="w-6 h-6 sm:w-7 sm:h-7"
+              />
+              <p className="hidden md:block text-sm sm:text-base">Name List</p>
+              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                Name List
+              </span>
+            </NavLink>
+          </ul>
+        )}
+      </div>
+    </>
   );
 };
 

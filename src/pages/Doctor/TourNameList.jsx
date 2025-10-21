@@ -1,610 +1,3 @@
-// import React, { useState, useContext, useEffect } from "react";
-// import { TourContext } from "../../context/TourContext";
-// import jsPDF from "jspdf";
-// import autoTable from "jspdf-autotable";
-
-// const TourNameList = () => {
-//   const {
-//     bookings,
-//     getBookings,
-//     updateTravellerDetails,
-//     tourList,
-//     getTourList,
-//   } = useContext(TourContext);
-
-//   const [initialized, setInitialized] = useState(false);
-//   const [tableData, setTableData] = useState({
-//     trainColumns: [],
-//     flightColumns: [],
-//     travellers: [],
-//   });
-//   const [selectedTourId, setSelectedTourId] = useState("");
-
-//   // Fetch the list of all tours for the dropdown
-//   useEffect(() => {
-//     getTourList();
-//   }, [getTourList]);
-
-//   // Fetch bookings for the selected tour
-//   useEffect(() => {
-//     if (selectedTourId) {
-//       getBookings(selectedTourId);
-//     }
-//   }, [selectedTourId, getBookings]);
-
-//   // Re-initialize the table when bookings change
-//   useEffect(() => {
-//     if (bookings.length > 0) {
-//       const trainSet = new Set();
-//       const flightSet = new Set();
-//       const travellersList = [];
-
-//       bookings.forEach((booking) => {
-//         // Skip bookings where advance payment is not verified
-//         if (!booking.payment?.advance?.paymentVerified) {
-//           return;
-//         }
-
-//         booking.travellers.forEach((trav) => {
-//           // Skip travellers who are cancelled
-//           if (trav.cancelled?.byTraveller || trav.cancelled?.byAdmin) {
-//             return;
-//           }
-
-//           if (Array.isArray(trav.trainSeats)) {
-//             trav.trainSeats.forEach((s) => {
-//               if (s?.trainName) trainSet.add(s.trainName);
-//             });
-//           } else if (trav.trainSeats && typeof trav.trainSeats === "object") {
-//             Object.keys(trav.trainSeats).forEach((k) => trainSet.add(k));
-//           }
-
-//           if (Array.isArray(trav.flightSeats)) {
-//             trav.flightSeats.forEach((s) => {
-//               if (s?.flightName) flightSet.add(s.flightName);
-//             });
-//           } else if (trav.flightSeats && typeof trav.flightSeats === "object") {
-//             Object.keys(trav.flightSeats).forEach((k) => flightSet.add(k));
-//           }
-
-//           const trainSeatsMap = {};
-//           const flightSeatsMap = {};
-
-//           const trainColumns =
-//             trainSet.size > 0 ? Array.from(trainSet) : ["Train 1"];
-//           const flightColumns =
-//             flightSet.size > 0 ? Array.from(flightSet) : ["Flight 1"];
-
-//           trainColumns.forEach((tn) => (trainSeatsMap[tn] = ""));
-//           flightColumns.forEach((fn) => (flightSeatsMap[fn] = ""));
-
-//           if (Array.isArray(trav.trainSeats)) {
-//             trav.trainSeats.forEach((s) => {
-//               if (s?.trainName) trainSeatsMap[s.trainName] = s.seatNo ?? "";
-//             });
-//           } else if (trav.trainSeats && typeof trav.trainSeats === "object") {
-//             Object.entries(trav.trainSeats).forEach(([k, v]) => {
-//               trainSeatsMap[k] = v ?? "";
-//             });
-//           }
-
-//           if (Array.isArray(trav.flightSeats)) {
-//             trav.flightSeats.forEach((s) => {
-//               if (s?.flightName) flightSeatsMap[s.flightName] = s.seatNo ?? "";
-//             });
-//           } else if (trav.flightSeats && typeof trav.flightSeats === "object") {
-//             Object.entries(trav.flightSeats).forEach(([k, v]) => {
-//               flightSeatsMap[k] = v ?? "";
-//             });
-//           }
-
-//           travellersList.push({
-//             id: trav._id,
-//             name: `${trav.firstName || ""} ${trav.lastName || ""}`.trim(),
-//             age: trav.age ?? "",
-//             mobile: booking.contact?.mobile ?? trav.phone ?? "",
-//             trainSeats: trainSeatsMap,
-//             flightSeats: flightSeatsMap,
-//             remarks: trav.staffRemarks ?? trav.remarks ?? "",
-//           });
-//         });
-//       });
-
-//       const trainColumns =
-//         trainSet.size > 0 ? Array.from(trainSet) : ["Train 1"];
-//       const flightColumns =
-//         flightSet.size > 0 ? Array.from(flightSet) : ["Flight 1"];
-
-//       setTableData({
-//         trainColumns,
-//         flightColumns,
-//         travellers: travellersList,
-//       });
-//       setInitialized(true);
-//     } else {
-//       // Reset state if no bookings are found
-//       setTableData({
-//         trainColumns: ["Train 1"],
-//         flightColumns: ["Flight 1"],
-//         travellers: [],
-//       });
-//       setInitialized(false);
-//     }
-//   }, [bookings]);
-
-//   const cloneState = (s) => JSON.parse(JSON.stringify(s));
-
-//   // ------------------ PDF Export ------------------
-//   const exportToPDF = () => {
-//     const doc = new jsPDF("landscape", "pt", "a4");
-//     const tourTitle = bookings[0]?.tourData?.title || "Tour Traveller List";
-
-//     doc.setFontSize(18);
-//     doc.text(tourTitle, doc.internal.pageSize.getWidth() / 2, 40, {
-//       align: "center",
-//     });
-
-//     // Table headers
-//     const head = [
-//       [
-//         "SL NO",
-//         "NAME",
-//         "AGE",
-//         "MOBILE",
-//         ...tableData.trainColumns,
-//         ...tableData.flightColumns,
-//         "Remarks",
-//       ],
-//     ];
-
-//     // Table rows
-//     const body = tableData.travellers.map((trav, idx) => [
-//       String(idx + 1).padStart(2, "0"),
-//       trav.name,
-//       trav.age,
-//       trav.mobile || "—",
-//       ...tableData.trainColumns.map((c) => trav.trainSeats[c] ?? ""),
-//       ...tableData.flightColumns.map((c) => trav.flightSeats[c] ?? ""),
-//       trav.remarks ?? "",
-//     ]);
-
-//     autoTable(doc, {
-//       head,
-//       body,
-//       startY: 60,
-//       styles: {
-//         fontSize: 11,
-//         cellPadding: 6,
-//         halign: "center",
-//         valign: "middle",
-//       },
-//       headStyles: { fillColor: [40, 167, 69], halign: "center" },
-//       alternateRowStyles: { fillColor: [245, 245, 245] },
-//     });
-
-//     doc.save(`${tourTitle.replace(/\s+/g, "_")}_Traveller_List.pdf`);
-//   };
-
-//   // Add train/flight column
-//   const handleAddGlobalColumn = (type) => {
-//     setTableData((prev) => {
-//       const updated = cloneState(prev);
-//       if (type === "train") {
-//         let newName = `Train ${updated.trainColumns.length + 1}`;
-//         updated.trainColumns.push(newName);
-//         updated.travellers.forEach((t) => (t.trainSeats[newName] = ""));
-//       } else {
-//         let newName = `Flight ${updated.flightColumns.length + 1}`;
-//         updated.flightColumns.push(newName);
-//         updated.travellers.forEach((t) => (t.flightSeats[newName] = ""));
-//       }
-//       return updated;
-//     });
-//   };
-
-//   // Rename column
-//   const handleColumnNameChangeGlobal = (type, index, newName) => {
-//     setTableData((prev) => {
-//       const updated = cloneState(prev);
-//       if (type === "train") {
-//         const oldName = updated.trainColumns[index];
-//         updated.trainColumns[index] = newName;
-//         updated.travellers.forEach((t) => {
-//           t.trainSeats[newName] = t.trainSeats[oldName] ?? "";
-//           if (oldName !== newName) delete t.trainSeats[oldName];
-//         });
-//       } else {
-//         const oldName = updated.flightColumns[index];
-//         updated.flightColumns[index] = newName;
-//         updated.travellers.forEach((t) => {
-//           t.flightSeats[newName] = t.flightSeats[oldName] ?? "";
-//           if (oldName !== newName) delete t.flightSeats[oldName];
-//         });
-//       }
-//       return updated;
-//     });
-//   };
-
-//   // Remove column
-//   const handleRemoveGlobalColumn = async (type, index) => {
-//     let removed;
-//     setTableData((prev) => {
-//       const updated = cloneState(prev);
-//       if (type === "train") {
-//         if (updated.trainColumns.length <= 1) return prev;
-//         removed = updated.trainColumns.splice(index, 1)[0];
-//         updated.travellers.forEach((t) => delete t.trainSeats[removed]);
-//       } else {
-//         if (updated.flightColumns.length <= 1) return prev;
-//         removed = updated.flightColumns.splice(index, 1)[0];
-//         updated.travellers.forEach((t) => delete t.flightSeats[removed]);
-//       }
-//       return updated;
-//     });
-
-//     // Persist changes
-//     for (const traveller of tableData.travellers) {
-//       await handleSaveSingleTraveller(traveller);
-//     }
-//   };
-
-//   // Traveller edits
-//   const handleSeatChange = (travellerId, type, column, value) => {
-//     setTableData((prev) => {
-//       const updated = cloneState(prev);
-//       const traveller = updated.travellers.find((t) => t.id === travellerId);
-//       if (!traveller) return prev;
-//       if (type === "train") traveller.trainSeats[column] = value;
-//       else traveller.flightSeats[column] = value;
-//       return updated;
-//     });
-//   };
-
-//   const handleRemarksChange = (travellerId, value) => {
-//     setTableData((prev) => {
-//       const updated = cloneState(prev);
-//       const traveller = updated.travellers.find((t) => t.id === travellerId);
-//       if (!traveller) return prev;
-//       traveller.remarks = value;
-//       return updated;
-//     });
-//   };
-
-//   // Save one traveller
-//   const handleSaveSingleTraveller = async (traveller) => {
-//     const trainSeatsArr = Object.entries(traveller.trainSeats).map(
-//       ([trainName, seatNo]) => ({ trainName, seatNo })
-//     );
-//     const flightSeatsArr = Object.entries(traveller.flightSeats).map(
-//       ([flightName, seatNo]) => ({ flightName, seatNo })
-//     );
-
-//     const payload = {
-//       trainSeats: trainSeatsArr,
-//       flightSeats: flightSeatsArr,
-//       staffRemarks: traveller.remarks ?? "",
-//     };
-
-//     const booking = bookings.find((b) =>
-//       b.travellers.some((t) => t._id === traveller.id)
-//     );
-//     if (!booking) return;
-
-//     await updateTravellerDetails(booking._id, traveller.id, payload);
-//     getBookings(selectedTourId);
-//   };
-
-//   // Save ALL travellers
-//   const handleSaveAllTravellers = async () => {
-//     const promises = tableData.travellers.map((traveller) => {
-//       const trainSeatsArr = Object.entries(traveller.trainSeats).map(
-//         ([trainName, seatNo]) => ({ trainName, seatNo })
-//       );
-//       const flightSeatsArr = Object.entries(traveller.flightSeats).map(
-//         ([flightName, seatNo]) => ({ flightName, seatNo })
-//       );
-
-//       const payload = {
-//         trainSeats: trainSeatsArr,
-//         flightSeats: flightSeatsArr,
-//         staffRemarks: traveller.remarks ?? "",
-//       };
-
-//       const booking = bookings.find((b) =>
-//         b.travellers.some((t) => t._id === traveller.id)
-//       );
-//       if (!booking) return null;
-
-//       return updateTravellerDetails(booking._id, traveller.id, payload);
-//     });
-
-//     await Promise.all(promises);
-//     getBookings(selectedTourId);
-//     alert("All traveller details saved successfully!");
-//   };
-
-//   return (
-//     <div style={{ padding: "24px", maxWidth: "100%", overflowX: "auto" }}>
-//       <h2 style={{ textAlign: "center", marginBottom: "18px" }}>
-//         Traveller Name List
-//       </h2>
-
-//       {/* Tour Selection Dropdown */}
-//       <div style={{ marginBottom: "18px" }}>
-//         <label
-//           htmlFor="tour-select"
-//           style={{ marginRight: "12px", fontWeight: "bold" }}
-//         >
-//           Select Tour:
-//         </label>
-//         <select
-//           id="tour-select"
-//           value={selectedTourId}
-//           onChange={(e) => setSelectedTourId(e.target.value)}
-//           style={{
-//             padding: "8px",
-//             borderRadius: "4px",
-//             border: "1px solid #ccc",
-//           }}
-//         >
-//           <option value="">-- Select a Tour --</option>
-//           {tourList.map((tour) => (
-//             <option key={tour._id} value={tour._id}>
-//               {tour.title}
-//             </option>
-//           ))}
-//         </select>
-//       </div>
-
-//       {tableData.travellers.length === 0 ? (
-//         <p style={{ textAlign: "center", color: "#777" }}>
-//           {selectedTourId
-//             ? "No active travellers with verified advance payment found for this tour."
-//             : "Please select a tour to view the traveller list."}
-//         </p>
-//       ) : (
-//         <>
-//           <div style={{ textAlign: "right", marginBottom: "16px" }}>
-//             <button onClick={exportToPDF} style={pdfBtn}>
-//               📄 Export to PDF
-//             </button>
-//           </div>
-
-//           <div style={{ marginBottom: 12, display: "flex", gap: 12 }}>
-//             <button
-//               onClick={() => handleAddGlobalColumn("train")}
-//               style={addBtn}
-//             >
-//               + Add Train
-//             </button>
-//             <button
-//               onClick={() => handleAddGlobalColumn("flight")}
-//               style={{ ...addBtn, background: "#17a2b8" }}
-//             >
-//               + Add Flight
-//             </button>
-//             <button
-//               onClick={handleSaveAllTravellers}
-//               style={{ ...addBtn, background: "#6f42c1" }}
-//             >
-//               💾 Save All
-//             </button>
-//           </div>
-
-//           <table
-//             style={{
-//               width: "100%",
-//               borderCollapse: "collapse",
-//               minWidth: "1200px",
-//             }}
-//           >
-//             <thead>
-//               <tr style={{ background: "#f8f9fa" }}>
-//                 <th style={thStyle}>SL NO</th>
-//                 <th style={thStyle}>NAME</th>
-//                 <th style={thStyle}>AGE</th>
-//                 <th style={thStyle}>MOBILE</th>
-//                 {tableData.trainColumns.map((col, i) => (
-//                   <th key={i} style={thStyle}>
-//                     <div style={headerFlex}>
-//                       <input
-//                         type="text"
-//                         value={col}
-//                         onChange={(e) =>
-//                           handleColumnNameChangeGlobal(
-//                             "train",
-//                             i,
-//                             e.target.value
-//                           )
-//                         }
-//                         style={headerInput}
-//                       />
-//                       {tableData.trainColumns.length > 1 && (
-//                         <button
-//                           onClick={() => handleRemoveGlobalColumn("train", i)}
-//                           style={removeBtn}
-//                         >
-//                           ×
-//                         </button>
-//                       )}
-//                     </div>
-//                   </th>
-//                 ))}
-//                 {tableData.flightColumns.map((col, i) => (
-//                   <th key={i} style={thStyle}>
-//                     <div style={headerFlex}>
-//                       <input
-//                         type="text"
-//                         value={col}
-//                         onChange={(e) =>
-//                           handleColumnNameChangeGlobal(
-//                             "flight",
-//                             i,
-//                             e.target.value
-//                           )
-//                         }
-//                         style={headerInput}
-//                       />
-//                       {tableData.flightColumns.length > 1 && (
-//                         <button
-//                           onClick={() => handleRemoveGlobalColumn("flight", i)}
-//                           style={removeBtn}
-//                         >
-//                           ×
-//                         </button>
-//                       )}
-//                     </div>
-//                   </th>
-//                 ))}
-//                 <th style={thStyle}>Remarks</th>
-//                 <th style={thStyle}>Actions</th>
-//               </tr>
-//             </thead>
-//             <tbody>
-//               {tableData.travellers.map((trav, idx) => (
-//                 <tr key={trav.id}>
-//                   <td style={tdCenter}>{String(idx + 1).padStart(2, "0")}.</td>
-//                   <td style={tdStyle}>{trav.name}</td>
-//                   <td style={tdCenter}>{trav.age}</td>
-//                   <td style={tdCenter}>{trav.mobile || "—"}</td>
-//                   {tableData.trainColumns.map((col, i) => (
-//                     <td key={i} style={tdStyle}>
-//                       <input
-//                         type="text"
-//                         value={trav.trainSeats[col] ?? ""}
-//                         onChange={(e) =>
-//                           handleSeatChange(
-//                             trav.id,
-//                             "train",
-//                             col,
-//                             e.target.value
-//                           )
-//                         }
-//                         style={inputStyle}
-//                       />
-//                     </td>
-//                   ))}
-//                   {tableData.flightColumns.map((col, i) => (
-//                     <td key={i} style={tdStyle}>
-//                       <input
-//                         type="text"
-//                         value={trav.flightSeats[col] ?? ""}
-//                         onChange={(e) =>
-//                           handleSeatChange(
-//                             trav.id,
-//                             "flight",
-//                             col,
-//                             e.target.value
-//                           )
-//                         }
-//                         style={inputStyle}
-//                       />
-//                     </td>
-//                   ))}
-//                   <td style={tdStyle}>
-//                     <textarea
-//                       value={trav.remarks ?? ""}
-//                       onChange={(e) =>
-//                         handleRemarksChange(trav.id, e.target.value)
-//                       }
-//                       style={textareaStyle}
-//                     />
-//                   </td>
-//                   <td style={tdCenter}>
-//                     <button
-//                       onClick={() => handleSaveSingleTraveller(trav)}
-//                       style={saveBtn}
-//                     >
-//                       Save
-//                     </button>
-//                   </td>
-//                 </tr>
-//               ))}
-//             </tbody>
-//           </table>
-//         </>
-//       )}
-//     </div>
-//   );
-// };
-
-// // Styles
-// const thStyle = {
-//   padding: "8px",
-//   border: "1px solid #e0e0e0",
-//   textAlign: "center",
-//   verticalAlign: "middle",
-// };
-// const tdStyle = {
-//   padding: "6px",
-//   border: "1px solid #e9e9e9",
-//   verticalAlign: "top",
-// };
-// const tdCenter = { ...tdStyle, textAlign: "center" };
-// const inputStyle = {
-//   width: "100%",
-//   padding: "6px",
-//   border: "1px solid #ccc",
-//   borderRadius: "4px",
-// };
-// const headerInput = {
-//   width: "120px",
-//   padding: "6px",
-//   border: "1px solid #bbb",
-//   borderRadius: "6px",
-//   fontWeight: "700",
-//   textAlign: "center",
-//   background: "#fff",
-// };
-// const addBtn = {
-//   padding: "8px 14px",
-//   background: "#28a745",
-//   color: "#fff",
-//   border: "none",
-//   borderRadius: "6px",
-//   cursor: "pointer",
-// };
-// const pdfBtn = {
-//   padding: "8px 14px",
-//   background: "#dc3545",
-//   color: "#fff",
-//   border: "none",
-//   borderRadius: "6px",
-//   cursor: "pointer",
-// };
-// const removeBtn = {
-//   padding: "6px 8px",
-//   background: "red",
-//   color: "white",
-//   border: "none",
-//   borderRadius: "50%",
-//   cursor: "pointer",
-//   marginLeft: 8,
-// };
-// const saveBtn = {
-//   padding: "6px 12px",
-//   background: "#007bff",
-//   color: "#fff",
-//   border: "none",
-//   borderRadius: "4px",
-//   cursor: "pointer",
-// };
-// const textareaStyle = {
-//   width: "100%",
-//   minHeight: "48px",
-//   padding: "6px",
-//   borderRadius: 4,
-//   border: "1px solid #ccc",
-// };
-// const headerFlex = {
-//   display: "flex",
-//   alignItems: "center",
-//   gap: 6,
-//   justifyContent: "center",
-// };
-
-// export default TourNameList;
-
 import React, { useState, useContext, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { TourContext } from "../../context/TourContext";
@@ -629,6 +22,7 @@ const TourNameList = () => {
     travellers: [],
   });
   const [selectedTourId, setSelectedTourId] = useState("");
+  const [isLoadingBookings, setIsLoadingBookings] = useState(false);
   const location = useLocation();
 
   // Fetch the list of all tours for the dropdown
@@ -639,54 +33,96 @@ const TourNameList = () => {
   // Fetch bookings for the selected tour
   useEffect(() => {
     if (selectedTourId) {
-      getBookings(selectedTourId);
+      setIsLoadingBookings(true);
+      getBookings(selectedTourId)
+        .then((response) => {
+          if (
+            response &&
+            typeof response === "object" &&
+            "success" in response
+          ) {
+            if (response.success) {
+              toast.success("Bookings fetched successfully", {
+                toastId: "bookings-fetch-success",
+              });
+            } else {
+              toast.error(response.message || "Failed to fetch bookings", {
+                toastId: "bookings-fetch-error",
+              });
+            }
+          } else {
+            toast.error("Invalid response from server", {
+              toastId: "server-error",
+            });
+          }
+        })
+        .catch((error) => {
+          console.error("getBookings error:", error);
+          toast.error(
+            error.response?.data?.message ||
+              error.message ||
+              "Failed to fetch bookings",
+            { toastId: "bookings-fetch-error" }
+          );
+        })
+        .finally(() => {
+          setIsLoadingBookings(false);
+        });
+    } else {
+      setIsLoadingBookings(false);
     }
   }, [selectedTourId, getBookings]);
 
   // Clear toasts on component unmount or route change
   useEffect(() => {
     return () => {
-      toast.dismiss(); // Dismiss all toasts when leaving the page
+      console.log("Dismissing toasts from TourNameList");
+      toast.dismiss();
     };
   }, [location]);
 
-  // Handle API responses with toast notifications
   const handleApiResponse = useCallback(
-    (response, successMessage) => {
-      console.log("API Response:", response); // Debug log
+    (response, successMessage, skipRefresh = false) => {
+      console.log("API Response:", response);
       if (response && typeof response === "object" && "success" in response) {
         if (response.success) {
-          toast.success(successMessage || "Operation completed successfully");
-          if (selectedTourId) {
-            getBookings(selectedTourId); // Refresh bookings on success
+          const toastId =
+            typeof successMessage === "string"
+              ? successMessage.toLowerCase().replace(/\s/g, "-")
+              : `operation-success-${Date.now()}`;
+          toast.success(successMessage || "Operation completed successfully", {
+            toastId,
+          });
+          if (selectedTourId && !skipRefresh) {
+            getBookings(selectedTourId);
           }
         } else {
           toast.error(
-            response.message || "An error occurred during the operation"
+            response.message || "An error occurred during the operation",
+            { toastId: "api-error" }
           );
         }
       } else {
-        toast.error("Invalid response from server");
+        toast.error("Invalid response from server", {
+          toastId: "server-error",
+        });
       }
     },
     [selectedTourId, getBookings]
   );
-
   // Re-initialize the table when bookings change
   useEffect(() => {
-    if (bookings.length > 0) {
+    if (bookings.length > 0 && selectedTourId) {
       const trainSet = new Set();
       const flightSet = new Set();
       const travellersList = [];
 
       bookings.forEach((booking) => {
-        // Skip bookings where advance payment is not verified
         if (!booking.payment?.advance?.paymentVerified) {
           return;
         }
 
         booking.travellers.forEach((trav) => {
-          // Skip travellers who are cancelled
           if (trav.cancelled?.byTraveller || trav.cancelled?.byAdmin) {
             return;
           }
@@ -717,7 +153,6 @@ const TourNameList = () => {
 
           trainColumns.forEach((tn) => (trainSeatsMap[tn] = ""));
           flightColumns.forEach((fn) => (flightSeatsMap[fn] = ""));
-
           if (Array.isArray(trav.trainSeats)) {
             trav.trainSeats.forEach((s) => {
               if (s?.trainName) trainSeatsMap[s.trainName] = s.seatNo ?? "";
@@ -743,9 +178,10 @@ const TourNameList = () => {
             name: `${trav.firstName || ""} ${trav.lastName || ""}`.trim(),
             age: trav.age ?? "",
             mobile: booking.contact?.mobile ?? trav.phone ?? "",
+            boardingPoint: trav.boardingPoint?.stationName || "",
+            deboardingPoint: trav.deboardingPoint?.stationName || "",
             trainSeats: trainSeatsMap,
             flightSeats: flightSeatsMap,
-            remarks: trav.staffRemarks ?? trav.remarks ?? "",
           });
         });
       });
@@ -761,6 +197,13 @@ const TourNameList = () => {
         travellers: travellersList,
       });
       setInitialized(true);
+    } else if (selectedTourId) {
+      setTableData({
+        trainColumns: ["Train 1"],
+        flightColumns: ["Flight 1"],
+        travellers: [],
+      });
+      setInitialized(false);
     } else {
       setTableData({
         trainColumns: ["Train 1"],
@@ -769,7 +212,8 @@ const TourNameList = () => {
       });
       setInitialized(false);
     }
-  }, [bookings]);
+    console.log("Table data:", tableData);
+  }, [bookings, selectedTourId]);
 
   const cloneState = (s) => JSON.parse(JSON.stringify(s));
 
@@ -777,10 +221,9 @@ const TourNameList = () => {
   const exportToPDF = () => {
     const doc = new jsPDF("landscape", "pt", "a4");
     const tourTitle =
-      bookings[0]?.tourData?.title || selectedTourId
-        ? tourList.find((tour) => tour._id === selectedTourId)?.title ||
-          "Tour Traveller List"
-        : "Tour Traveller List";
+      bookings[0]?.tourData?.title ||
+      tourList.find((tour) => tour._id === selectedTourId)?.title ||
+      "Tour Traveller List";
 
     doc.setFontSize(18);
     doc.text(tourTitle, doc.internal.pageSize.getWidth() / 2, 40, {
@@ -793,9 +236,10 @@ const TourNameList = () => {
         "NAME",
         "AGE",
         "MOBILE",
+        "BOARDING POINT",
+        "DEBOARDING POINT",
         ...tableData.trainColumns,
         ...tableData.flightColumns,
-        "Remarks",
       ],
     ];
 
@@ -804,9 +248,10 @@ const TourNameList = () => {
       trav.name,
       trav.age,
       trav.mobile || "—",
+      trav.boardingPoint || "—",
+      trav.deboardingPoint || "—",
       ...tableData.trainColumns.map((c) => trav.trainSeats[c] ?? ""),
       ...tableData.flightColumns.map((c) => trav.flightSeats[c] ?? ""),
-      trav.remarks ?? "",
     ]);
 
     autoTable(doc, {
@@ -824,21 +269,58 @@ const TourNameList = () => {
     });
 
     doc.save(`${tourTitle.replace(/\s+/g, "_")}_Traveller_List.pdf`);
+    toast.success(
+      <div className="flex items-center gap-2">
+        <span>✅</span>
+        <span>PDF exported successfully</span>
+      </div>,
+      { toastId: "pdf-export-success" }
+    );
+    console.log("Toast displayed: pdf-export-success");
   };
 
   // Add train/flight column
   const handleAddGlobalColumn = (type) => {
+    const maxColumns = 15;
     setTableData((prev) => {
+      if (prev.trainColumns.length + prev.flightColumns.length >= maxColumns) {
+        toast.error(
+          <div className="flex items-center gap-2">
+            <span>❌</span>
+            <span>Cannot add more than {maxColumns} columns</span>
+          </div>,
+          { toastId: "max-columns-error" }
+        );
+        console.log("Toast displayed: max-columns-error");
+        return prev;
+      }
       const updated = cloneState(prev);
       if (type === "train") {
         let newName = `Train ${updated.trainColumns.length + 1}`;
         updated.trainColumns.push(newName);
         updated.travellers.forEach((t) => (t.trainSeats[newName] = ""));
+        toast.success(
+          <div className="flex items-center gap-2">
+            <span>✅</span>
+            <span>Train column "{newName}" added</span>
+          </div>,
+          { toastId: `add-train-${newName}` }
+        );
+        console.log("Toast displayed: add-train-", newName);
       } else {
         let newName = `Flight ${updated.flightColumns.length + 1}`;
         updated.flightColumns.push(newName);
         updated.travellers.forEach((t) => (t.flightSeats[newName] = ""));
+        toast.success(
+          <div className="flex items-center gap-2">
+            <span>✅</span>
+            <span>Flight column "{newName}" added</span>
+          </div>,
+          { toastId: `add-flight-${newName}` }
+        );
+        console.log("Toast displayed: add-flight-", newName);
       }
+      console.log("Table data after add:", updated);
       return updated;
     });
   };
@@ -849,19 +331,38 @@ const TourNameList = () => {
       const updated = cloneState(prev);
       if (type === "train") {
         const oldName = updated.trainColumns[index];
+        if (oldName === newName) return prev;
         updated.trainColumns[index] = newName;
         updated.travellers.forEach((t) => {
           t.trainSeats[newName] = t.trainSeats[oldName] ?? "";
-          if (oldName !== newName) delete t.trainSeats[oldName];
+          delete t.trainSeats[oldName];
         });
+        toast.success(
+          <div className="flex items-center gap-2">
+            <span>✅</span>
+            <span>Train column renamed to "{newName}"</span>
+          </div>,
+          { toastId: `rename-train-${index}` }
+        );
+        console.log("Toast displayed: rename-train-", index);
       } else {
         const oldName = updated.flightColumns[index];
+        if (oldName === newName) return prev;
         updated.flightColumns[index] = newName;
         updated.travellers.forEach((t) => {
           t.flightSeats[newName] = t.flightSeats[oldName] ?? "";
-          if (oldName !== newName) delete t.flightSeats[oldName];
+          delete t.flightSeats[oldName];
         });
+        toast.success(
+          <div className="flex items-center gap-2">
+            <span>✅</span>
+            <span>Flight column renamed to "{newName}"</span>
+          </div>,
+          { toastId: `rename-flight-${index}` }
+        );
+        console.log("Toast displayed: rename-flight-", index);
       }
+      console.log("Table data after rename:", updated);
       return updated;
     });
   };
@@ -872,18 +373,56 @@ const TourNameList = () => {
     setTableData((prev) => {
       const updated = cloneState(prev);
       if (type === "train") {
-        if (updated.trainColumns.length <= 1) return prev;
+        if (updated.trainColumns.length <= 1) {
+          toast.error(
+            <div className="flex items-center gap-2">
+              <span>❌</span>
+              <span>At least one train column is required</span>
+            </div>,
+            { toastId: "remove-train-error" }
+          );
+          console.log("Toast displayed: remove-train-error");
+          return prev;
+        }
         removed = updated.trainColumns.splice(index, 1)[0];
         updated.travellers.forEach((t) => delete t.trainSeats[removed]);
+        toast.success(
+          <div className="flex items-center gap-2">
+            <span>✅</span>
+            <span>Train column "{removed}" removed</span>
+          </div>,
+          { toastId: `remove-train-${index}` }
+        );
+        console.log("Toast displayed: remove-train-", index);
       } else {
-        if (updated.flightColumns.length <= 1) return prev;
+        if (updated.flightColumns.length <= 1) {
+          toast.error(
+            <div className="flex items-center gap-2">
+              <span>❌</span>
+              <span>At least one flight column is required</span>
+            </div>,
+            { toastId: "remove-flight-error" }
+          );
+          console.log("Toast displayed: remove-flight-error");
+          return prev;
+        }
         removed = updated.flightColumns.splice(index, 1)[0];
         updated.travellers.forEach((t) => delete t.flightSeats[removed]);
+        toast.success(
+          <div className="flex items-center gap-2">
+            <span>✅</span>
+            <span>Flight column "{removed}" removed</span>
+          </div>,
+          { toastId: `remove-flight-${index}` }
+        );
+        console.log("Toast displayed: remove-flight-", index);
       }
+      console.log("Table data after remove:", updated);
       return updated;
     });
 
-    // Persist changes
+    if (!removed) return;
+
     const promises = tableData.travellers.map((traveller) => {
       const trainSeatsArr = Object.entries(traveller.trainSeats).map(
         ([trainName, seatNo]) => ({ trainName, seatNo })
@@ -895,7 +434,6 @@ const TourNameList = () => {
       const payload = {
         trainSeats: trainSeatsArr,
         flightSeats: flightSeatsArr,
-        staffRemarks: traveller.remarks ?? "",
       };
 
       const booking = bookings.find((b) =>
@@ -911,7 +449,8 @@ const TourNameList = () => {
       if (response) {
         handleApiResponse(
           response,
-          `Traveller ${tableData.travellers[idx].name} details updated`
+          `Traveller ${tableData.travellers[idx].name} details updated`,
+          true
         );
       }
     });
@@ -925,16 +464,7 @@ const TourNameList = () => {
       if (!traveller) return prev;
       if (type === "train") traveller.trainSeats[column] = value;
       else traveller.flightSeats[column] = value;
-      return updated;
-    });
-  };
-
-  const handleRemarksChange = (travellerId, value) => {
-    setTableData((prev) => {
-      const updated = cloneState(prev);
-      const traveller = updated.travellers.find((t) => t.id === travellerId);
-      if (!traveller) return prev;
-      traveller.remarks = value;
+      console.log("Table data after seat change:", updated);
       return updated;
     });
   };
@@ -942,7 +472,14 @@ const TourNameList = () => {
   // Save one traveller
   const handleSaveSingleTraveller = async (traveller) => {
     if (!selectedTourId) {
-      toast.error("Please select a tour first.");
+      toast.error(
+        <div className="flex items-center gap-2">
+          <span>❌</span>
+          <span>Please select a tour first.</span>
+        </div>,
+        { toastId: "no-tour-error" }
+      );
+      console.log("Toast displayed: no-tour-error");
       return;
     }
 
@@ -957,14 +494,20 @@ const TourNameList = () => {
       const payload = {
         trainSeats: trainSeatsArr,
         flightSeats: flightSeatsArr,
-        staffRemarks: traveller.remarks ?? "",
       };
 
       const booking = bookings.find((b) =>
         b.travellers.some((t) => t._id === traveller.id)
       );
       if (!booking) {
-        toast.error("Booking not found for this traveller.");
+        toast.error(
+          <div className="flex items-center gap-2">
+            <span>❌</span>
+            <span>Booking not found for this traveller.</span>
+          </div>,
+          { toastId: "no-booking-error" }
+        );
+        console.log("Toast displayed: no-booking-error");
         return;
       }
 
@@ -975,18 +518,36 @@ const TourNameList = () => {
       );
       handleApiResponse(
         response,
-        `Traveller ${traveller.name} details updated`
+        <div className="flex items-center gap-2">
+          <span>✅</span>
+          <span>Traveller {traveller.name} details updated</span>
+        </div>,
+        { toastId: `save-traveller-${traveller.id}` }
       );
     } catch (error) {
       console.error("handleSaveSingleTraveller error:", error);
-      toast.error(`Failed to save traveller details: ${error.message}`);
+      toast.error(
+        <div className="flex items-center gap-2">
+          <span>❌</span>
+          <span>Failed to save traveller details: {error.message}</span>
+        </div>,
+        { toastId: `save-traveller-error-${traveller.id}` }
+      );
+      console.log("Toast displayed: save-traveller-error-", traveller.id);
     }
   };
 
   // Save all travellers
   const handleSaveAllTravellers = async () => {
     if (!selectedTourId) {
-      toast.error("Please select a tour first.");
+      toast.error(
+        <div className="flex items-center gap-2">
+          <span>❌</span>
+          <span>Please select a tour first.</span>
+        </div>,
+        { toastId: "no-tour-error" }
+      );
+      console.log("Toast displayed: no-tour-error");
       return;
     }
 
@@ -1002,7 +563,6 @@ const TourNameList = () => {
         const payload = {
           trainSeats: trainSeatsArr,
           flightSeats: flightSeatsArr,
-          staffRemarks: traveller.remarks ?? "",
         };
 
         const booking = bookings.find((b) =>
@@ -1019,312 +579,500 @@ const TourNameList = () => {
         if (response) {
           handleApiResponse(
             response,
-            `Traveller ${tableData.travellers[idx].name} details updated`
+            <div className="flex items-center gap-2">
+              <span>✅</span>
+              <span>
+                Traveller {tableData.travellers[idx].name} details updated
+              </span>
+            </div>,
+            { toastId: `update-traveller-${idx}` }
           );
           if (!response.success) allSuccessful = false;
         }
       });
 
       if (allSuccessful) {
-        toast.success("All traveller details saved successfully!");
+        toast.success(
+          <div className="flex items-center gap-2">
+            <span>✅</span>
+            <span>All traveller details saved successfully!</span>
+          </div>,
+          { toastId: "save-all-success" }
+        );
+        console.log("Toast displayed: save-all-success");
       }
     } catch (error) {
       console.error("handleSaveAllTravellers error:", error);
-      toast.error(`Failed to save all traveller details: ${error.message}`);
+      toast.error(
+        <div className="flex items-center gap-2">
+          <span>❌</span>
+          <span>Failed to save all traveller details: {error.message}</span>
+        </div>,
+        { toastId: "save-all-error" }
+      );
+      console.log("Toast displayed: save-all-error");
     }
   };
 
+  // Dynamic column width based on number of columns
+  const totalColumns =
+    tableData.trainColumns.length + tableData.flightColumns.length;
+  const columnWidthClass =
+    totalColumns > 10
+      ? "min-w-[80px]"
+      : totalColumns > 6
+      ? "min-w-[100px]"
+      : "min-w-[120px]";
+
   return (
-    <div style={{ padding: "24px", maxWidth: "100%", overflowX: "auto" }}>
-      {/* Local ToastContainer for TourNameList */}
+    <div className="p-4 sm:p-6 lg:p-8 max-w-full mx-auto">
+      {/* Compact ToastContainer */}
       <ToastContainer
         position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
+        autoClose={2000}
+        hideProgressBar
         newestOnTop
         closeOnClick
         rtl={false}
         pauseOnFocusLoss
         draggable
         pauseOnHover
+        className="fixed top-2 right-2 max-w-[280px] w-auto z-50"
+        toastClassName="text-xs bg-white shadow-sm rounded-lg p-2 border border-gray-100 flex items-center gap-2"
+        style={{
+          fontSize: "clamp(10px, 2.5vw, 12px)",
+        }}
       />
 
-      <h2 style={{ textAlign: "center", marginBottom: "18px" }}>
-        Traveller Name List
-      </h2>
-
-      {/* Tour Selection Dropdown */}
-      <div style={{ marginBottom: "18px" }}>
-        <label
-          htmlFor="tour-select"
-          style={{ marginRight: "12px", fontWeight: "bold" }}
-        >
-          Select Tour:
-        </label>
-        <select
-          id="tour-select"
-          value={selectedTourId}
-          onChange={(e) => setSelectedTourId(e.target.value)}
-          style={{
-            padding: "8px",
-            borderRadius: "4px",
-            border: "1px solid #ccc",
-          }}
-        >
-          <option value="">-- Select a Tour --</option>
-          {tourList.map((tour) => (
-            <option key={tour._id} value={tour._id}>
-              {tour.title}
-            </option>
-          ))}
-        </select>
+      <div className="mb-4 sm:mb-6 lg:mb-8">
+        <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold mb-4 sm:mb-6 text-center">
+          Traveller Name List
+        </h2>
+        <div className="mb-4 sm:mb-6">
+          <label
+            htmlFor="tour-select"
+            className="block text-xs sm:text-sm lg:text-base font-medium text-gray-700 mb-1"
+          >
+            Select Tour:
+          </label>
+          <select
+            id="tour-select"
+            value={selectedTourId}
+            onChange={(e) => setSelectedTourId(e.target.value)}
+            className="mt-1 block w-full pl-3 pr-10 py-2 sm:py-3 text-xs sm:text-sm lg:text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md disabled:bg-gray-100 touch-manipulation"
+            disabled={isLoadingBookings}
+            aria-label="Select a tour"
+          >
+            <option value="">-- Select a Tour --</option>
+            {tourList.map((tour) => (
+              <option key={tour._id} value={tour._id}>
+                {tour.title}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      {tableData.travellers.length === 0 ? (
-        <p style={{ textAlign: "center", color: "#777" }}>
-          {selectedTourId
-            ? "No active travellers with verified advance payment found for this tour."
-            : "Please select a tour to view the traveller list."}
-        </p>
-      ) : (
-        <>
-          <div style={{ textAlign: "right", marginBottom: "16px" }}>
-            <button onClick={exportToPDF} style={pdfBtn}>
-              📄 Export to PDF
-            </button>
+      {selectedTourId ? (
+        isLoadingBookings ? (
+          <div className="text-center text-gray-500 text-xs sm:text-sm lg:text-base">
+            <svg
+              className="animate-spin h-5 w-5 sm:h-6 sm:w-6 mx-auto text-indigo-500"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+                fill="none"
+              />
+              <path
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+              />
+            </svg>
+            Loading...
           </div>
+        ) : tableData.travellers.length === 0 ? (
+          <p className="text-center text-gray-500 text-xs sm:text-sm lg:text-base">
+            No active travellers with verified advance payment found for this
+            tour.
+          </p>
+        ) : (
+          <>
+            <div className="flex justify-end mb-4 sm:mb-6">
+              <button
+                onClick={exportToPDF}
+                className="px-3 sm:px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 text-xs sm:text-sm lg:text-base min-w-[100px] sm:min-w-[120px] touch-manipulation"
+                aria-label="Export traveller list to PDF"
+              >
+                📄 Export to PDF
+              </button>
+            </div>
 
-          <div style={{ marginBottom: 12, display: "flex", gap: 12 }}>
-            <button
-              onClick={() => handleAddGlobalColumn("train")}
-              style={addBtn}
-            >
-              + Add Train
-            </button>
-            <button
-              onClick={() => handleAddGlobalColumn("flight")}
-              style={{ ...addBtn, background: "#17a2b8" }}
-            >
-              + Add Flight
-            </button>
-            <button
-              onClick={handleSaveAllTravellers}
-              style={{ ...addBtn, background: "#6f42c1" }}
-            >
-              💾 Save All
-            </button>
-          </div>
+            <div className="flex flex-wrap gap-2 sm:gap-3 mb-4 sm:mb-6">
+              <button
+                onClick={() => handleAddGlobalColumn("train")}
+                className="px-3 sm:px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 text-xs sm:text-sm lg:text-base min-w-[100px] sm:min-w-[120px] touch-manipulation"
+                aria-label="Add new train column"
+              >
+                + Add Train
+              </button>
+              <button
+                onClick={() => handleAddGlobalColumn("flight")}
+                className="px-3 sm:px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 text-xs sm:text-sm lg:text-base min-w-[100px] sm:min-w-[120px] touch-manipulation"
+                aria-label="Add new flight column"
+              >
+                + Add Flight
+              </button>
+              <button
+                onClick={handleSaveAllTravellers}
+                className="px-3 sm:px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 text-xs sm:text-sm lg:text-base min-w-[100px] sm:min-w-[120px] touch-manipulation"
+                aria-label="Save all traveller details"
+              >
+                💾 Save All
+              </button>
+            </div>
 
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              minWidth: "1200px",
-            }}
-          >
-            <thead>
-              <tr style={{ background: "#f8f9fa" }}>
-                <th style={thStyle}>SL NO</th>
-                <th style={thStyle}>NAME</th>
-                <th style={thStyle}>AGE</th>
-                <th style={thStyle}>MOBILE</th>
-                {tableData.trainColumns.map((col, i) => (
-                  <th key={i} style={thStyle}>
-                    <div style={headerFlex}>
-                      <input
-                        type="text"
-                        value={col}
-                        onChange={(e) =>
-                          handleColumnNameChangeGlobal(
-                            "train",
-                            i,
-                            e.target.value
-                          )
-                        }
-                        style={headerInput}
-                      />
-                      {tableData.trainColumns.length > 1 && (
-                        <button
-                          onClick={() => handleRemoveGlobalColumn("train", i)}
-                          style={removeBtn}
+            {/* Desktop Table View */}
+            <div className="hidden sm:block overflow-x-auto max-w-[calc(100vw-2rem)] sm:max-w-[calc(100vw-3rem)] lg:max-w-[calc(100vw-4rem)] mx-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-100 sticky top-0 z-10">
+                    <th
+                      className={`p-2 sm:p-3 border border-gray-200 text-center text-xs sm:text-sm lg:text-base font-semibold min-w-[50px]`}
+                    >
+                      SL NO
+                    </th>
+                    <th
+                      className={`p-2 sm:p-3 border border-gray-200 text-center text-xs sm:text-sm lg:text-base font-semibold min-w-[100px] sm:min-w-[120px]`}
+                    >
+                      NAME
+                    </th>
+                    <th
+                      className={`p-2 sm:p-3 border border-gray-200 text-center text-xs sm:text-sm lg:text-base font-semibold min-w-[50px]`}
+                    >
+                      AGE
+                    </th>
+                    <th
+                      className={`p-2 sm:p-3 border border-gray-200 text-center text-xs sm:text-sm lg:text-base font-semibold min-w-[80px]`}
+                    >
+                      MOBILE
+                    </th>
+                    <th
+                      className={`p-2 sm:p-3 border border-gray-200 text-center text-xs sm:text-sm lg:text-base font-semibold ${columnWidthClass}`}
+                    >
+                      BOARDING POINT
+                    </th>
+                    <th
+                      className={`p-2 sm:p-3 border border-gray-200 text-center text-xs sm:text-sm lg:text-base font-semibold ${columnWidthClass}`}
+                    >
+                      DEBOARDING POINT
+                    </th>
+                    {tableData.trainColumns.map((col, i) => (
+                      <th
+                        key={i}
+                        className={`p-2 sm:p-3 border border-gray-200 text-center text-xs sm:text-sm lg:text-base font-semibold ${columnWidthClass}`}
+                      >
+                        <div className="flex items-center justify-center gap-1 sm:gap-2">
+                          <input
+                            type="text"
+                            value={col}
+                            onChange={(e) =>
+                              handleColumnNameChangeGlobal(
+                                "train",
+                                i,
+                                e.target.value
+                              )
+                            }
+                            className="w-16 sm:w-20 lg:w-24 px-1 sm:px-2 py-1 border border-gray-300 rounded-md text-xs sm:text-sm font-semibold text-center touch-manipulation"
+                            aria-label={`Train column ${i + 1} name`}
+                          />
+                          {tableData.trainColumns.length > 1 && (
+                            <button
+                              onClick={() =>
+                                handleRemoveGlobalColumn("train", i)
+                              }
+                              className="p-1 sm:p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 text-xs touch-manipulation"
+                              aria-label={`Remove train column ${col}`}
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
+                      </th>
+                    ))}
+                    {tableData.flightColumns.map((col, i) => (
+                      <th
+                        key={i}
+                        className={`p-2 sm:p-3 border border-gray-200 text-center text-xs sm:text-sm lg:text-base font-semibold ${columnWidthClass}`}
+                      >
+                        <div className="flex items-center justify-center gap-1 sm:gap-2">
+                          <input
+                            type="text"
+                            value={col}
+                            onChange={(e) =>
+                              handleColumnNameChangeGlobal(
+                                "flight",
+                                i,
+                                e.target.value
+                              )
+                            }
+                            className="w-16 sm:w-20 lg:w-24 px-1 sm:px-2 py-1 border border-gray-300 rounded-md text-xs sm:text-sm font-semibold text-center touch-manipulation"
+                            aria-label={`Flight column ${i + 1} name`}
+                          />
+                          {tableData.flightColumns.length > 1 && (
+                            <button
+                              onClick={() =>
+                                handleRemoveGlobalColumn("flight", i)
+                              }
+                              className="p-1 sm:p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 text-xs touch-manipulation"
+                              aria-label={`Remove flight column ${col}`}
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
+                      </th>
+                    ))}
+                    <th
+                      className={`p-2 sm:p-3 border border-gray-200 text-center text-xs sm:text-sm lg:text-base font-semibold min-w-[80px]`}
+                    >
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tableData.travellers.map((trav, idx) => (
+                    <tr key={trav.id}>
+                      <td className="p-2 sm:p-3 border border-gray-200 text-center text-xs sm:text-sm lg:text-base">
+                        {String(idx + 1).padStart(2, "0")}.
+                      </td>
+                      <td
+                        className="p-2 sm:p-3 border border-gray-200 text-xs sm:text-sm lg:text-base truncate max-w-[100px] sm:max-w-[120px]"
+                        title={trav.name}
+                      >
+                        {trav.name}
+                      </td>
+                      <td className="p-2 sm:p-3 border border-gray-200 text-center text-xs sm:text-sm lg:text-base">
+                        {trav.age}
+                      </td>
+                      <td className="p-2 sm:p-3 border border-gray-200 text-center text-xs sm:text-sm lg:text-base">
+                        {trav.mobile || "—"}
+                      </td>
+                      <td
+                        className="p-2 sm:p-3 border border-gray-200 text-center text-xs sm:text-sm lg:text-base truncate max-w-[80px] sm:max-w-[100px]"
+                        title={trav.boardingPoint}
+                      >
+                        {trav.boardingPoint || "—"}
+                      </td>
+                      <td
+                        className="p-2 sm:p-3 border border-gray-200 text-center text-xs sm:text-sm lg:text-base truncate max-w-[80px] sm:max-w-[100px]"
+                        title={trav.deboardingPoint}
+                      >
+                        {trav.deboardingPoint || "—"}
+                      </td>
+                      {tableData.trainColumns.map((col, i) => (
+                        <td
+                          key={i}
+                          className="p-2 sm:p-3 border border-gray-200 text-center"
                         >
-                          ×
+                          <input
+                            type="text"
+                            value={trav.trainSeats[col] ?? ""}
+                            onChange={(e) =>
+                              handleSeatChange(
+                                trav.id,
+                                "train",
+                                col,
+                                e.target.value
+                              )
+                            }
+                            className="w-14 sm:w-16 lg:w-20 px-1 sm:px-2 py-1 border border-gray-300 rounded-md text-xs sm:text-sm text-center touch-manipulation"
+                            aria-label={`Train seat for ${col}`}
+                          />
+                        </td>
+                      ))}
+                      {tableData.flightColumns.map((col, i) => (
+                        <td
+                          key={i}
+                          className="p-2 sm:p-3 border border-gray-200 text-center"
+                        >
+                          <input
+                            type="text"
+                            value={trav.flightSeats[col] ?? ""}
+                            onChange={(e) =>
+                              handleSeatChange(
+                                trav.id,
+                                "flight",
+                                col,
+                                e.target.value
+                              )
+                            }
+                            className="w-14 sm:w-16 lg:w-20 px-1 sm:px-2 py-1 border border-gray-300 rounded-md text-xs sm:text-sm text-center touch-manipulation"
+                            aria-label={`Flight seat for ${col}`}
+                          />
+                        </td>
+                      ))}
+                      <td className="p-2 sm:p-3 border border-gray-200 text-center">
+                        <button
+                          onClick={() => handleSaveSingleTraveller(trav)}
+                          className="px-2 sm:px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-xs sm:text-sm min-w-[60px] sm:min-w-[80px] touch-manipulation"
+                          aria-label={`Save details for ${trav.name}`}
+                        >
+                          Save
                         </button>
-                      )}
-                    </div>
-                  </th>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="block sm:hidden space-y-4">
+              <div className="mb-4">
+                {tableData.trainColumns.map((col, i) => (
+                  <div key={i} className="flex items-center gap-2 mb-2">
+                    <input
+                      type="text"
+                      value={col}
+                      onChange={(e) =>
+                        handleColumnNameChangeGlobal("train", i, e.target.value)
+                      }
+                      className="w-full px-2 py-2 border border-gray-300 rounded-md text-xs sm:text-sm touch-manipulation"
+                      aria-label={`Train column ${i + 1} name`}
+                    />
+                    {tableData.trainColumns.length > 1 && (
+                      <button
+                        onClick={() => handleRemoveGlobalColumn("train", i)}
+                        className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 text-xs touch-manipulation"
+                        aria-label={`Remove train column ${col}`}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
                 ))}
                 {tableData.flightColumns.map((col, i) => (
-                  <th key={i} style={thStyle}>
-                    <div style={headerFlex}>
-                      <input
-                        type="text"
-                        value={col}
-                        onChange={(e) =>
-                          handleColumnNameChangeGlobal(
-                            "flight",
-                            i,
-                            e.target.value
-                          )
-                        }
-                        style={headerInput}
-                      />
-                      {tableData.flightColumns.length > 1 && (
-                        <button
-                          onClick={() => handleRemoveGlobalColumn("flight", i)}
-                          style={removeBtn}
-                        >
-                          ×
-                        </button>
-                      )}
-                    </div>
-                  </th>
-                ))}
-                <th style={thStyle}>Remarks</th>
-                <th style={thStyle}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tableData.travellers.map((trav, idx) => (
-                <tr key={trav.id}>
-                  <td style={tdCenter}>{String(idx + 1).padStart(2, "0")}.</td>
-                  <td style={tdStyle}>{trav.name}</td>
-                  <td style={tdCenter}>{trav.age}</td>
-                  <td style={tdCenter}>{trav.mobile || "—"}</td>
-                  {tableData.trainColumns.map((col, i) => (
-                    <td key={i} style={tdStyle}>
-                      <input
-                        type="text"
-                        value={trav.trainSeats[col] ?? ""}
-                        onChange={(e) =>
-                          handleSeatChange(
-                            trav.id,
-                            "train",
-                            col,
-                            e.target.value
-                          )
-                        }
-                        style={inputStyle}
-                      />
-                    </td>
-                  ))}
-                  {tableData.flightColumns.map((col, i) => (
-                    <td key={i} style={tdStyle}>
-                      <input
-                        type="text"
-                        value={trav.flightSeats[col] ?? ""}
-                        onChange={(e) =>
-                          handleSeatChange(
-                            trav.id,
-                            "flight",
-                            col,
-                            e.target.value
-                          )
-                        }
-                        style={inputStyle}
-                      />
-                    </td>
-                  ))}
-                  <td style={tdStyle}>
-                    <textarea
-                      value={trav.remarks ?? ""}
+                  <div key={i} className="flex items-center gap-2 mb-2">
+                    <input
+                      type="text"
+                      value={col}
                       onChange={(e) =>
-                        handleRemarksChange(trav.id, e.target.value)
+                        handleColumnNameChangeGlobal(
+                          "flight",
+                          i,
+                          e.target.value
+                        )
                       }
-                      style={textareaStyle}
+                      className="w-full px-2 py-2 border border-gray-300 rounded-md text-xs sm:text-sm touch-manipulation"
+                      aria-label={`Flight column ${i + 1} name`}
                     />
-                  </td>
-                  <td style={tdCenter}>
-                    <button
-                      onClick={() => handleSaveSingleTraveller(trav)}
-                      style={saveBtn}
-                    >
-                      Save
-                    </button>
-                  </td>
-                </tr>
+                    {tableData.flightColumns.length > 1 && (
+                      <button
+                        onClick={() => handleRemoveGlobalColumn("flight", i)}
+                        className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 text-xs touch-manipulation"
+                        aria-label={`Remove flight column ${col}`}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {tableData.travellers.map((trav, idx) => (
+                <div
+                  key={trav.id}
+                  className="bg-white border rounded-lg p-3 shadow-sm"
+                >
+                  <div className="grid grid-cols-1 gap-2 text-xs sm:text-sm">
+                    <div>
+                      <span className="font-semibold">SL NO: </span>
+                      {String(idx + 1).padStart(2, "0")}.
+                    </div>
+                    <div>
+                      <span className="font-semibold">Name: </span>
+                      {trav.name}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Age: </span>
+                      {trav.age}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Mobile: </span>
+                      {trav.mobile || "—"}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Boarding Point: </span>
+                      {trav.boardingPoint || "—"}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Deboarding Point: </span>
+                      {trav.deboardingPoint || "—"}
+                    </div>
+                    {tableData.trainColumns.map((col, i) => (
+                      <div key={i}>
+                        <span className="font-semibold">{col}: </span>
+                        <input
+                          type="text"
+                          value={trav.trainSeats[col] ?? ""}
+                          onChange={(e) =>
+                            handleSeatChange(
+                              trav.id,
+                              "train",
+                              col,
+                              e.target.value
+                            )
+                          }
+                          className="w-full px-2 py-2 border border-gray-300 rounded-md text-xs sm:text-sm touch-manipulation"
+                          aria-label={`Train seat for ${col}`}
+                        />
+                      </div>
+                    ))}
+                    {tableData.flightColumns.map((col, i) => (
+                      <div key={i}>
+                        <span className="font-semibold">{col}: </span>
+                        <input
+                          type="text"
+                          value={trav.flightSeats[col] ?? ""}
+                          onChange={(e) =>
+                            handleSeatChange(
+                              trav.id,
+                              "flight",
+                              col,
+                              e.target.value
+                            )
+                          }
+                          className="w-full px-2 py-2 border border-gray-300 rounded-md text-xs sm:text-sm touch-manipulation"
+                          aria-label={`Flight seat for ${col}`}
+                        />
+                      </div>
+                    ))}
+                    <div className="text-center">
+                      <button
+                        onClick={() => handleSaveSingleTraveller(trav)}
+                        className="px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-xs sm:text-sm w-full touch-manipulation"
+                        aria-label={`Save details for ${trav.name}`}
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
-        </>
+            </div>
+          </>
+        )
+      ) : (
+        <p className="text-center text-gray-500 text-xs sm:text-sm lg:text-base">
+          Please select a tour to view the traveller list.
+        </p>
       )}
     </div>
   );
-};
-
-// Styles
-const thStyle = {
-  padding: "8px",
-  border: "1px solid #e0e0e0",
-  textAlign: "center",
-  verticalAlign: "middle",
-};
-const tdStyle = {
-  padding: "6px",
-  border: "1px solid #e9e9e9",
-  verticalAlign: "top",
-};
-const tdCenter = { ...tdStyle, textAlign: "center" };
-const inputStyle = {
-  width: "100%",
-  padding: "6px",
-  border: "1px solid #ccc",
-  borderRadius: "4px",
-};
-const headerInput = {
-  width: "120px",
-  padding: "6px",
-  border: "1px solid #bbb",
-  borderRadius: "6px",
-  fontWeight: "700",
-  textAlign: "center",
-  background: "#fff",
-};
-const addBtn = {
-  padding: "8px 14px",
-  background: "#28a745",
-  color: "#fff",
-  border: "none",
-  borderRadius: "6px",
-  cursor: "pointer",
-};
-const pdfBtn = {
-  padding: "8px 14px",
-  background: "#dc3545",
-  color: "#fff",
-  border: "none",
-  borderRadius: "6px",
-  cursor: "pointer",
-};
-const removeBtn = {
-  padding: "6px 8px",
-  background: "red",
-  color: "white",
-  border: "none",
-  borderRadius: "50%",
-  cursor: "pointer",
-  marginLeft: 8,
-};
-const saveBtn = {
-  padding: "6px 12px",
-  background: "#007bff",
-  color: "#fff",
-  border: "none",
-  borderRadius: "4px",
-  cursor: "pointer",
-};
-const textareaStyle = {
-  width: "100%",
-  minHeight: "48px",
-  padding: "6px",
-  borderRadius: 4,
-  border: "1px solid #ccc",
-};
-const headerFlex = {
-  display: "flex",
-  alignItems: "center",
-  gap: 6,
-  justifyContent: "center",
 };
 
 export default TourNameList;

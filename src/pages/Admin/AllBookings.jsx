@@ -1,301 +1,3 @@
-// import React, { useContext, useEffect, useState } from "react";
-// import { TourAdminContext } from "../../context/TourAdminContext";
-// import { ChevronDown, ChevronRight } from "lucide-react";
-
-// const AllBookings = () => {
-//   const { aToken, bookings, getAllBookings, rejectBooking } =
-//     useContext(TourAdminContext);
-
-//   const [expandedRow, setExpandedRow] = useState(null);
-//   const [filters, setFilters] = useState({
-//     tour: "",
-//     contact: "",
-//     payment: "",
-//     status: "",
-//   });
-//   const [rejectedTravellers, setRejectedTravellers] = useState({}); // local rejected state
-
-//   useEffect(() => {
-//     if (aToken) {
-//       getAllBookings();
-//     }
-//   }, [aToken]);
-
-//   if (!aToken) {
-//     return (
-//       <div className="p-6 text-center">
-//         <h2 className="text-xl font-semibold text-red-500">
-//           Unauthorized Access 🚫
-//         </h2>
-//         <p className="text-gray-600">Please login as Admin to continue.</p>
-//       </div>
-//     );
-//   }
-
-//   const toggleRow = (index) => {
-//     setExpandedRow(expandedRow === index ? null : index);
-//   };
-
-//   // 🔎 Filtered Bookings
-//   const filteredBookings = bookings?.filter((b) => {
-//     const tourMatch = b?.tourData?.title
-//       ?.toLowerCase()
-//       .includes(filters.tour.toLowerCase());
-
-//     const contactMatch =
-//       b?.contact?.email
-//         ?.toLowerCase()
-//         .includes(filters.contact.toLowerCase()) ||
-//       b?.contact?.mobile?.toLowerCase().includes(filters.contact.toLowerCase());
-
-//     const paymentStatus = `${
-//       b.payment?.advance?.paid ? "advance-paid" : "advance-pending"
-//     } ${b.payment?.balance?.paid ? "balance-paid" : "balance-pending"}`;
-
-//     const paymentMatch = paymentStatus.includes(filters.payment.toLowerCase());
-
-//     const statusValue = b.isBookingCompleted
-//       ? "completed"
-//       : b.cancelled?.byAdmin || b.cancelled?.byTraveller
-//       ? "cancelled"
-//       : "under completion";
-
-//     const statusMatch = statusValue.includes(filters.status.toLowerCase());
-
-//     return tourMatch && contactMatch && paymentMatch && statusMatch;
-//   });
-
-//   // 🚫 Handle reject with confirmation
-//   const handleReject = (bookingId, travellerId) => {
-//     const confirmReject = window.confirm(
-//       "Are you sure you want to reject this booking?"
-//     );
-//     if (confirmReject) {
-//       rejectBooking(bookingId, [travellerId]);
-//       setRejectedTravellers((prev) => ({
-//         ...prev,
-//         [travellerId]: true,
-//       }));
-//     }
-//   };
-
-//   return (
-//     <div className="p-6">
-//       <h1 className="text-2xl font-bold mb-6">
-//         Super admin bookings Dashboard
-//       </h1>
-
-//       {!bookings || bookings.length === 0 ? (
-//         <p className="text-center text-gray-500">No bookings found</p>
-//       ) : (
-//         <div className="overflow-x-auto">
-//           <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
-//             <thead className="bg-gray-100 border-b">
-//               <tr>
-//                 <th></th>
-//                 <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">
-//                   S.No
-//                 </th>
-//                 <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">
-//                   Tour
-//                   <input
-//                     type="text"
-//                     placeholder="Filter tour"
-//                     value={filters.tour}
-//                     onChange={(e) =>
-//                       setFilters({ ...filters, tour: e.target.value })
-//                     }
-//                     className="mt-1 w-full border rounded px-2 py-1 text-sm"
-//                   />
-//                 </th>
-//                 <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">
-//                   Contact
-//                   <input
-//                     type="text"
-//                     placeholder="Filter contact"
-//                     value={filters.contact}
-//                     onChange={(e) =>
-//                       setFilters({ ...filters, contact: e.target.value })
-//                     }
-//                     className="mt-1 w-full border rounded px-2 py-1 text-sm"
-//                   />
-//                 </th>
-//                 <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">
-//                   Payment
-//                   <select
-//                     value={filters.payment}
-//                     onChange={(e) =>
-//                       setFilters({ ...filters, payment: e.target.value })
-//                     }
-//                     className="mt-1 w-full border rounded px-2 py-1 text-sm"
-//                   >
-//                     <option value="">All</option>
-//                     <option value="advance-paid">Advance Paid</option>
-//                     <option value="advance-pending">Advance Pending</option>
-//                     <option value="balance-paid">Balance Paid</option>
-//                     <option value="balance-pending">Balance Pending</option>
-//                   </select>
-//                 </th>
-//                 <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">
-//                   Status
-//                   <select
-//                     value={filters.status}
-//                     onChange={(e) =>
-//                       setFilters({ ...filters, status: e.target.value })
-//                     }
-//                     className="mt-1 w-full border rounded px-2 py-1 text-sm"
-//                   >
-//                     <option value="">All</option>
-//                     <option value="completed">Completed</option>
-//                     <option value="cancelled">Cancelled</option>
-//                     <option value="under completion">Under Completion</option>
-//                   </select>
-//                 </th>
-//               </tr>
-//             </thead>
-
-//             <tbody>
-//               {filteredBookings.map((booking, index) => (
-//                 <React.Fragment key={booking._id}>
-//                   <tr
-//                     className="border-b hover:bg-gray-50 transition cursor-pointer"
-//                     onClick={() => toggleRow(index)}
-//                   >
-//                     <td className="px-4 py-2 text-gray-600">
-//                       {expandedRow === index ? (
-//                         <ChevronDown size={18} />
-//                       ) : (
-//                         <ChevronRight size={18} />
-//                       )}
-//                     </td>
-//                     <td className="px-4 py-2 text-sm text-gray-800">
-//                       {index + 1}
-//                     </td>
-//                     <td className="px-4 py-2 text-sm text-gray-800">
-//                       {booking?.tourData?.title || "N/A"}
-//                     </td>
-//                     <td className="px-4 py-2 text-sm text-gray-800">
-//                       <div>{booking?.contact?.email}</div>
-//                       <div>{booking?.contact?.mobile}</div>
-//                     </td>
-//                     <td className="px-4 py-2 text-sm text-gray-800">
-//                       <div>
-//                         Advance:{" "}
-//                         {booking.payment?.advance?.paid ? (
-//                           <span className="text-green-600">Paid ✅</span>
-//                         ) : (
-//                           <span className="text-red-600">Pending ❌</span>
-//                         )}
-//                       </div>
-//                       <div>
-//                         Balance:{" "}
-//                         {booking.payment?.balance?.paid ? (
-//                           <span className="text-green-600">Paid ✅</span>
-//                         ) : (
-//                           <span className="text-yellow-600">Pending ⏳</span>
-//                         )}
-//                       </div>
-//                     </td>
-//                     <td className="px-4 py-2 text-sm font-medium">
-//                       {booking.isBookingCompleted ? (
-//                         <span className="text-green-600">Completed ✅</span>
-//                       ) : booking.cancelled?.byAdmin ||
-//                         booking.cancelled?.byTraveller ? (
-//                         <span className="text-red-600">Cancelled ❌</span>
-//                       ) : (
-//                         <span className="text-yellow-600">
-//                           Under completion ⏳
-//                         </span>
-//                       )}
-//                     </td>
-//                   </tr>
-
-//                   {expandedRow === index && (
-//                     <tr className="bg-gray-50">
-//                       <td></td>
-//                       <td colSpan="5" className="px-6 py-4">
-//                         <h4 className="font-semibold text-gray-700 mb-2">
-//                           Travellers
-//                         </h4>
-//                         {booking.travellers && booking.travellers.length > 0 ? (
-//                           <ul className="list-disc list-inside space-y-2">
-//                             {booking.travellers.map((t, i) => {
-//                               const isCancelledByAdmin = t.cancelled?.byAdmin;
-//                               const isCancelledByTraveller =
-//                                 t.cancelled?.byTraveller;
-//                               const isLocallyRejected =
-//                                 rejectedTravellers[t._id];
-
-//                               const isDisabled =
-//                                 isCancelledByAdmin ||
-//                                 isCancelledByTraveller ||
-//                                 isLocallyRejected;
-
-//                               let buttonLabel = "Reject Booking";
-//                               if (isCancelledByTraveller) {
-//                                 buttonLabel = "Cancelled by Traveller";
-//                               } else if (
-//                                 isCancelledByAdmin ||
-//                                 isLocallyRejected
-//                               ) {
-//                                 buttonLabel = "Booking Rejected";
-//                               }
-
-//                               return (
-//                                 <li
-//                                   key={i}
-//                                   className="text-sm text-gray-700 flex justify-between items-center"
-//                                 >
-//                                   <span>
-//                                     {t.title} {t.firstName} {t.lastName} (
-//                                     {t.age}y)
-//                                   </span>
-
-//                                   <button
-//                                     disabled={isDisabled}
-//                                     onClick={
-//                                       !isDisabled
-//                                         ? () => handleReject(booking._id, t._id)
-//                                         : undefined
-//                                     }
-//                                     className={`ml-4 px-3 py-1.5 rounded text-xs ${
-//                                       isDisabled
-//                                         ? "bg-gray-400 text-white cursor-not-allowed"
-//                                         : "bg-red-500 text-white hover:bg-red-600"
-//                                     }`}
-//                                   >
-//                                     {buttonLabel}
-//                                   </button>
-//                                 </li>
-//                               );
-//                             })}
-//                           </ul>
-//                         ) : (
-//                           <p className="text-sm text-gray-500">No travellers</p>
-//                         )}
-//                       </td>
-//                     </tr>
-//                   )}
-//                 </React.Fragment>
-//               ))}
-
-//               {filteredBookings.length === 0 && (
-//                 <tr>
-//                   <td colSpan="6" className="text-center text-gray-500 py-4">
-//                     No results match your filters
-//                   </td>
-//                 </tr>
-//               )}
-//             </tbody>
-//           </table>
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default AllBookings;
-
 import React, { useContext, useEffect, useState, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { TourAdminContext } from "../../context/TourAdminContext";
@@ -385,39 +87,51 @@ const AllBookings = () => {
     setExpandedRow(expandedRow === index ? null : index);
   };
 
-  // Filtered Bookings
-  const filteredBookings = bookings?.filter((b) => {
-    // Get the first traveller's name for filtering
-    const firstTraveller =
-      b.travellers && b.travellers.length > 0 ? b.travellers[0] : null;
-    const displayName = firstTraveller
-      ? `${firstTraveller.firstName} ${firstTraveller.lastName}`.toLowerCase()
-      : "unknown traveller";
+  // Filtered Bookings with new bookings first
+  const filteredBookings = bookings
+    ?.filter((b) => {
+      // Get the first traveller's name for filtering
+      const firstTraveller =
+        b.travellers && b.travellers.length > 0 ? b.travellers[0] : null;
+      const displayName = firstTraveller
+        ? `${firstTraveller.firstName} ${firstTraveller.lastName}`.toLowerCase()
+        : "unknown traveller";
 
-    const tourMatch = b?.tourData?.title
-      ?.toLowerCase()
-      .includes(filters.tour.toLowerCase());
+      const tourMatch = b?.tourData?.title
+        ?.toLowerCase()
+        .includes(filters.tour.toLowerCase());
 
-    const contactMatch =
-      displayName.includes(filters.contact.toLowerCase()) ||
-      b?.contact?.mobile?.toLowerCase().includes(filters.contact.toLowerCase());
+      const contactMatch =
+        displayName.includes(filters.contact.toLowerCase()) ||
+        b?.contact?.mobile
+          ?.toLowerCase()
+          .includes(filters.contact.toLowerCase());
 
-    const paymentStatus = `${
-      b.payment?.advance?.paid ? "advance-paid" : "advance-pending"
-    } ${b.payment?.balance?.paid ? "balance-paid" : "balance-pending"}`;
+      const paymentStatus = `${
+        b.payment?.advance?.paid ? "advance-paid" : "advance-pending"
+      } ${b.payment?.balance?.paid ? "balance-paid" : "balance-pending"}`;
 
-    const paymentMatch = paymentStatus.includes(filters.payment.toLowerCase());
+      const paymentMatch = paymentStatus.includes(
+        filters.payment.toLowerCase()
+      );
 
-    const statusValue = b.isBookingCompleted
-      ? "completed"
-      : b.cancelled?.byAdmin || b.cancelled?.byTraveller
-      ? "cancelled"
-      : "under completion";
+      const statusValue = b.isBookingCompleted
+        ? "completed"
+        : b.cancelled?.byAdmin || b.cancelled?.byTraveller
+        ? "cancelled"
+        : "under completion";
 
-    const statusMatch = statusValue.includes(filters.status.toLowerCase());
+      const statusMatch = statusValue.includes(filters.status.toLowerCase());
 
-    return tourMatch && contactMatch && paymentMatch && statusMatch;
-  });
+      return tourMatch && contactMatch && paymentMatch && statusMatch;
+    })
+    .sort((a, b) => {
+      // Sort to show newly added bookings first (assuming newer bookings have higher _id or timestamp)
+      return (
+        new Date(b.createdAt) - new Date(a.createdAt) ||
+        b._id.localeCompare(a._id)
+      );
+    });
 
   // Handle reject with confirmation
   const handleReject = async (bookingId, travellerId) => {
@@ -462,7 +176,7 @@ const AllBookings = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-1 sm:p-2 md:p-3 lg:p-4 xl:p-6 2xl:p-8 w-full max-w-full">
       <ToastContainer
         position="top-right"
         autoClose={3000}
@@ -474,31 +188,37 @@ const AllBookings = () => {
         draggable
         pauseOnHover
       />
-      <h1 className="text-2xl font-bold mb-6">
+      <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold mb-2 sm:mb-3 md:mb-4 lg:mb-6 text-center ml-4 sm:ml-0 md:ml-0 lg:ml-0 xl:ml-0 2xl:ml-0">
         Super Admin Bookings Dashboard
       </h1>
 
       {!aToken ? (
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-red-500">
+          <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-red-500">
             Unauthorized Access 🚫
           </h2>
-          <p className="text-gray-600">Please login as Admin to continue.</p>
+          <p className="text-gray-600 text-xs sm:text-sm md:text-base lg:text-lg">
+            Please login as Admin to continue.
+          </p>
         </div>
       ) : isLoading ? (
-        <div className="text-center text-gray-500">Loading bookings...</div>
+        <div className="text-center text-gray-500 text-xs sm:text-sm md:text-base lg:text-lg">
+          Loading bookings...
+        </div>
       ) : !bookings || bookings.length === 0 ? (
-        <p className="text-center text-gray-500">No bookings found</p>
+        <p className="text-center text-gray-500 text-xs sm:text-sm md:text-base lg:text-lg">
+          No bookings found
+        </p>
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
             <thead className="bg-gray-100 border-b">
               <tr>
-                <th></th>
-                <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">
+                <th className="p-1 sm:p-2"></th>
+                <th className="p-1 sm:p-2 text-left text-xs sm:text-sm font-semibold text-gray-700">
                   S.No
                 </th>
-                <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">
+                <th className="p-1 sm:p-2 text-left text-xs sm:text-sm font-semibold text-gray-700">
                   Tour
                   <input
                     type="text"
@@ -507,11 +227,11 @@ const AllBookings = () => {
                     onChange={(e) =>
                       setFilters({ ...filters, tour: e.target.value })
                     }
-                    className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                    className="mt-1 w-full border rounded px-1 sm:px-2 py-0.5 sm:py-1 text-xs sm:text-sm"
                     disabled={isLoading}
                   />
                 </th>
-                <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">
+                <th className="p-1 sm:p-2 text-left text-xs sm:text-sm font-semibold text-gray-700">
                   Contact
                   <input
                     type="text"
@@ -520,18 +240,18 @@ const AllBookings = () => {
                     onChange={(e) =>
                       setFilters({ ...filters, contact: e.target.value })
                     }
-                    className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                    className="mt-1 w-full border rounded px-1 sm:px-2 py-0.5 sm:py-1 text-xs sm:text-sm"
                     disabled={isLoading}
                   />
                 </th>
-                <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">
+                <th className="p-1 sm:p-2 text-left text-xs sm:text-sm font-semibold text-gray-700">
                   Payment
                   <select
                     value={filters.payment}
                     onChange={(e) =>
                       setFilters({ ...filters, payment: e.target.value })
                     }
-                    className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                    className="mt-1 w-full border rounded px-1 sm:px-2 py-0.5 sm:py-1 text-xs sm:text-sm"
                     disabled={isLoading}
                   >
                     <option value="">All</option>
@@ -541,14 +261,14 @@ const AllBookings = () => {
                     <option value="balance-pending">Balance Pending</option>
                   </select>
                 </th>
-                <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">
+                <th className="p-1 sm:p-2 text-left text-xs sm:text-sm font-semibold text-gray-700">
                   Status
                   <select
                     value={filters.status}
                     onChange={(e) =>
                       setFilters({ ...filters, status: e.target.value })
                     }
-                    className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                    className="mt-1 w-full border rounded px-1 sm:px-2 py-0.5 sm:py-1 text-xs sm:text-sm"
                     disabled={isLoading}
                   >
                     <option value="">All</option>
@@ -576,26 +296,26 @@ const AllBookings = () => {
                       className="border-b hover:bg-gray-50 transition cursor-pointer"
                       onClick={() => toggleRow(index)}
                     >
-                      <td className="px-4 py-2 text-gray-600">
+                      <td className="p-1 sm:p-2 text-gray-600">
                         {expandedRow === index ? (
-                          <ChevronDown size={18} />
+                          <ChevronDown size={12} sm:size={16} />
                         ) : (
-                          <ChevronRight size={18} />
+                          <ChevronRight size={12} sm:size={16} />
                         )}
                       </td>
-                      <td className="px-4 py-2 text-sm text-gray-800">
+                      <td className="p-1 sm:p-2 text-xs sm:text-sm text-gray-800">
                         {index + 1}
                       </td>
-                      <td className="px-4 py-2 text-sm text-gray-800">
+                      <td className="p-1 sm:p-2 text-xs sm:text-sm text-gray-800">
                         {booking?.tourData?.title || "N/A"}
                       </td>
-                      <td className="px-4 py-2 text-sm text-gray-800">
+                      <td className="p-1 sm:p-2 text-xs sm:text-sm text-gray-800">
                         <div>
                           <strong>{displayName}</strong>
                         </div>
                         <div>{booking?.contact?.mobile}</div>
                       </td>
-                      <td className="px-4 py-2 text-sm text-gray-800">
+                      <td className="p-1 sm:p-2 text-xs sm:text-sm text-gray-800">
                         <div>
                           Advance:{" "}
                           {booking.payment?.advance?.paid ? (
@@ -613,7 +333,7 @@ const AllBookings = () => {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-2 text-sm font-medium">
+                      <td className="p-1 sm:p-2 text-xs sm:text-sm font-medium">
                         {booking.isBookingCompleted ? (
                           <span className="text-green-600">Completed ✅</span>
                         ) : booking.cancelled?.byAdmin ||
@@ -630,13 +350,16 @@ const AllBookings = () => {
                     {expandedRow === index && (
                       <tr className="bg-gray-50">
                         <td></td>
-                        <td colSpan="5" className="px-6 py-4">
-                          <h4 className="font-semibold text-gray-700 mb-2">
+                        <td
+                          colSpan="5"
+                          className="p-1 sm:p-2 md:p-4 lg:p-6 xl:p-8"
+                        >
+                          <h4 className="font-semibold text-gray-700 mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">
                             Travellers
                           </h4>
                           {booking.travellers &&
                           booking.travellers.length > 0 ? (
-                            <ul className="list-disc list-inside space-y-2">
+                            <ul className="list-disc list-inside space-y-1 sm:space-y-2">
                               {booking.travellers.map((t, i) => {
                                 const isCancelledByAdmin = t.cancelled?.byAdmin;
                                 const isCancelledByTraveller =
@@ -663,7 +386,7 @@ const AllBookings = () => {
                                 return (
                                   <li
                                     key={i}
-                                    className="text-sm text-gray-700 flex justify-between items-center"
+                                    className="text-xs sm:text-sm md:text-base text-gray-700 flex justify-between items-center"
                                   >
                                     <span>
                                       {t.title} {t.firstName} {t.lastName} (
@@ -678,7 +401,7 @@ const AllBookings = () => {
                                               handleReject(booking._id, t._id)
                                           : undefined
                                       }
-                                      className={`ml-4 px-3 py-1.5 rounded text-xs ${
+                                      className={`ml-1 sm:ml-2 md:ml-4 px-1 sm:px-2 md:px-3 py-0.5 sm:py-1 md:py-1.5 rounded text-xs sm:text-sm md:text-base ${
                                         isDisabled
                                           ? "bg-gray-400 text-white cursor-not-allowed"
                                           : "bg-red-500 text-white hover:bg-red-600"
@@ -696,7 +419,7 @@ const AllBookings = () => {
                               })}
                             </ul>
                           ) : (
-                            <p className="text-sm text-gray-500">
+                            <p className="text-xs sm:text-sm md:text-base text-gray-500">
                               No travellers
                             </p>
                           )}
@@ -709,7 +432,10 @@ const AllBookings = () => {
 
               {filteredBookings.length === 0 && (
                 <tr>
-                  <td colSpan="6" className="text-center text-gray-500 py-4">
+                  <td
+                    colSpan="6"
+                    className="text-center text-gray-500 p-1 sm:p-2 md:p-4 text-xs sm:text-sm md:text-base"
+                  >
                     No results match your filters
                   </td>
                 </tr>
