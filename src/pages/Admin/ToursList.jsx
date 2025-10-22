@@ -92,7 +92,7 @@ const ToursList = () => {
       .reduce((count, b) => {
         const cancelledTravellers = (b.travellers || []).filter(
           (t) =>
-            t.cancelled?.byTraveller === true || t.cancelled?.byAdmin === true
+            t.cancelled?.byTraveller === true && t.cancelled?.byAdmin === true
         );
         return count + cancelledTravellers.length;
       }, 0);

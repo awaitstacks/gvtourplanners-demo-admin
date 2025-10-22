@@ -1,4 +1,10 @@
-import React, { useState, useContext, useEffect, useCallback } from "react";
+import React, {
+  useState,
+  useContext,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import { useLocation } from "react-router-dom";
 import { TourContext } from "../../context/TourContext";
 import { toast, ToastContainer } from "react-toastify";
@@ -23,6 +29,10 @@ const TourNameList = () => {
   });
   const [selectedTourId, setSelectedTourId] = useState("");
   const [isLoadingBookings, setIsLoadingBookings] = useState(false);
+  const [nameFilter, setNameFilter] = useState("");
+  const [phoneFilter, setPhoneFilter] = useState("");
+  const [boardingPointFilter, setBoardingPointFilter] = useState("");
+  const [deboardingPointFilter, setDeboardingPointFilter] = useState("");
   const location = useLocation();
 
   // Fetch the list of all tours for the dropdown
@@ -110,6 +120,43 @@ const TourNameList = () => {
     },
     [selectedTourId, getBookings]
   );
+
+  // Filter travellers based on name, phone number, boarding point, and deboarding point
+  const filteredTravellers = useMemo(() => {
+    return tableData.travellers.filter((traveller) => {
+      const matchesName = nameFilter
+        ? traveller.name.toLowerCase().includes(nameFilter.toLowerCase())
+        : true;
+      const matchesPhone = phoneFilter
+        ? traveller.mobile && traveller.mobile.includes(phoneFilter)
+        : true;
+      const matchesBoardingPoint = boardingPointFilter
+        ? traveller.boardingPoint &&
+          traveller.boardingPoint
+            .toLowerCase()
+            .includes(boardingPointFilter.toLowerCase())
+        : true;
+      const matchesDeboardingPoint = deboardingPointFilter
+        ? traveller.deboardingPoint &&
+          traveller.deboardingPoint
+            .toLowerCase()
+            .includes(deboardingPointFilter.toLowerCase())
+        : true;
+      return (
+        matchesName &&
+        matchesPhone &&
+        matchesBoardingPoint &&
+        matchesDeboardingPoint
+      );
+    });
+  }, [
+    tableData.travellers,
+    nameFilter,
+    phoneFilter,
+    boardingPointFilter,
+    deboardingPointFilter,
+  ]);
+
   // Re-initialize the table when bookings change
   useEffect(() => {
     if (bookings.length > 0 && selectedTourId) {
@@ -177,6 +224,8 @@ const TourNameList = () => {
             id: trav._id,
             name: `${trav.firstName || ""} ${trav.lastName || ""}`.trim(),
             age: trav.age ?? "",
+            gender: trav.gender || "",
+            sharingType: trav.sharingType || "",
             mobile: booking.contact?.mobile ?? trav.phone ?? "",
             boardingPoint: trav.boardingPoint?.stationName || "",
             deboardingPoint: trav.deboardingPoint?.stationName || "",
@@ -186,14 +235,10 @@ const TourNameList = () => {
         });
       });
 
-      const trainColumns =
-        trainSet.size > 0 ? Array.from(trainSet) : ["Train 1"];
-      const flightColumns =
-        flightSet.size > 0 ? Array.from(flightSet) : ["Flight 1"];
-
       setTableData({
-        trainColumns,
-        flightColumns,
+        trainColumns: trainSet.size > 0 ? Array.from(trainSet) : ["Train 1"],
+        flightColumns:
+          flightSet.size > 0 ? Array.from(flightSet) : ["Flight 1"],
         travellers: travellersList,
       });
       setInitialized(true);
@@ -217,6 +262,28 @@ const TourNameList = () => {
 
   const cloneState = (s) => JSON.parse(JSON.stringify(s));
 
+  // Compute display gender based on age, gender, and sharingType
+  const getDisplayGender = (age, gender, sharingType) => {
+    const parsedAge = parseInt(age, 10);
+    if (isNaN(parsedAge) || parsedAge < 6) return "";
+    const genderAbbrev =
+      gender.toLowerCase() === "male"
+        ? "M"
+        : gender.toLowerCase() === "female"
+        ? "F"
+        : "";
+    if (parsedAge >= 6 && parsedAge <= 10) {
+      if (["withBerth", "double", "triple"].includes(sharingType)) {
+        return genderAbbrev ? `CWB(${genderAbbrev})` : "CWB";
+      }
+      if (sharingType === "withoutBerth") {
+        return genderAbbrev ? `CNB(${genderAbbrev})` : "CNB";
+      }
+      return "";
+    }
+    return genderAbbrev;
+  };
+
   // Export to PDF
   const exportToPDF = () => {
     const doc = new jsPDF("landscape", "pt", "a4");
@@ -235,6 +302,7 @@ const TourNameList = () => {
         "SL NO",
         "NAME",
         "AGE",
+        "GENDER",
         "MOBILE",
         "BOARDING POINT",
         "DEBOARDING POINT",
@@ -243,10 +311,11 @@ const TourNameList = () => {
       ],
     ];
 
-    const body = tableData.travellers.map((trav, idx) => [
+    const body = filteredTravellers.map((trav, idx) => [
       String(idx + 1).padStart(2, "0"),
       trav.name,
       trav.age,
+      getDisplayGender(trav.age, trav.gender, trav.sharingType),
       trav.mobile || "—",
       trav.boardingPoint || "—",
       trav.deboardingPoint || "—",
@@ -671,6 +740,78 @@ const TourNameList = () => {
             ))}
           </select>
         </div>
+        {selectedTourId && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 mb-4 sm:mb-6">
+            <div className="flex-1">
+              <label
+                htmlFor="name-filter"
+                className="block text-xs sm:text-sm lg:text-base font-medium text-gray-700 mb-1"
+              >
+                Filter by Name:
+              </label>
+              <input
+                id="name-filter"
+                type="text"
+                value={nameFilter}
+                onChange={(e) => setNameFilter(e.target.value)}
+                placeholder="Enter name to filter"
+                className="mt-1 block w-full px-3 py-2 text-xs sm:text-sm lg:text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md touch-manipulation"
+                aria-label="Filter travellers by name"
+              />
+            </div>
+            <div className="flex-1">
+              <label
+                htmlFor="phone-filter"
+                className="block text-xs sm:text-sm lg:text-base font-medium text-gray-700 mb-1"
+              >
+                Filter by Phone:
+              </label>
+              <input
+                id="phone-filter"
+                type="text"
+                value={phoneFilter}
+                onChange={(e) => setPhoneFilter(e.target.value)}
+                placeholder="Enter phone to filter"
+                className="mt-1 block w-full px-3 py-2 text-xs sm:text-sm lg:text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md touch-manipulation"
+                aria-label="Filter travellers by phone number"
+              />
+            </div>
+            <div className="flex-1">
+              <label
+                htmlFor="boarding-point-filter"
+                className="block text-xs sm:text-sm lg:text-base font-medium text-gray-700 mb-1"
+              >
+                Filter by Boarding Point:
+              </label>
+              <input
+                id="boarding-point-filter"
+                type="text"
+                value={boardingPointFilter}
+                onChange={(e) => setBoardingPointFilter(e.target.value)}
+                placeholder="Enter boarding point to filter"
+                className="mt-1 block w-full px-3 py-2 text-xs sm:text-sm lg:text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md touch-manipulation"
+                aria-label="Filter travellers by boarding point"
+              />
+            </div>
+            <div className="flex-1">
+              <label
+                htmlFor="deboarding-point-filter"
+                className="block text-xs sm:text-sm lg:text-base font-medium text-gray-700 mb-1"
+              >
+                Filter by Deboarding Point:
+              </label>
+              <input
+                id="deboarding-point-filter"
+                type="text"
+                value={deboardingPointFilter}
+                onChange={(e) => setDeboardingPointFilter(e.target.value)}
+                placeholder="Enter deboarding point to filter"
+                className="mt-1 block w-full px-3 py-2 text-xs sm:text-sm lg:text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md touch-manipulation"
+                aria-label="Filter travellers by deboarding point"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {selectedTourId ? (
@@ -695,7 +836,7 @@ const TourNameList = () => {
             </svg>
             Loading...
           </div>
-        ) : tableData.travellers.length === 0 ? (
+        ) : filteredTravellers.length === 0 ? (
           <p className="text-center text-gray-500 text-xs sm:text-sm lg:text-base">
             No active travellers with verified advance payment found for this
             tour.
@@ -755,6 +896,11 @@ const TourNameList = () => {
                       className={`p-2 sm:p-3 border border-gray-200 text-center text-xs sm:text-sm lg:text-base font-semibold min-w-[50px]`}
                     >
                       AGE
+                    </th>
+                    <th
+                      className={`p-2 sm:p-3 border border-gray-200 text-center text-xs sm:text-sm lg:text-base font-semibold min-w-[60px]`}
+                    >
+                      GENDER
                     </th>
                     <th
                       className={`p-2 sm:p-3 border border-gray-200 text-center text-xs sm:text-sm lg:text-base font-semibold min-w-[80px]`}
@@ -845,7 +991,7 @@ const TourNameList = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {tableData.travellers.map((trav, idx) => (
+                  {filteredTravellers.map((trav, idx) => (
                     <tr key={trav.id}>
                       <td className="p-2 sm:p-3 border border-gray-200 text-center text-xs sm:text-sm lg:text-base">
                         {String(idx + 1).padStart(2, "0")}.
@@ -858,6 +1004,13 @@ const TourNameList = () => {
                       </td>
                       <td className="p-2 sm:p-3 border border-gray-200 text-center text-xs sm:text-sm lg:text-base">
                         {trav.age}
+                      </td>
+                      <td className="p-2 sm:p-3 border border-gray-200 text-center text-xs sm:text-sm lg:text-base">
+                        {getDisplayGender(
+                          trav.age,
+                          trav.gender,
+                          trav.sharingType
+                        )}
                       </td>
                       <td className="p-2 sm:p-3 border border-gray-200 text-center text-xs sm:text-sm lg:text-base">
                         {trav.mobile || "—"}
@@ -983,7 +1136,7 @@ const TourNameList = () => {
                   </div>
                 ))}
               </div>
-              {tableData.travellers.map((trav, idx) => (
+              {filteredTravellers.map((trav, idx) => (
                 <div
                   key={trav.id}
                   className="bg-white border rounded-lg p-3 shadow-sm"
@@ -1000,6 +1153,14 @@ const TourNameList = () => {
                     <div>
                       <span className="font-semibold">Age: </span>
                       {trav.age}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Gender: </span>
+                      {getDisplayGender(
+                        trav.age,
+                        trav.gender,
+                        trav.sharingType
+                      )}
                     </div>
                     <div>
                       <span className="font-semibold">Mobile: </span>

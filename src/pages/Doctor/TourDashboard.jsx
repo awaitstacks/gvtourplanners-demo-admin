@@ -100,7 +100,6 @@ const TourDashboard = () => {
             "Dashboard data fetched successfully",
             "Failed to fetch dashboard data"
           );
-          // Removed toast for bookings fetched to avoid duplication
         })
         .catch((error) => {
           console.error(
@@ -154,20 +153,20 @@ const TourDashboard = () => {
         travellerCount += nonCancelledTravellers.length;
       }
 
-      if (b.isBookingCompleted) {
+      // Check if all travellers are cancelled
+      const allTravellersCancelled =
+        b.travellers?.every(
+          (trav) =>
+            trav.cancelled?.byTraveller === true ||
+            trav.cancelled?.byAdmin === true
+        ) || b.travellers?.length === 0;
+
+      // Count as completed only if isBookingCompleted is true and not all travellers are cancelled
+      if (b.isBookingCompleted && !allTravellersCancelled) {
         completed++;
-      } else {
-        // Check if all travellers are cancelled
-        const allTravellersCancelled =
-          b.travellers?.every(
-            (trav) =>
-              trav.cancelled?.byTraveller === true ||
-              trav.cancelled?.byAdmin === true
-          ) || b.travellers?.length === 0;
-        if (!allTravellersCancelled) {
-          pending++;
-          uncompleted.push(b);
-        }
+      } else if (!allTravellersCancelled) {
+        pending++;
+        uncompleted.push(b);
       }
 
       // Check for advance receipt pending only if there are non-cancelled travellers
