@@ -335,7 +335,7 @@ const TourAdminDashboard = () => {
                 {uniqueUsers}
               </p>
               <p className="text-xs sm:text-sm md:text-base text-gray-500">
-                Unique Users
+                Total users
               </p>
             </div>
             <div className="p-2 sm:p-3 md:p-4 bg-white rounded-lg shadow border text-center">

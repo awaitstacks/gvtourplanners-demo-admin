@@ -10,6 +10,8 @@ const TourAdminContextProvider = (props) => {
   const [tours, setTours] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [dashData, setDashData] = useState(false);
+  const [cancelRule, setCancelRule] = useState(null);
+
   const backendUrl =
     import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
 
@@ -247,6 +249,51 @@ const TourAdminContextProvider = (props) => {
     }
   };
 
+  const updateCancelRule = async (payload) => {
+    try {
+      console.log(
+        "Updating cancellation rule at",
+        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
+        payload
+      );
+
+      const { data } = await axios.post(
+        `${backendUrl}/api/touradmin/touradmincancelrule`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${aToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const validatedData = validateApiResponse(
+        data,
+        "Failed to update cancellation chart"
+      );
+
+      if (validatedData.success) {
+        setCancelRule(validatedData.data);
+        console.log("Cancellation chart updated:", validatedData.data);
+        toast?.success?.("Cancellation chart updated successfully!");
+        return validatedData;
+      } else {
+        throw new Error("Cancellation update failed");
+      }
+    } catch (error) {
+      console.error(
+        "Error updating cancellation rule at",
+        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
+        error
+      );
+      toast?.error?.(
+        error.response?.data?.message || "Error updating cancellation chart"
+      );
+      throw error;
+    }
+  };
+
   const value = {
     aToken,
     setAToken,
@@ -262,6 +309,8 @@ const TourAdminContextProvider = (props) => {
     dashData,
     getAdminDashData,
     getAllTours,
+    cancelRule,
+    updateCancelRule,
   };
 
   return (

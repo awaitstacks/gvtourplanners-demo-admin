@@ -404,7 +404,7 @@ const TourDashboard = () => {
                   </div>
                   <div>
                     <p className="text-sm sm:text-base text-gray-500">
-                      Total Bookings (Unique Users)
+                      Total users
                     </p>
                     <p className="text-lg sm:text-xl lg:text-2xl font-semibold">
                       {dashData?.totalUsers || 0}

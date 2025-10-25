@@ -2,8 +2,17 @@ import React, { useContext, useState } from "react";
 import { TourContext } from "../context/TourContext";
 import { TourAdminContext } from "../context/TourAdminContext";
 import { NavLink } from "react-router-dom";
-import { assets } from "../assets/assets.js";
-import { Menu, X } from "lucide-react";
+import {
+  Home,
+  Calendar,
+  Plus,
+  Users,
+  X,
+  Menu,
+  FileText,
+  User,
+  Settings, // New icon for Booking Controls
+} from "lucide-react";
 
 const TourSidebar = () => {
   const { aToken } = useContext(TourAdminContext);
@@ -44,11 +53,7 @@ const TourSidebar = () => {
               to="/admin-dashboard"
               aria-label="Dashboard"
             >
-              <img
-                src={assets.home_icon}
-                alt="Dashboard icon"
-                className="w-6 h-6 sm:w-7 sm:h-7"
-              />
+              <Home size={24} className="w-6 h-6 sm:w-7 sm:h-7" />
               <p className="hidden md:block text-sm sm:text-base">Dashboard</p>
               <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
                 Dashboard
@@ -63,11 +68,7 @@ const TourSidebar = () => {
               to="/all-bookings"
               aria-label="Bookings"
             >
-              <img
-                src={assets.appointment_icon}
-                alt="Bookings icon"
-                className="w-6 h-6 sm:w-7 sm:h-7"
-              />
+              <Calendar size={24} className="w-6 h-6 sm:w-7 sm:h-7" />
               <p className="hidden md:block text-sm sm:text-base">Bookings</p>
               <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
                 Bookings
@@ -82,11 +83,7 @@ const TourSidebar = () => {
               to="/add-tour"
               aria-label="Add Tour"
             >
-              <img
-                src={assets.add_icon}
-                alt="Add Tour icon"
-                className="w-6 h-6 sm:w-7 sm:h-7"
-              />
+              <Plus size={24} className="w-6 h-6 sm:w-7 sm:h-7" />
               <p className="hidden md:block text-sm sm:text-base">Add Tour</p>
               <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
                 Add Tour
@@ -101,16 +98,29 @@ const TourSidebar = () => {
               to="/tour-list"
               aria-label="Tour Controls and Data"
             >
-              <img
-                src={assets.people_icon}
-                alt="Tour Controls icon"
-                className="w-6 h-6 sm:w-7 sm:h-7"
-              />
+              <Users size={24} className="w-6 h-6 sm:w-7 sm:h-7" />
               <p className="hidden md:block text-sm sm:text-base">
                 Tour Controls and Data
               </p>
               <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
                 Tour Controls and Data
+              </span>
+            </NavLink>
+            <NavLink
+              className={({ isActive }) =>
+                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
+                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
+                }`
+              }
+              to="/cancel-rule"
+              aria-label="Cancellation Rule"
+            >
+              <FileText size={24} className="w-6 h-6 sm:w-7 sm:h-7" />
+              <p className="hidden md:block text-sm sm:text-base">
+                Cancellation Rule
+              </p>
+              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                Cancellation Rule
               </span>
             </NavLink>
           </ul>
@@ -126,11 +136,7 @@ const TourSidebar = () => {
               to="/tour-dashboard"
               aria-label="Dashboard"
             >
-              <img
-                src={assets.home_icon}
-                alt="Dashboard icon"
-                className="w-6 h-6 sm:w-7 sm:h-7"
-              />
+              <Home size={24} className="w-6 h-6 sm:w-7 sm:h-7" />
               <p className="hidden md:block text-sm sm:text-base">Dashboard</p>
               <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
                 Dashboard
@@ -145,11 +151,7 @@ const TourSidebar = () => {
               to="/tour-bookings"
               aria-label="Bookings"
             >
-              <img
-                src={assets.appointment_icon}
-                alt="Bookings icon"
-                className="w-6 h-6 sm:w-7 sm:h-7"
-              />
+              <Calendar size={24} className="w-6 h-6 sm:w-7 sm:h-7" />
               <p className="hidden md:block text-sm sm:text-base">Bookings</p>
               <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
                 Bookings
@@ -164,11 +166,7 @@ const TourSidebar = () => {
               to="/tour-profile"
               aria-label="Profile"
             >
-              <img
-                src={assets.people_icon}
-                alt="Profile icon"
-                className="w-6 h-6 sm:w-7 sm:h-7"
-              />
+              <User size={24} className="w-6 h-6 sm:w-7 sm:h-7" />
               <p className="hidden md:block text-sm sm:text-base">Profile</p>
               <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
                 Profile
@@ -183,14 +181,28 @@ const TourSidebar = () => {
               to="/tour-namelist"
               aria-label="Name List"
             >
-              <img
-                src={assets.people_icon}
-                alt="Name List icon"
-                className="w-6 h-6 sm:w-7 sm:h-7"
-              />
+              <FileText size={24} className="w-6 h-6 sm:w-7 sm:h-7" />
               <p className="hidden md:block text-sm sm:text-base">Name List</p>
               <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
                 Name List
+              </span>
+            </NavLink>
+            <NavLink
+              className={({ isActive }) =>
+                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
+                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
+                }`
+              }
+              to="/tour-updateBalance"
+              aria-label="Booking Controls"
+            >
+              <Settings size={24} className="w-6 h-6 sm:w-7 sm:h-7" />{" "}
+              {/* Changed to Settings icon */}
+              <p className="hidden md:block text-sm sm:text-base">
+                Booking Controls
+              </p>
+              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                Booking Controls
               </span>
             </NavLink>
           </ul>

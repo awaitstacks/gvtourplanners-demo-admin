@@ -12,6 +12,7 @@ const TourContextProvider = (props) => {
   const [dashData, setDashData] = useState(false);
   const [profileData, setProfileData] = useState(false);
   const [tourList, setTourList] = useState([]);
+  const [balanceDetails, setBalanceDetails] = useState(null); // New state for balance details
 
   // ----------------- API Functions -----------------
 
@@ -23,7 +24,7 @@ const TourContextProvider = (props) => {
       if (data.success) {
         setTourList(data.tours);
       }
-      return data; // Return response for caller to handle
+      return data;
     } catch (error) {
       console.error("getTourList error:", error);
       return {
@@ -40,18 +41,14 @@ const TourContextProvider = (props) => {
           setBookings([]);
           return { success: true, bookings: [] };
         }
-
         const { data } = await axios.get(
           `${backendUrl}/api/tour/bookings-tour/${tourId}`,
-          {
-            headers: { ttoken },
-          }
+          { headers: { ttoken } }
         );
-
         if (data.success) {
           setBookings(data.bookings);
         }
-        return data; // Return response for caller to handle
+        return data;
       } catch (error) {
         console.error("getBookings error:", error);
         return {
@@ -74,7 +71,7 @@ const TourContextProvider = (props) => {
           setDashData(data.data);
           console.log("Dashboard Data:", data.data);
         }
-        return data; // Return response for caller to handle
+        return data;
       } catch (error) {
         console.error("getDashData error:", error);
         return {
@@ -97,7 +94,7 @@ const TourContextProvider = (props) => {
         { bookingId, travellerId, ...travellerData },
         { headers: { ttoken } }
       );
-      return data; // Return response for caller to handle
+      return data;
     } catch (error) {
       console.error("updateTravellerDetails error:", error);
       return {
@@ -135,7 +132,7 @@ const TourContextProvider = (props) => {
           )
         );
       }
-      return data; // Return response for caller to handle
+      return data;
     } catch (error) {
       console.error("markAdvancePaid error:", error);
       return {
@@ -172,7 +169,7 @@ const TourContextProvider = (props) => {
           )
         );
       }
-      return data; // Return response for caller to handle
+      return data;
     } catch (error) {
       console.error("markBalancePaid error:", error);
       return {
@@ -202,7 +199,7 @@ const TourContextProvider = (props) => {
           )
         );
       }
-      return data; // Return response for caller to handle
+      return data;
     } catch (error) {
       console.error("completeBooking error:", error);
       return {
@@ -219,7 +216,7 @@ const TourContextProvider = (props) => {
         { bookingId },
         { headers: { ttoken } }
       );
-      return data; // Return response for caller to handle
+      return data;
     } catch (error) {
       console.error("cancelBooking error:", error);
       return {
@@ -233,16 +230,14 @@ const TourContextProvider = (props) => {
     try {
       const { data } = await axios.get(
         `${backendUrl}/api/tour/tour-profile/${tourId}`,
-        {
-          headers: { ttoken },
-        }
+        { headers: { ttoken } }
       );
       if (data.success) {
         setProfileData(data.tourProfileData);
       } else {
         setProfileData(null);
       }
-      return data; // Return response for caller to handle
+      return data;
     } catch (error) {
       console.error("getProfileData error:", error);
       setProfileData(null);
@@ -260,7 +255,7 @@ const TourContextProvider = (props) => {
         { bookingId, tourId },
         { headers: { ttoken } }
       );
-      return data; // Return response for caller to handle
+      return data;
     } catch (error) {
       console.error("markAdvanceReceiptSent error:", error);
       return {
@@ -277,9 +272,66 @@ const TourContextProvider = (props) => {
         { bookingId, tourId },
         { headers: { ttoken } }
       );
-      return data; // Return response for caller to handle
+      return data;
     } catch (error) {
       console.error("markBalanceReceiptSent error:", error);
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message,
+      };
+    }
+  };
+
+  // New function for updating tour balance
+  const updateTourBalance = async (bookingId, updates) => {
+    try {
+      const { data } = await axios.post(
+        `${backendUrl}/api/tour/update-tour-balance/${bookingId}`,
+        { updates },
+        { headers: { ttoken } }
+      );
+      if (data.success) {
+        setBalanceDetails(data.data);
+        setBookings((prevBookings) =>
+          prevBookings.map((booking) =>
+            booking._id === bookingId
+              ? {
+                  ...booking,
+                  payment: {
+                    ...booking.payment,
+                    balance: {
+                      ...booking.payment.balance,
+                      amount: data.data.updatedBalance,
+                    },
+                  },
+                  adminRemarks: data.data.adminRemarks,
+                }
+              : booking
+          )
+        );
+      }
+      return data;
+    } catch (error) {
+      console.error("updateTourBalance error:", error.response?.data || error);
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message,
+      };
+    }
+  };
+  // View balance details
+  const viewTourBalance = async (bookingId) => {
+    try {
+      const { data } = await axios.get(
+        `${backendUrl}/api/tour/view-tour-balance/${bookingId}`,
+        { headers: { ttoken } }
+      );
+      if (data.success) {
+        setBalanceDetails(data.data);
+      }
+      return data;
+    } catch (error) {
+      console.error("viewTourBalance error:", error);
       return {
         success: false,
         message: error.response?.data?.message || error.message,
@@ -310,6 +362,10 @@ const TourContextProvider = (props) => {
     updateTravellerDetails,
     tourList,
     getTourList,
+    updateTourBalance, // Added
+    viewTourBalance, // Added
+    balanceDetails, // Added
+    setBalanceDetails, // Added
   };
 
   return (
