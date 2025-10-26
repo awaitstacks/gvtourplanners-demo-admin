@@ -418,7 +418,7 @@ const BookingControls = () => {
           )}
           <button
             onClick={addUpdateField}
-            className="w-full sm:w-auto px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            className="w-full sm:w-auto px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 bg-blue-600 text-white rounded-lg hover:bg-green-700"
           >
             Add More
           </button>
