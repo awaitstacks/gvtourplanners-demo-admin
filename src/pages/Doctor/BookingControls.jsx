@@ -418,7 +418,7 @@ const BookingControls = () => {
           )}
           <button
             onClick={addUpdateField}
-            className="w-full sm:w-auto px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 bg-blue-600 text-white rounded-lg hover:bg-green-700"
+            className="w-full sm:w-auto px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             Add More
           </button>
@@ -426,7 +426,7 @@ const BookingControls = () => {
 
         <button
           onClick={handleUpdateBalance}
-          className="w-full px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className="w-full px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 bg-green-600 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
           disabled={isLoading}
         >
           {isLoading ? "Updating..." : "Update Balance"}
