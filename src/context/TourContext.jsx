@@ -12,7 +12,8 @@
 //   const [dashData, setDashData] = useState(false);
 //   const [profileData, setProfileData] = useState(false);
 //   const [tourList, setTourList] = useState([]);
-//   const [balanceDetails, setBalanceDetails] = useState(null); // New state for balance details
+//   const [balanceDetails, setBalanceDetails] = useState(null);
+//   const [singleBooking, setSingleBooking] = useState(null); // NEW: For viewBooking
 
 //   // ----------------- API Functions -----------------
 
@@ -78,6 +79,45 @@
 //           success: false,
 //           message: error.response?.data?.message || error.message,
 //         };
+//       }
+//     },
+//     [backendUrl, ttoken]
+//   );
+
+//   // src/context/TourContext.jsx
+//   const viewBooking = useCallback(
+//     async (bookingId) => {
+//       if (!bookingId) {
+//         console.log("viewBooking: No bookingId provided");
+//         return { success: false, message: "Booking ID is required" };
+//       }
+
+//       console.log("Fetching booking with ID:", bookingId);
+//       console.log("Backend URL:", backendUrl);
+
+//       try {
+//         const { data } = await axios.get(
+//           `${backendUrl}/api/tour/view-booking-cancel/${bookingId}`,
+//           { headers: { ttoken } }
+//         );
+
+//         console.log("API Response:", data);
+
+//         if (data.success) {
+//           setSingleBooking(data.data);
+//           console.log("Booking loaded:", data.data);
+//           return { success: true, booking: data.data };
+//         } else {
+//           console.warn("API failed:", data.message);
+//           return { success: false, message: data.message };
+//         }
+//       } catch (error) {
+//         console.error("viewBooking ERROR:", error);
+//         console.error("Error response:", error.response?.data);
+//         console.error("Status:", error.response?.status);
+//         const message =
+//           error.response?.data?.message || error.message || "Network error";
+//         return { success: false, message };
 //       }
 //     },
 //     [backendUrl, ttoken]
@@ -255,6 +295,22 @@
 //         { bookingId, tourId },
 //         { headers: { ttoken } }
 //       );
+//       if (data.success) {
+//         setBookings((prevBookings) =>
+//           prevBookings.map((booking) =>
+//             booking._id === bookingId
+//               ? {
+//                   ...booking,
+//                   receipts: {
+//                     ...booking.receipts,
+//                     advanceReceiptSent: true,
+//                     advanceReceiptSentAt: new Date(),
+//                   },
+//                 }
+//               : booking
+//           )
+//         );
+//       }
 //       return data;
 //     } catch (error) {
 //       console.error("markAdvanceReceiptSent error:", error);
@@ -272,6 +328,22 @@
 //         { bookingId, tourId },
 //         { headers: { ttoken } }
 //       );
+//       if (data.success) {
+//         setBookings((prevBookings) =>
+//           prevBookings.map((booking) =>
+//             booking._id === bookingId
+//               ? {
+//                   ...booking,
+//                   receipts: {
+//                     ...booking.receipts,
+//                     balanceReceiptSent: true,
+//                     balanceReceiptSentAt: new Date(),
+//                   },
+//                 }
+//               : booking
+//           )
+//         );
+//       }
 //       return data;
 //     } catch (error) {
 //       console.error("markBalanceReceiptSent error:", error);
@@ -282,7 +354,6 @@
 //     }
 //   };
 
-//   // New function for updating tour balance
 //   const updateTourBalance = async (bookingId, updates) => {
 //     try {
 //       const { data } = await axios.post(
@@ -305,6 +376,7 @@
 //                     },
 //                   },
 //                   adminRemarks: data.data.adminRemarks,
+//                   isTripCompleted: data.data.isTripCompleted,
 //                 }
 //               : booking
 //           )
@@ -319,7 +391,7 @@
 //       };
 //     }
 //   };
-//   // View balance details
+
 //   const viewTourBalance = async (bookingId) => {
 //     try {
 //       const { data } = await axios.get(
@@ -335,6 +407,93 @@
 //       return {
 //         success: false,
 //         message: error.response?.data?.message || error.message,
+//       };
+//     }
+//   };
+
+//   const markModifyReceipt = async (bookingId, tourId) => {
+//     try {
+//       const { data } = await axios.put(
+//         `${backendUrl}/api/tour/mark-modify-receipt`,
+//         { bookingId, tourId },
+//         { headers: { ttoken } }
+//       );
+//       if (data.success) {
+//         setBookings((prevBookings) =>
+//           prevBookings.map((booking) =>
+//             booking._id === bookingId
+//               ? {
+//                   ...booking,
+//                   isTripCompleted: false,
+//                 }
+//               : booking
+//           )
+//         );
+//       }
+//       return data;
+//     } catch (error) {
+//       console.error("markModifyReceipt error:", error);
+//       return {
+//         success: false,
+//         message: error.response?.data?.message || error.message,
+//       };
+//     }
+//   };
+//   // inside TourContext provider (replace existing cancelBooking)
+//   const calculateCancelBooking = async ({
+//     bookingId,
+//     cancellationDate,
+//     cancelledTravellerIndexes,
+//     extraRemarkAmount = 0,
+//     remark = "",
+//     irctcCancellationAmount = 0,
+//   }) => {
+//     try {
+//       if (!bookingId) {
+//         return { success: false, message: "Booking ID is required" };
+//       }
+//       if (!cancellationDate) {
+//         return { success: false, message: "Cancellation date is required" };
+//       }
+//       if (
+//         !Array.isArray(cancelledTravellerIndexes) ||
+//         cancelledTravellerIndexes.length === 0
+//       ) {
+//         return {
+//           success: false,
+//           message: "cancelledTravellerIndexes (array) is required",
+//         };
+//       }
+
+//       const payload = {
+//         cancellationDate, // ISO string, e.g. new Date().toISOString()
+//         cancelledTravellerIndexes, // e.g. [0] or [0,1]
+//         extraRemarkAmount, // optional
+//         remark, // optional
+//         irctcCancellationAmount, // optional
+//       };
+
+//       // NOTE: route expects bookingId in URL param :id
+//       const url = `${backendUrl}/api/tour/bookings/${bookingId}/cancel`;
+
+//       const { data } = await axios.post(url, payload, {
+//         headers: { ttoken },
+//       });
+
+//       // Optionally update local booking state if cancellation succeeded
+//       if (data && data.message === "Cancellation processed") {
+//         // you may want to refresh bookings or the specific booking
+//         await getBookings(/* current tourId if available */);
+//         // or update bookings state manually
+//       }
+
+//       return data;
+//     } catch (error) {
+//       console.error("cancelBooking error:", error);
+//       return {
+//         success: false,
+//         message:
+//           error.response?.data?.message || error.message || "Network error",
 //       };
 //     }
 //   };
@@ -362,10 +521,16 @@
 //     updateTravellerDetails,
 //     tourList,
 //     getTourList,
-//     updateTourBalance, // Added
-//     viewTourBalance, // Added
-//     balanceDetails, // Added
-//     setBalanceDetails, // Added
+//     updateTourBalance,
+//     viewTourBalance,
+//     balanceDetails,
+//     setBalanceDetails,
+//     markModifyReceipt,
+//     // ========== NEW: viewBooking ==========
+//     singleBooking,
+//     setSingleBooking,
+//     viewBooking,
+//     calculateCancelBooking,
 //   };
 
 //   return (
@@ -389,7 +554,8 @@ const TourContextProvider = (props) => {
   const [dashData, setDashData] = useState(false);
   const [profileData, setProfileData] = useState(false);
   const [tourList, setTourList] = useState([]);
-  const [balanceDetails, setBalanceDetails] = useState(null); // New state for balance details
+  const [balanceDetails, setBalanceDetails] = useState(null);
+  const [singleBooking, setSingleBooking] = useState(null); // NEW: For viewBooking
 
   // ----------------- API Functions -----------------
 
@@ -455,6 +621,45 @@ const TourContextProvider = (props) => {
           success: false,
           message: error.response?.data?.message || error.message,
         };
+      }
+    },
+    [backendUrl, ttoken]
+  );
+
+  // src/context/TourContext.jsx
+  const viewBooking = useCallback(
+    async (bookingId) => {
+      if (!bookingId) {
+        console.log("viewBooking: No bookingId provided");
+        return { success: false, message: "Booking ID is required" };
+      }
+
+      console.log("Fetching booking with ID:", bookingId);
+      console.log("Backend URL:", backendUrl);
+
+      try {
+        const { data } = await axios.get(
+          `${backendUrl}/api/tour/view-booking-cancel/${bookingId}`,
+          { headers: { ttoken } }
+        );
+
+        console.log("API Response:", data);
+
+        if (data.success) {
+          setSingleBooking(data.data);
+          console.log("Booking loaded:", data.data);
+          return { success: true, booking: data.data };
+        } else {
+          console.warn("API failed:", data.message);
+          return { success: false, message: data.message };
+        }
+      } catch (error) {
+        console.error("viewBooking ERROR:", error);
+        console.error("Error response:", error.response?.data);
+        console.error("Status:", error.response?.status);
+        const message =
+          error.response?.data?.message || error.message || "Network error";
+        return { success: false, message };
       }
     },
     [backendUrl, ttoken]
@@ -713,7 +918,7 @@ const TourContextProvider = (props) => {
                     },
                   },
                   adminRemarks: data.data.adminRemarks,
-                  isTripCompleted: data.data.isTripCompleted, // Update isTripCompleted
+                  isTripCompleted: data.data.isTripCompleted,
                 }
               : booking
           )
@@ -776,7 +981,85 @@ const TourContextProvider = (props) => {
       };
     }
   };
+  // inside TourContext provider (replace existing cancelBooking)
+  const calculateCancelBooking = async ({
+    bookingId,
+    cancellationDate,
+    cancelledTravellerIndexes,
+    extraRemarkAmount = 0,
+    remark = "",
+    irctcCancellationAmount = 0,
+  }) => {
+    try {
+      if (!bookingId) {
+        return { success: false, message: "Booking ID is required" };
+      }
+      if (!cancellationDate) {
+        return { success: false, message: "Cancellation date is required" };
+      }
+      if (
+        !Array.isArray(cancelledTravellerIndexes) ||
+        cancelledTravellerIndexes.length === 0
+      ) {
+        return {
+          success: false,
+          message: "cancelledTravellerIndexes (array) is required",
+        };
+      }
 
+      const payload = {
+        cancellationDate, // ISO string, e.g. new Date().toISOString()
+        cancelledTravellerIndexes, // e.g. [0] or [0,1]
+        extraRemarkAmount, // optional
+        remark, // optional
+        irctcCancellationAmount, // optional
+      };
+
+      // NOTE: route expects bookingId in URL param :id
+      const url = `${backendUrl}/api/tour/bookings/${bookingId}/cancel`;
+
+      const { data } = await axios.post(url, payload, {
+        headers: { ttoken },
+      });
+
+      // Optionally update local booking state if cancellation succeeded
+      if (data && data.message === "Cancellation processed") {
+        // you may want to refresh bookings or the specific booking
+        await getBookings(/* current tourId if available */);
+        // or update bookings state manually
+      }
+
+      return data;
+    } catch (error) {
+      console.error("cancelBooking error:", error);
+      return {
+        success: false,
+        message:
+          error.response?.data?.message || error.message || "Network error",
+      };
+    }
+  };
+  // src/context/TourContext.jsx
+  const fetchCancellationsByBooking = async (bookingId, limit = 20) => {
+    try {
+      if (!bookingId)
+        return { success: false, message: "bookingId is required" };
+
+      // <-- FIX HERE
+      const url = `${backendUrl}/api/tour/cancelled-bookings/${bookingId}?limit=${limit}`;
+      // ---------------------------------
+
+      const { data } = await axios.get(url, { headers: { ttoken } });
+      return data;
+    } catch (error) {
+      console.error("fetchCancellationsByBooking error:", error);
+      return {
+        success: false,
+        message:
+          error.response?.data?.message || error.message || "Network error",
+      };
+    }
+  };
   // ----------------- Context Value -----------------
   const value = {
     ttoken,
@@ -804,7 +1087,13 @@ const TourContextProvider = (props) => {
     viewTourBalance,
     balanceDetails,
     setBalanceDetails,
-    markModifyReceipt, // Added
+    markModifyReceipt,
+    // ========== NEW: viewBooking ==========
+    singleBooking,
+    setSingleBooking,
+    viewBooking,
+    calculateCancelBooking,
+    fetchCancellationsByBooking, // <-- add this
   };
 
   return (

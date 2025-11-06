@@ -1,5 +1,311 @@
+// import { createContext, useState, useCallback } from "react";
+// import axios from "axios";
+// import { toast } from "react-toastify";
+
+// export const TourAdminContext = createContext();
+
+// const TourAdminContextProvider = (props) => {
+//   const [aToken, setAToken] = useState(
+//     localStorage.getItem("aToken") ? localStorage.getItem("aToken") : ""
+//   );
+//   const [tours, setTours] = useState([]);
+//   const [bookings, setBookings] = useState([]);
+//   const [dashData, setDashData] = useState(false);
+//   const [cancelRule, setCancelRule] = useState(null);
+//   const [cancelBookings, setCancelBookings] = useState(null);
+
+//   const backendUrl =
+//     import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
+
+//   // === VALIDATE API RESPONSE ===
+//   const validateApiResponse = useCallback((data, errorMessage) => {
+//     console.log(
+//       "API Response:",
+//       new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
+//       data
+//     );
+//     if (data && typeof data === "object" && "success" in data) return data;
+//     throw new Error(data?.message || errorMessage || "Invalid response");
+//   }, []);
+
+//   // === GET CANCELLATION CHART ===
+//   const getCancelRule = useCallback(async () => {
+//     try {
+//       console.log("Fetching cancellation chart...");
+//       const response = await axios.get(
+//         `${backendUrl}/api/touradmin/touradmingetcancelrule`,
+//         { headers: { aToken } }
+//       );
+
+//       const validated = validateApiResponse(
+//         response.data,
+//         "Failed to fetch chart"
+//       );
+//       setCancelRule(validated.data);
+//       return validated;
+//     } catch (error) {
+//       console.error("Fetch error:", error);
+//       const msg = error.response?.data?.message || "Failed to load chart";
+//       toast.error(msg);
+//       throw error;
+//     }
+//   }, [aToken, backendUrl, validateApiResponse]);
+
+//   // === UPDATE CANCELLATION CHART ===
+//   const updateCancelRule = async (payload) => {
+//     try {
+//       console.log("Updating chart:", payload);
+//       const { data } = await axios.post(
+//         `${backendUrl}/api/touradmin/touradmincancelrule`,
+//         payload,
+//         {
+//           headers: {
+//             aToken: aToken, // ← CHANGE THIS
+//             "Content-Type": "application/json",
+//           },
+//         }
+//       );
+
+//       const validated = validateApiResponse(data, "Failed to update chart");
+//       if (validated.success) {
+//         setCancelRule(validated.data);
+
+//         return validated;
+//       }
+//     } catch (error) {
+//       console.error("Update error:", error);
+//       if (
+//         error.response?.data?.message === "Not authorized login again" &&
+//         logout
+//       ) {
+//         logout();
+//       }
+//       toast.error(error.response?.data?.message || "Update failed");
+//       throw error;
+//     }
+//   };
+//   // === OTHER API FUNCTIONS (FULLY IMPLEMENTED) ===
+
+//   const getAllTours = async () => {
+//     try {
+//       const { data } = await axios.post(
+//         `${backendUrl}/api/touradmin/all-tours`,
+//         {},
+//         { headers: { aToken } }
+//       );
+//       const validated = validateApiResponse(data, "Failed to fetch tours");
+//       setTours(validated.tours);
+//       return validated;
+//     } catch (error) {
+//       console.error("Fetch tours error:", error);
+//       throw new Error(error.response?.data?.message || "Failed to fetch tours");
+//     }
+//   };
+
+//   const changeTourAvailablity = async (tourId) => {
+//     try {
+//       const { data } = await axios.post(
+//         `${backendUrl}/api/touradmin/change-touravailablity`,
+//         { tourId },
+//         { headers: { aToken } }
+//       );
+//       const validated = validateApiResponse(
+//         data,
+//         "Failed to change availability"
+//       );
+//       await getAllTours();
+//       return validated;
+//     } catch (error) {
+//       console.error("Change availability error:", error);
+//       throw new Error(
+//         error.response?.data?.message || "Failed to change availability"
+//       );
+//     }
+//   };
+
+//   const getAllBookings = useCallback(async () => {
+//     try {
+//       const { data } = await axios.get(`${backendUrl}/api/touradmin/bookings`, {
+//         headers: { aToken },
+//       });
+//       const validated = validateApiResponse(data, "Failed to fetch bookings");
+//       setBookings(validated.bookings);
+//       return validated;
+//     } catch (error) {
+//       console.error("Fetch bookings error:", error);
+//       throw new Error(
+//         error.response?.data?.message || "Failed to fetch bookings"
+//       );
+//     }
+//   }, [aToken, backendUrl, validateApiResponse]);
+
+//   const getAdminDashData = async () => {
+//     try {
+//       const { data } = await axios.get(
+//         `${backendUrl}/api/touradmin/touradmindashboard`,
+//         { headers: { aToken } }
+//       );
+//       const validated = validateApiResponse(data, "Failed to fetch dashboard");
+//       setDashData(validated.dashData);
+//       return validated;
+//     } catch (error) {
+//       console.error("Fetch dashboard error:", error);
+//       throw new Error(
+//         error.response?.data?.message || "Failed to fetch dashboard"
+//       );
+//     }
+//   };
+
+//   const cancelBooking = async (tourBookingId, travellerIds) => {
+//     try {
+//       const { data } = await axios.post(
+//         `${backendUrl}/api/touradmin/cancel-bookingadmin`,
+//         { tourBookingId, travellerIds },
+//         { headers: { aToken } }
+//       );
+//       const validated = validateApiResponse(data, "Failed to cancel booking");
+//       await getAllBookings();
+//       return validated;
+//     } catch (error) {
+//       console.error("Cancel booking error:", error);
+//       throw new Error(
+//         error.response?.data?.message || "Failed to cancel booking"
+//       );
+//     }
+//   };
+
+//   const rejectBooking = async (tourBookingId, travellerIds) => {
+//     try {
+//       const { data } = await axios.post(
+//         `${backendUrl}/api/touradmin/reject-bookingadmin`,
+//         { tourBookingId, travellerIds },
+//         { headers: { aToken } }
+//       );
+//       const validated = validateApiResponse(data, "Failed to reject booking");
+//       await getAllBookings();
+//       return validated;
+//     } catch (error) {
+//       console.error("Reject booking error:", error);
+//       throw new Error(
+//         error.response?.data?.message || "Failed to reject booking"
+//       );
+//     }
+//   };
+
+//   const releaseBooking = async (tourBookingId, travellerIds) => {
+//     try {
+//       const { data } = await axios.post(
+//         `${backendUrl}/api/touradmin/release-bookingadmin`,
+//         { tourBookingId, travellerIds },
+//         { headers: { aToken } }
+//       );
+//       const validated = validateApiResponse(data, "Failed to release booking");
+//       await getAllBookings();
+//       return validated;
+//     } catch (error) {
+//       console.error("Release booking error:", error);
+//       throw new Error(
+//         error.response?.data?.message || "Failed to release booking"
+//       );
+//     }
+//   };
+//   const getCancellations = useCallback(async () => {
+//     try {
+//       const { data } = await axios.get(
+//         `${backendUrl}/api/touradmin/touradmingetcancellations`,
+//         { headers: { aToken } }
+//       );
+//       const validated = validateApiResponse(
+//         data,
+//         "Failed to fetch cancellations"
+//       );
+//       setCancelBookings(validated.data);
+//       return validated;
+//     } catch (error) {
+//       const msg =
+//         error.response?.data?.message || "Failed to load cancellations";
+//       toast.error(msg);
+//       throw error;
+//     }
+//   }, [aToken, backendUrl, validateApiResponse]);
+//   // === APPROVE CANCELLATION ===
+//   const approveCancellation = async (bookingId, travellerIds) => {
+//     try {
+//       const { data } = await axios.post(
+//         `${backendUrl}/api/touradmin/approvecancellation`,
+//         { bookingId, travellerIds },
+//         { headers: { aToken } }
+//       );
+//       const validated = validateApiResponse(data, "Failed to approve");
+
+//       await getCancellations();
+//       return validated;
+//     } catch (error) {
+//       toast.error(error.response?.data?.message || "Approve failed");
+//       throw error;
+//     }
+//   };
+//   // === REJECT CANCELLATION ===
+//   const rejectCancellation = async (
+//     bookingId,
+//     travellerIds,
+//     cancellationId
+//   ) => {
+//     try {
+//       const { data } = await axios.post(
+//         `${backendUrl}/api/touradmin/rejectcancellation`,
+//         { bookingId, travellerIds, cancellationId },
+//         { headers: { aToken } }
+//       );
+//       const validated = validateApiResponse(data, "Failed to reject");
+
+//       await getCancellations();
+//       return validated;
+//     } catch (error) {
+//       toast.error(error.response?.data?.message || "Reject failed");
+//       throw error;
+//     }
+//   };
+
+//   // === CONTEXT VALUE ===
+//   const value = {
+//     aToken,
+//     setAToken,
+//     backendUrl,
+//     tours,
+//     setTours,
+//     getAllTours,
+//     changeTourAvailablity,
+//     bookings,
+//     setBookings,
+//     getAllBookings,
+//     cancelBooking,
+//     rejectBooking,
+//     releaseBooking,
+//     dashData,
+//     setDashData,
+//     getAdminDashData,
+//     cancelRule,
+//     setCancelRule,
+//     getCancelRule,
+//     updateCancelRule,
+//     getCancellations,
+//     approveCancellation,
+//     rejectCancellation,
+//   };
+
+//   return (
+//     <TourAdminContext.Provider value={value}>
+//       {props.children}
+//     </TourAdminContext.Provider>
+//   );
+// };
+
+// export default TourAdminContextProvider;
+
 import { createContext, useState, useCallback } from "react";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 export const TourAdminContext = createContext();
 
@@ -11,306 +317,279 @@ const TourAdminContextProvider = (props) => {
   const [bookings, setBookings] = useState([]);
   const [dashData, setDashData] = useState(false);
   const [cancelRule, setCancelRule] = useState(null);
+  const [cancelBookings, setCancelBookings] = useState(null);
 
   const backendUrl =
     import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
 
-  // Validate API response
+  // === VALIDATE API RESPONSE ===
   const validateApiResponse = useCallback((data, errorMessage) => {
     console.log(
-      "API Response at",
+      "API Response:",
       new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
       data
     );
-    if (data && typeof data === "object" && "success" in data) {
-      return data;
-    } else {
-      throw new Error(
-        data?.message || errorMessage || "Invalid response from server"
-      );
-    }
+    if (data && typeof data === "object" && "success" in data) return data;
+    throw new Error(data?.message || errorMessage || "Invalid response");
   }, []);
+
+  // === GET CANCELLATION CHART ===
+  const getCancelRule = useCallback(async () => {
+    try {
+      console.log("Fetching cancellation chart...");
+      const response = await axios.get(
+        `${backendUrl}/api/touradmin/touradmingetcancelrule`,
+        { headers: { aToken } }
+      );
+
+      const validated = validateApiResponse(
+        response.data,
+        "Failed to fetch chart"
+      );
+      setCancelRule(validated.data);
+      return validated;
+    } catch (error) {
+      console.error("Fetch error:", error);
+      const msg = error.response?.data?.message || "Failed to load chart";
+      toast.error(msg);
+      throw error;
+    }
+  }, [aToken, backendUrl, validateApiResponse]);
+
+  // === UPDATE CANCELLATION CHART ===
+  const updateCancelRule = async (payload) => {
+    try {
+      console.log("Updating chart:", payload);
+      const { data } = await axios.post(
+        `${backendUrl}/api/touradmin/touradmincancelrule`,
+        payload,
+        {
+          headers: {
+            aToken: aToken, // ← CHANGE THIS
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const validated = validateApiResponse(data, "Failed to update chart");
+      if (validated.success) {
+        setCancelRule(validated.data);
+
+        return validated;
+      }
+    } catch (error) {
+      console.error("Update error:", error);
+      if (
+        error.response?.data?.message === "Not authorized login again" &&
+        logout
+      ) {
+        logout();
+      }
+      toast.error(error.response?.data?.message || "Update failed");
+      throw error;
+    }
+  };
+  // === OTHER API FUNCTIONS (FULLY IMPLEMENTED) ===
 
   const getAllTours = async () => {
     try {
-      console.log(
-        "Fetching all tours at",
-        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
-      );
       const { data } = await axios.post(
         `${backendUrl}/api/touradmin/all-tours`,
         {},
-        {
-          headers: { aToken },
-        }
+        { headers: { aToken } }
       );
-      const validatedData = validateApiResponse(data, "Failed to fetch tours");
-      setTours(validatedData.tours);
-      console.log("Tours set:", validatedData.tours);
-      return validatedData;
+      const validated = validateApiResponse(data, "Failed to fetch tours");
+      setTours(validated.tours);
+      return validated;
     } catch (error) {
-      console.error(
-        "Fetch tours error at",
-        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
-        error
-      );
-      throw new Error(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to fetch tours"
-      );
+      console.error("Fetch tours error:", error);
+      throw new Error(error.response?.data?.message || "Failed to fetch tours");
     }
   };
 
   const changeTourAvailablity = async (tourId) => {
     try {
-      console.log(
-        `Changing tour availability for tourId ${tourId} at`,
-        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
-      );
       const { data } = await axios.post(
         `${backendUrl}/api/touradmin/change-touravailablity`,
         { tourId },
         { headers: { aToken } }
       );
-      const validatedData = validateApiResponse(
+      const validated = validateApiResponse(
         data,
-        "Failed to change tour availability"
+        "Failed to change availability"
       );
       await getAllTours();
-      return validatedData;
+      return validated;
     } catch (error) {
-      console.error(
-        "Change tour availability error at",
-        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
-        error
-      );
+      console.error("Change availability error:", error);
       throw new Error(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to change tour availability"
+        error.response?.data?.message || "Failed to change availability"
       );
     }
   };
 
   const getAllBookings = useCallback(async () => {
     try {
-      console.log(
-        "Fetching all bookings at",
-        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
-      );
       const { data } = await axios.get(`${backendUrl}/api/touradmin/bookings`, {
         headers: { aToken },
       });
-      const validatedData = validateApiResponse(
-        data,
-        "Failed to fetch bookings"
-      );
-      setBookings(validatedData.bookings);
-      console.log("Bookings set:", validatedData.bookings);
-      return validatedData;
+      const validated = validateApiResponse(data, "Failed to fetch bookings");
+      setBookings(validated.bookings);
+      return validated;
     } catch (error) {
-      console.error(
-        "Fetch bookings error at",
-        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
-        error
-      );
+      console.error("Fetch bookings error:", error);
       throw new Error(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to fetch bookings"
+        error.response?.data?.message || "Failed to fetch bookings"
       );
     }
   }, [aToken, backendUrl, validateApiResponse]);
 
   const getAdminDashData = async () => {
     try {
-      console.log(
-        "Fetching admin dashboard data at",
-        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
-      );
       const { data } = await axios.get(
         `${backendUrl}/api/touradmin/touradmindashboard`,
-        {
-          headers: { aToken },
-        }
+        { headers: { aToken } }
       );
-      const validatedData = validateApiResponse(
-        data,
-        "Failed to fetch dashboard data"
-      );
-      setDashData(validatedData.dashData);
-      console.log("Dashboard data set:", validatedData.dashData);
-      return validatedData;
+      const validated = validateApiResponse(data, "Failed to fetch dashboard");
+      setDashData(validated.dashData);
+      return validated;
     } catch (error) {
-      console.error(
-        "Fetch dashboard data error at",
-        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
-        error
-      );
+      console.error("Fetch dashboard error:", error);
       throw new Error(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to fetch dashboard data"
+        error.response?.data?.message || "Failed to fetch dashboard"
       );
     }
   };
 
   const cancelBooking = async (tourBookingId, travellerIds) => {
     try {
-      console.log(
-        `Cancelling booking ${tourBookingId} for travellers ${travellerIds} at`,
-        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
-      );
       const { data } = await axios.post(
         `${backendUrl}/api/touradmin/cancel-bookingadmin`,
         { tourBookingId, travellerIds },
         { headers: { aToken } }
       );
-      const validatedData = validateApiResponse(
-        data,
-        "Failed to cancel booking"
-      );
+      const validated = validateApiResponse(data, "Failed to cancel booking");
       await getAllBookings();
-      return validatedData;
+      return validated;
     } catch (error) {
-      console.error(
-        "Cancel booking error at",
-        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
-        error
-      );
+      console.error("Cancel booking error:", error);
       throw new Error(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to cancel booking"
+        error.response?.data?.message || "Failed to cancel booking"
       );
     }
   };
 
   const rejectBooking = async (tourBookingId, travellerIds) => {
     try {
-      console.log(
-        `Rejecting booking ${tourBookingId} for travellers ${travellerIds} at`,
-        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
-      );
       const { data } = await axios.post(
         `${backendUrl}/api/touradmin/reject-bookingadmin`,
         { tourBookingId, travellerIds },
         { headers: { aToken } }
       );
-      const validatedData = validateApiResponse(
-        data,
-        "Failed to reject booking"
-      );
+      const validated = validateApiResponse(data, "Failed to reject booking");
       await getAllBookings();
-      return validatedData;
+      return validated;
     } catch (error) {
-      console.error(
-        "Reject booking error at",
-        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
-        error
-      );
+      console.error("Reject booking error:", error);
       throw new Error(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to reject booking"
+        error.response?.data?.message || "Failed to reject booking"
       );
     }
   };
 
   const releaseBooking = async (tourBookingId, travellerIds) => {
     try {
-      console.log(
-        `Releasing booking ${tourBookingId} for travellers ${travellerIds} at`,
-        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
-      );
       const { data } = await axios.post(
         `${backendUrl}/api/touradmin/release-bookingadmin`,
         { tourBookingId, travellerIds },
         { headers: { aToken } }
       );
-      const validatedData = validateApiResponse(
-        data,
-        "Failed to release booking"
-      );
+      const validated = validateApiResponse(data, "Failed to release booking");
       await getAllBookings();
-      return validatedData;
+      return validated;
     } catch (error) {
-      console.error(
-        "Release booking error at",
-        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
-        error
-      );
+      console.error("Release booking error:", error);
       throw new Error(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to release booking"
+        error.response?.data?.message || "Failed to release booking"
       );
     }
   };
-
-  const updateCancelRule = async (payload) => {
+  const getCancellations = useCallback(async () => {
     try {
-      console.log(
-        "Updating cancellation rule at",
-        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
-        payload
+      const { data } = await axios.get(
+        `${backendUrl}/api/touradmin/touradmingetcancellations`,
+        { headers: { aToken } }
       );
-
-      const { data } = await axios.post(
-        `${backendUrl}/api/touradmin/touradmincancelrule`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${aToken}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      const validatedData = validateApiResponse(
+      const validated = validateApiResponse(
         data,
-        "Failed to update cancellation chart"
+        "Failed to fetch cancellations"
       );
-
-      if (validatedData.success) {
-        setCancelRule(validatedData.data);
-        console.log("Cancellation chart updated:", validatedData.data);
-        toast?.success?.("Cancellation chart updated successfully!");
-        return validatedData;
-      } else {
-        throw new Error("Cancellation update failed");
-      }
+      setCancelBookings(validated.data);
+      return validated; // ← UI will handle toast
     } catch (error) {
-      console.error(
-        "Error updating cancellation rule at",
-        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
-        error
+      throw error; // ← UI will handle toast
+    }
+  }, [aToken, backendUrl, validateApiResponse]);
+  // === APPROVE CANCELLATION ===
+  const approveCancellation = async (bookingId, travellerIds) => {
+    try {
+      const { data } = await axios.post(
+        `${backendUrl}/api/touradmin/approvecancellation`,
+        { bookingId, travellerIds },
+        { headers: { aToken } }
       );
-      toast?.error?.(
-        error.response?.data?.message || "Error updating cancellation chart"
+      const validated = validateApiResponse(data, "Failed to approve");
+      await getCancellations();
+      return validated; // ← UI will handle toast
+    } catch (error) {
+      throw error; // ← UI will handle toast
+    }
+  };
+  // === REJECT CANCELLATION ===
+  const rejectCancellation = async (
+    bookingId,
+    travellerIds,
+    cancellationId
+  ) => {
+    try {
+      const { data } = await axios.post(
+        `${backendUrl}/api/touradmin/rejectcancellation`,
+        { bookingId, travellerIds, cancellationId },
+        { headers: { aToken } }
       );
-      throw error;
+      const validated = validateApiResponse(data, "Failed to reject");
+      await getCancellations();
+      return validated; // ← UI will handle toast
+    } catch (error) {
+      throw error; // ← UI will handle toast
     }
   };
 
+  // === CONTEXT VALUE ===
   const value = {
     aToken,
     setAToken,
     backendUrl,
     tours,
-    getAllBookings,
+    setTours,
+    getAllTours,
     changeTourAvailablity,
     bookings,
     setBookings,
+    getAllBookings,
     cancelBooking,
     rejectBooking,
     releaseBooking,
     dashData,
+    setDashData,
     getAdminDashData,
-    getAllTours,
     cancelRule,
+    setCancelRule,
+    getCancelRule,
     updateCancelRule,
+    getCancellations,
+    approveCancellation,
+    rejectCancellation,
   };
 
   return (

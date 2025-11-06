@@ -889,9 +889,7 @@ const TourBookings = () => {
         statusFilter === "cancelled" &&
         !booking.travellers.some(
           (traveller) =>
-            (traveller.cancelled?.byTraveller &&
-              !traveller.cancelled?.byAdmin) ||
-            (traveller.cancelled?.byAdmin && traveller.cancelled?.byTraveller)
+            traveller.cancelled?.byAdmin && traveller.cancelled?.byTraveller
         )
       ) {
         statusMatch = false;
@@ -933,56 +931,29 @@ const TourBookings = () => {
     .sort((a, b) => new Date(b.bookingDate) - new Date(a.bookingDate));
 
   const cancellationRequestBookings = filteredBookings
-    .filter(
-      (booking) =>
-        booking.travellers.some(
-          (traveller) =>
-            traveller.cancelled?.byTraveller && !traveller.cancelled?.byAdmin
-        ) &&
-        !booking.travellers.some(
-          (traveller) =>
-            traveller.cancelled?.byAdmin && traveller.cancelled?.byTraveller
-        ) &&
-        !booking.travellers.some(
-          (traveller) =>
-            traveller.cancelled?.byAdmin && !traveller.cancelled?.byTraveller
-        )
+    .filter((booking) =>
+      booking.travellers.some(
+        (traveller) =>
+          traveller.cancelled?.byTraveller && !traveller.cancelled?.byAdmin
+      )
     )
     .sort((a, b) => new Date(b.bookingDate) - new Date(a.bookingDate));
 
   const rejectedByAdminBookings = filteredBookings
-    .filter(
-      (booking) =>
-        booking.travellers.some(
-          (traveller) =>
-            traveller.cancelled?.byAdmin && !traveller.cancelled?.byTraveller
-        ) &&
-        !booking.travellers.some(
-          (traveller) =>
-            traveller.cancelled?.byAdmin && traveller.cancelled?.byTraveller
-        ) &&
-        !booking.travellers.some(
-          (traveller) =>
-            traveller.cancelled?.byTraveller && !traveller.cancelled?.byAdmin
-        )
+    .filter((booking) =>
+      booking.travellers.some(
+        (traveller) =>
+          traveller.cancelled?.byAdmin && !traveller.cancelled?.byTraveller
+      )
     )
     .sort((a, b) => new Date(b.bookingDate) - new Date(a.bookingDate));
 
   const cancelledByTravellerBookings = filteredBookings
-    .filter(
-      (booking) =>
-        booking.travellers.some(
-          (traveller) =>
-            traveller.cancelled?.byAdmin && traveller.cancelled?.byTraveller
-        ) &&
-        !booking.travellers.some(
-          (traveller) =>
-            traveller.cancelled?.byTraveller && !traveller.cancelled?.byAdmin
-        ) &&
-        !booking.travellers.some(
-          (traveller) =>
-            traveller.cancelled?.byAdmin && !traveller.cancelled?.byTraveller
-        )
+    .filter((booking) =>
+      booking.travellers.some(
+        (traveller) =>
+          traveller.cancelled?.byAdmin && traveller.cancelled?.byTraveller
+      )
     )
     .sort((a, b) => new Date(b.bookingDate) - new Date(a.bookingDate));
 

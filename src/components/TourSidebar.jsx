@@ -12,6 +12,7 @@ import {
   FileText,
   User,
   Settings, // New icon for Booking Controls
+  TicketX,
 } from "lucide-react";
 
 const TourSidebar = () => {
@@ -123,6 +124,23 @@ const TourSidebar = () => {
                 Cancellation Rule
               </span>
             </NavLink>
+            <NavLink
+              className={({ isActive }) =>
+                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
+                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
+                }`
+              }
+              to="/cancel-centre"
+              aria-label="Cancellation centre"
+            >
+              <TicketX size={24} className="w-6 h-6 sm:w-7 sm:h-7" />
+              <p className="hidden md:block text-sm sm:text-base">
+                Cancellation centre
+              </p>
+              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                Cancellation centre
+              </span>
+            </NavLink>
           </ul>
         )}
         {ttoken && (
@@ -203,6 +221,24 @@ const TourSidebar = () => {
               </p>
               <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
                 Booking Controls
+              </span>
+            </NavLink>
+            <NavLink
+              className={({ isActive }) =>
+                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
+                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
+                }`
+              }
+              to="/tour-cancelTraveller"
+              aria-label="Cancellation Controls"
+            >
+              <TicketX size={24} className="w-6 h-6 sm:w-7 sm:h-7" />{" "}
+              {/* Changed to Settings icon */}
+              <p className="hidden md:block text-sm sm:text-base">
+                Cancellation Controls
+              </p>
+              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                Cancellation Controls
               </span>
             </NavLink>
           </ul>

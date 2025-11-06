@@ -20,6 +20,8 @@ import TourNameList from "./pages/Doctor/TourNameList.jsx";
 import CancelRule from "./pages/Admin/CancelRule.jsx";
 
 import BookingControls from "./pages/Doctor/BookingControls.jsx";
+import CancellationControls from "./pages/Doctor/CancellationControls.jsx";
+import CancellationCentre from "./pages/Admin/CancellationCentre.jsx";
 
 const TourApp = () => {
   const { aToken } = useContext(TourAdminContext);
@@ -38,6 +40,7 @@ const TourApp = () => {
           <Route path="/add-tour" element={<AddTour />} />
           <Route path="/tour-list" element={<ToursList />} />
           <Route path="/cancel-rule" element={<CancelRule />} />
+          <Route path="/cancel-centre" element={<CancellationCentre />} />
 
           {/* Doctor Routes */}
           <Route path="/tour-dashboard" element={<TourDashboard />} />
@@ -45,6 +48,10 @@ const TourApp = () => {
           <Route path="/tour-profile" element={<TourProfile />} />
           <Route path="/tour-namelist" element={<TourNameList />} />
           <Route path="/tour-updateBalance" element={<BookingControls />} />
+          <Route
+            path="/tour-cancelTraveller"
+            element={<CancellationControls />}
+          />
         </Routes>
       </div>
     </div>
