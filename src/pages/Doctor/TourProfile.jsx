@@ -2380,7 +2380,7 @@ const TourProfile = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block font-semibold mb-1">
-                Last Booking Date
+                Tour start Date
               </label>
               <input
                 type="date"
