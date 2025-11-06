@@ -3172,7 +3172,7 @@ const TourProfile = () => {
                   {/* Variant Last Booking Date */}
                   <div>
                     <label className="block font-semibold mb-1">
-                      Last Booking Date
+                      Tour start Date
                     </label>
                     <input
                       type="date"
