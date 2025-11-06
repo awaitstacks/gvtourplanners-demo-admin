@@ -765,18 +765,18 @@ const TourAdminDashboard = () => {
     );
   };
 
-  const handleCancelBooking = async (bookingId, travellerId) => {
-    if (!window.confirm("Approve this cancellation?")) return;
-    setIsLoading(true);
-    try {
-      const res = await cancelBooking(bookingId, [travellerId]);
-      handleApiResponse(res, "Cancellation approved", "Failed to approve");
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Error");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // const handleCancelBooking = async (bookingId, travellerId) => {
+  //   if (!window.confirm("Approve this cancellation?")) return;
+  //   setIsLoading(true);
+  //   try {
+  //     const res = await cancelBooking(bookingId, [travellerId]);
+  //     handleApiResponse(res, "Cancellation approved", "Failed to approve");
+  //   } catch (err) {
+  //     toast.error(err.response?.data?.message || "Error");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   const handleReleaseBooking = async (bookingId, travellerId) => {
     if (!window.confirm("Reject this cancellation request?")) return;
@@ -976,7 +976,7 @@ const TourAdminDashboard = () => {
                     </p>
                   </div>
                   <div className="flex gap-2 mt-2 sm:mt-0">
-                    <button
+                    {/* <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleCancelBooking(booking._id, t._id);
@@ -991,7 +991,7 @@ const TourAdminDashboard = () => {
                       ) : (
                         "Approve"
                       )}
-                    </button>
+                    </button> */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
