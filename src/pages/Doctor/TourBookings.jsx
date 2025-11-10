@@ -697,19 +697,19 @@ const TourBookings = () => {
   const [expanded, setExpanded] = useState(null);
   const [selectedTourId, setSelectedTourId] = useState("");
   const [isLoadingBookings, setIsLoadingBookings] = useState(false);
-  const [paymentFilter, setPaymentFilter] = useState("all"); // "all", "advancePaid", "advancePending", "balancePaid", "balancePending"
-  const [statusFilter, setStatusFilter] = useState("all"); // "all", "active", "completed", "rejected", "cancelled"
+  const [paymentFilter, setPaymentFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [travellerNameFilter, setTravellerNameFilter] = useState("");
   const location = useLocation();
 
-  // Fetch the list of all tours when the component mounts
+  // Fetch tour list
   useEffect(() => {
     if (ttoken) {
       getTourList();
     }
   }, [ttoken, getTourList]);
 
-  // Fetch bookings for the selected tour whenever selectedTourId changes
+  // Fetch bookings when tour changes
   useEffect(() => {
     if (ttoken && selectedTourId) {
       setIsLoadingBookings(true);
@@ -745,10 +745,10 @@ const TourBookings = () => {
     }
   }, [ttoken, selectedTourId, getBookings]);
 
-  // Clear toasts on component unmount or route change
+  // Clear toasts on route change
   useEffect(() => {
     return () => {
-      toast.dismiss(); // Dismiss all toasts when leaving the page
+      toast.dismiss();
     };
   }, [location]);
 
@@ -758,26 +758,23 @@ const TourBookings = () => {
 
   const handleTourChange = (e) => {
     setSelectedTourId(e.target.value);
-    // Reset filters when a new tour is selected
     setPaymentFilter("all");
     setStatusFilter("all");
     setTravellerNameFilter("");
   };
 
-  // Handle API responses with toast notifications
+  // API response handler
   const handleApiResponse = useCallback(
     (response, successMessage) => {
-      console.log("API Response:", response); // Debug log
+      console.log("API Response:", response);
       if (response && typeof response === "object" && "success" in response) {
         if (response.success) {
           toast.success(successMessage || "Operation completed successfully");
           if (selectedTourId) {
-            getBookings(selectedTourId); // Refresh bookings on success
+            getBookings(selectedTourId);
           }
         } else {
-          toast.error(
-            response.message || "An error occurred during the operation"
-          );
+          toast.error(response.message || "An error occurred");
         }
       } else {
         toast.error("Invalid response from server");
@@ -792,7 +789,7 @@ const TourBookings = () => {
       handleApiResponse(response, "Advance payment marked successfully");
     } catch (error) {
       console.error("markAdvancePaid error:", error);
-      toast.error("Failed to mark advance payment: " + error.message);
+      toast.error("Failed to mark advance: " + error.message);
     }
   };
 
@@ -806,46 +803,58 @@ const TourBookings = () => {
       handleApiResponse(response, "Balance payment marked successfully");
     } catch (error) {
       console.error("markBalancePaid error:", error);
-      toast.error("Failed to mark balance payment: " + error.message);
+      toast.error("Failed to mark balance: " + error.message);
     }
   };
 
   const handleCompleteBooking = async (bookingId, tourId) => {
-    const confirm = window.confirm(
-      "Are you sure you want to mark this booking as completed?"
-    );
+    const confirm = window.confirm("Mark this booking as completed?");
     if (!confirm) return;
     try {
       const response = await completeBooking(bookingId, tourId);
-      handleApiResponse(response, "Booking marked as completed successfully");
+      handleApiResponse(response, "Booking completed successfully");
     } catch (error) {
       console.error("completeBooking error:", error);
-      toast.error("Failed to complete booking: " + error.message);
+      toast.error("Failed to complete: " + error.message);
     }
   };
 
-  // Handle copying bookingId to clipboard
   const handleCopyBookingId = (bookingId) => {
     navigator.clipboard
       .writeText(bookingId)
-      .then(() => {
-        toast.success("Booking ID copied to clipboard!");
-      })
-      .catch((err) => {
-        console.error("Failed to copy booking ID:", err);
-        toast.error("Failed to copy booking ID");
-      });
+      .then(() => toast.success("Booking ID copied!"))
+      .catch(() => toast.error("Failed to copy"));
   };
 
-  // Filter bookings based on selected filters
+  // === HELPER FUNCTIONS ===
+  const areAllTravellersCancelled = (booking) =>
+    booking.travellers.length > 0 &&
+    booking.travellers.every(
+      (t) => t.cancelled?.byTraveller && t.cancelled?.byAdmin
+    );
+
+  const areAllTravellersRejected = (booking) =>
+    booking.travellers.length > 0 &&
+    booking.travellers.every(
+      (t) => t.cancelled?.byAdmin && !t.cancelled?.byTraveller
+    );
+
+  const hasCancellationRequest = (booking) =>
+    booking.travellers.some(
+      (t) => t.cancelled?.byTraveller && !t.cancelled?.byAdmin
+    ) && !areAllTravellersCancelled(booking);
+
+  const hasActiveTraveller = (booking) =>
+    booking.travellers.some(
+      (t) => !(t.cancelled?.byTraveller || t.cancelled?.byAdmin)
+    );
+
+  // === FILTER BOOKINGS ===
   const filteredBookings = bookings.filter((booking) => {
-    const firstTraveller =
-      booking.travellers && booking.travellers.length > 0
-        ? booking.travellers[0]
-        : null;
-    const displayName = firstTraveller
-      ? `${firstTraveller.firstName} ${firstTraveller.lastName}`
-      : "";
+    const firstTraveller = booking.travellers[0] || {};
+    const displayName = `${firstTraveller.firstName || ""} ${
+      firstTraveller.lastName || ""
+    }`.trim();
 
     // Payment Filter
     let paymentMatch = true;
@@ -873,30 +882,22 @@ const TourBookings = () => {
     // Status Filter
     let statusMatch = true;
     if (statusFilter !== "all") {
-      if (statusFilter === "active" && booking.isBookingCompleted) {
-        statusMatch = false;
-      } else if (statusFilter === "completed" && !booking.isBookingCompleted) {
-        statusMatch = false;
-      } else if (
-        statusFilter === "rejected" &&
-        !booking.travellers.some(
-          (traveller) =>
-            traveller.cancelled?.byAdmin && !traveller.cancelled?.byTraveller
-        )
-      ) {
-        statusMatch = false;
-      } else if (
-        statusFilter === "cancelled" &&
-        !booking.travellers.some(
-          (traveller) =>
-            traveller.cancelled?.byAdmin && traveller.cancelled?.byTraveller
-        )
-      ) {
-        statusMatch = false;
+      const allCancelled = areAllTravellersCancelled(booking);
+      const allRejected = areAllTravellersRejected(booking);
+      const hasActive = hasActiveTraveller(booking);
+
+      if (statusFilter === "active") {
+        statusMatch = !booking.isBookingCompleted && hasActive;
+      } else if (statusFilter === "completed") {
+        statusMatch = booking.isBookingCompleted && hasActive;
+      } else if (statusFilter === "rejected") {
+        statusMatch = allRejected;
+      } else if (statusFilter === "cancelled") {
+        statusMatch = allCancelled;
       }
     }
 
-    // Traveller Name Filter
+    // Name Filter
     let nameMatch = true;
     if (travellerNameFilter) {
       nameMatch = displayName
@@ -907,72 +908,46 @@ const TourBookings = () => {
     return paymentMatch && statusMatch && nameMatch;
   });
 
-  // Categorize filtered bookings
+  // === CATEGORIZE BOOKINGS ===
   const activeBookings = filteredBookings
-    .filter(
-      (booking) =>
-        !booking.isBookingCompleted &&
-        !booking.travellers.some(
-          (traveller) =>
-            traveller.cancelled?.byAdmin || traveller.cancelled?.byTraveller
-        )
-    )
+    .filter((b) => !b.isBookingCompleted && hasActiveTraveller(b))
     .sort((a, b) => new Date(b.bookingDate) - new Date(a.bookingDate));
 
   const completedBookings = filteredBookings
-    .filter(
-      (booking) =>
-        booking.isBookingCompleted &&
-        !booking.travellers.some(
-          (traveller) =>
-            traveller.cancelled?.byAdmin || traveller.cancelled?.byTraveller
-        )
-    )
+    .filter((b) => b.isBookingCompleted && hasActiveTraveller(b))
     .sort((a, b) => new Date(b.bookingDate) - new Date(a.bookingDate));
 
   const cancellationRequestBookings = filteredBookings
-    .filter((booking) =>
-      booking.travellers.some(
-        (traveller) =>
-          traveller.cancelled?.byTraveller && !traveller.cancelled?.byAdmin
-      )
-    )
+    .filter(hasCancellationRequest)
     .sort((a, b) => new Date(b.bookingDate) - new Date(a.bookingDate));
 
   const rejectedByAdminBookings = filteredBookings
-    .filter((booking) =>
-      booking.travellers.some(
-        (traveller) =>
-          traveller.cancelled?.byAdmin && !traveller.cancelled?.byTraveller
-      )
-    )
+    .filter(areAllTravellersRejected)
     .sort((a, b) => new Date(b.bookingDate) - new Date(a.bookingDate));
 
   const cancelledByTravellerBookings = filteredBookings
-    .filter((booking) =>
-      booking.travellers.some(
-        (traveller) =>
-          traveller.cancelled?.byAdmin && traveller.cancelled?.byTraveller
-      )
-    )
+    .filter(areAllTravellersCancelled)
     .sort((a, b) => new Date(b.bookingDate) - new Date(a.bookingDate));
 
+  // === RENDER CARD ===
   const renderBookingCard = (booking, category) => {
     const isExpanded = expanded === booking._id;
-    // Get the first traveller's name, fallback to "Unknown Traveller" if none
-    const firstTraveller =
-      booking.travellers && booking.travellers.length > 0
-        ? booking.travellers[0]
-        : null;
-    const displayName = firstTraveller
-      ? `${firstTraveller.firstName} ${firstTraveller.lastName}`
-      : "Unknown Traveller";
+    const firstTraveller = booking.travellers[0] || {};
+    const displayName =
+      `${firstTraveller.firstName || ""} ${
+        firstTraveller.lastName || ""
+      }`.trim() || "Unknown Traveller";
+
+    const showPartialCancellation = hasCancellationRequest(booking);
+    const isFullyCancelled = areAllTravellersCancelled(booking);
+    const isFullyRejected = areAllTravellersRejected(booking);
+
     return (
       <div
         key={booking._id}
         className="bg-white rounded-2xl shadow border overflow-hidden w-full sm:max-w-4xl mx-auto"
       >
-        {/* Row Header */}
+        {/* Header */}
         <div
           className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 cursor-pointer hover:bg-gray-50"
           onClick={() => toggleExpand(booking._id)}
@@ -985,6 +960,8 @@ const TourBookings = () => {
               {booking.userId?.email || "No email"} |{" "}
               {booking.userId?.phone || "No phone"}
             </p>
+
+            {/* Payment Status */}
             <div className="mt-2 flex flex-wrap gap-2 text-xs sm:text-sm">
               <span
                 className={`px-2 py-1 rounded-lg text-xs font-medium ${
@@ -1005,56 +982,55 @@ const TourBookings = () => {
                 Balance: {booking.payment.balance.paid ? "Paid" : "Pending"}
               </span>
             </div>
-            {category === "rejected" && (
-              <span className="px-2 py-1 rounded-lg text-xs font-medium bg-red-100 text-red-700 mt-2 inline-block">
-                Rejected by Admin
-              </span>
-            )}
-            {category === "cancellationRequest" && (
-              <span className="px-2 py-1 rounded-lg text-xs font-medium bg-orange-100 text-orange-700 mt-2 inline-block">
-                Cancellation Request
-              </span>
-            )}
-            {category === "cancelledByTraveller" && (
-              <span className="px-2 py-1 rounded-lg text-xs font-medium bg-yellow-100 text-yellow-700 mt-2 inline-block">
-                Cancelled by Traveller
-              </span>
-            )}
+
+            {/* Status Badges */}
             {category === "completed" && (
               <span className="px-2 py-1 rounded-lg text-xs font-medium bg-green-100 text-green-700 mt-2 inline-block">
                 Completed
               </span>
             )}
-            {/* Booking ID and Type */}
+            {showPartialCancellation && (
+              <span className="px-2 py-1 rounded-lg text-xs font-medium bg-orange-100 text-orange-700 mt-2 inline-block">
+                Partial Cancellation Request
+              </span>
+            )}
+            {isFullyRejected && (
+              <span className="px-2 py-1 rounded-lg text-xs font-medium bg-red-100 text-red-700 mt-2 inline-block">
+                Rejected by Admin
+              </span>
+            )}
+            {isFullyCancelled && (
+              <span className="px-2 py-1 rounded-lg text-xs font-medium bg-yellow-100 text-yellow-700 mt-2 inline-block">
+                Fully Cancelled
+              </span>
+            )}
+
+            {/* Booking ID */}
             <div className="mt-2 flex items-center gap-2 text-xs sm:text-sm">
-              <span className="text-gray-600">Booking ID: {booking._id}</span>
+              <span className="text-gray-600">ID: {booking._id}</span>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handleCopyBookingId(booking._id);
                 }}
-                className="text-blue-500 hover:text-blue-700 focus:outline-none flex items-center"
-                title="Copy Booking ID"
+                className="text-blue-500 hover:text-blue-700"
+                title="Copy ID"
               >
                 <Copy size={14} />
               </button>
-              <span className="text-gray-600">
-                | Type: {booking.bookingType}
-              </span>
+              <span className="text-gray-600">| {booking.bookingType}</span>
             </div>
           </div>
 
-          {/* Actions Section */}
+          {/* Actions */}
           <div className="flex items-center gap-2 mt-3 sm:mt-0 w-full sm:w-auto justify-between sm:justify-end">
-            {category === "rejected" ||
-            category === "cancelledByTraveller" ||
-            category === "cancellationRequest" ? (
+            {isFullyCancelled || isFullyRejected ? (
               <button
                 disabled
                 className="flex items-center gap-1 px-3 py-1.5 text-xs sm:text-sm bg-gray-400 text-white rounded-lg cursor-not-allowed min-w-[120px] sm:min-w-[140px]"
               >
                 <CheckCircle size={16} />
-                Cancelled Booking
+                Cancelled
               </button>
             ) : booking.isBookingCompleted ? (
               <button
@@ -1062,11 +1038,10 @@ const TourBookings = () => {
                 className="flex items-center gap-1 px-3 py-1.5 text-xs sm:text-sm bg-green-400 text-white rounded-lg cursor-not-allowed min-w-[120px] sm:min-w-[140px]"
               >
                 <CheckCircle size={16} />
-                Booking Completed
+                Completed
               </button>
             ) : (
               <>
-                {/* Payment buttons for offline bookings */}
                 {booking.bookingType === "offline" && (
                   <>
                     {!booking.payment.advance.paid && (
@@ -1096,7 +1071,6 @@ const TourBookings = () => {
                       )}
                   </>
                 )}
-                {/* Mark as Booking Complete button for all bookings */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -1120,30 +1094,25 @@ const TourBookings = () => {
         {/* Expanded Details */}
         {isExpanded && (
           <div className="p-4 border-t bg-gray-50 text-xs sm:text-sm text-gray-700 space-y-4">
-            {/* Booking Info */}
             <div>
               <p>
-                <span className="font-medium">Tour title:</span>{" "}
-                {booking?.tourData?.title}
+                <strong>Tour:</strong> {booking?.tourData?.title}
               </p>
               <p>
-                <span className="font-medium">Booking Date:</span>{" "}
+                <strong>Date:</strong>{" "}
                 {new Date(booking.bookingDate).toLocaleDateString()}
               </p>
               <p>
-                <span className="font-medium">Booking Type:</span>{" "}
-                {booking.bookingType}
+                <strong>Type:</strong> {booking.bookingType}
               </p>
             </div>
 
-            {/* Contact Info */}
             <div>
-              <h3 className="font-semibold text-gray-800">Traveller Contact</h3>
+              <h3 className="font-semibold text-gray-800">Contact</h3>
               <p>Email: {booking.contact?.email}</p>
               <p>Mobile: {booking.contact?.mobile}</p>
             </div>
 
-            {/* Billing Address */}
             {booking.billingAddress && (
               <div>
                 <h3 className="font-semibold text-gray-800">Billing Address</h3>
@@ -1159,22 +1128,20 @@ const TourBookings = () => {
               </div>
             )}
 
-            {/* Travellers List */}
             {booking.travellers.map((trav, idx) => {
-              let cancellationStatus = null;
-
+              let status = null;
               if (trav.cancelled?.byTraveller && !trav.cancelled?.byAdmin) {
-                cancellationStatus = "Cancellation Requested by Traveller";
+                status = "Cancellation Requested";
               } else if (
                 trav.cancelled?.byAdmin &&
                 !trav.cancelled?.byTraveller
               ) {
-                cancellationStatus = "Booking Rejected by Admin";
+                status = "Rejected by Admin";
               } else if (
                 trav.cancelled?.byTraveller &&
                 trav.cancelled?.byAdmin
               ) {
-                cancellationStatus = "Traveller Cancelled";
+                status = "Cancelled";
               }
 
               return (
@@ -1186,18 +1153,17 @@ const TourBookings = () => {
                     {trav.title} {trav.firstName} {trav.lastName} ({trav.age}{" "}
                     yrs, {trav.gender})
                   </p>
-                  <p>Package Type: {trav.packageType}</p>
-                  <p>Sharing Type: {trav.sharingType}</p>
+                  <p>Package: {trav.packageType}</p>
+                  <p>Sharing: {trav.sharingType}</p>
                   {trav.boardingPoint?.stationName && (
                     <p>
-                      Boarding Point: {trav.boardingPoint.stationName} (
+                      Boarding: {trav.boardingPoint.stationName} (
                       {trav.boardingPoint.stationCode})
                     </p>
                   )}
                   {trav.deboardingPoint?.stationName && (
                     <p>
-                      Return De-Boarding Point:{" "}
-                      {trav.deboardingPoint.stationName} (
+                      Deboarding: {trav.deboardingPoint.stationName} (
                       {trav.deboardingPoint.stationCode})
                     </p>
                   )}
@@ -1212,25 +1178,21 @@ const TourBookings = () => {
                       Remarks: {trav.remarks}
                     </p>
                   )}
-                  {/* Cancellation Status */}
-                  {cancellationStatus && (
-                    <p className="text-red-600 font-medium">
-                      {cancellationStatus}
-                    </p>
+                  {status && (
+                    <p className="text-red-600 font-medium">{status}</p>
                   )}
                 </div>
               );
             })}
 
-            {/* Payment Details */}
             {booking.payment && (
               <div>
-                <h3 className="font-semibold text-gray-800">Payment Details</h3>
+                <h3 className="font-semibold text-gray-800">Payment</h3>
                 <p>
                   Advance: ₹{booking.payment.advance.amount} –{" "}
                   {booking.payment.advance.paid ? "Paid" : "Pending"}{" "}
                   {booking.payment.advance.paidAt &&
-                    `(at ${new Date(
+                    `(on ${new Date(
                       booking.payment.advance.paidAt
                     ).toLocaleDateString()})`}
                 </p>
@@ -1238,37 +1200,12 @@ const TourBookings = () => {
                   Balance: ₹{booking.payment.balance.amount} –{" "}
                   {booking.payment.balance.paid ? "Paid" : "Pending"}{" "}
                   {booking.payment.balance.paidAt &&
-                    `(at ${new Date(
+                    `(on ${new Date(
                       booking.payment.balance.paidAt
                     ).toLocaleDateString()})`}
                 </p>
               </div>
             )}
-
-            {/* Cancellation Info */}
-            {booking.cancelled?.byAdmin || booking.cancelled?.byTraveller ? (
-              <div className="text-red-600">
-                <h3 className="font-semibold">Cancelled</h3>
-                <p>
-                  Cancelled By:{" "}
-                  {booking.cancelled.byAdmin
-                    ? "Admin"
-                    : booking.cancelled.byTraveller
-                    ? "Traveller"
-                    : "Unknown"}
-                </p>
-                <p>
-                  At:{" "}
-                  {booking.cancelled.cancelledAt &&
-                    new Date(
-                      booking.cancelled.cancelledAt
-                    ).toLocaleDateString()}
-                </p>
-                {booking.cancelled.reason && (
-                  <p>Reason: {booking.cancelled.reason}</p>
-                )}
-              </div>
-            ) : null}
           </div>
         )}
       </div>
@@ -1277,25 +1214,13 @@ const TourBookings = () => {
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-      {/* Local ToastContainer for TourBookings */}
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        className="text-sm"
-      />
+      <ToastContainer position="top-right" autoClose={3000} />
 
       <h2 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 pl-12 md:pl-0">
         Bookings
       </h2>
 
-      {/* Dropdown Menu for Tour Selection */}
+      {/* Tour Selector */}
       <div className="mb-4 sm:mb-6">
         <label
           htmlFor="tour-select"
@@ -1318,10 +1243,9 @@ const TourBookings = () => {
         </select>
       </div>
 
-      {/* Filters (visible only when a tour is selected) */}
+      {/* Filters */}
       {selectedTourId && (
         <div className="mb-6 flex flex-col sm:flex-row gap-4 sm:gap-6">
-          {/* Payment Filter */}
           <div className="w-full sm:w-1/3">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Payment Status:
@@ -1339,7 +1263,6 @@ const TourBookings = () => {
             </select>
           </div>
 
-          {/* Status Filter */}
           <div className="w-full sm:w-1/3">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Booking Status:
@@ -1350,14 +1273,13 @@ const TourBookings = () => {
               className="mt-1 block w-full pl-3 pr-10 py-2 text-sm sm:text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md"
             >
               <option value="all">All</option>
-              <option value="active">Active Bookings</option>
+              <option value="active">Active</option>
               <option value="completed">Completed</option>
-              <option value="rejected">Rejected by Admin</option>
+              <option value="rejected">Rejected</option>
               <option value="cancelled">Cancelled</option>
             </select>
           </div>
 
-          {/* Traveller Name Filter */}
           <div className="w-full sm:w-1/3">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Traveller Name:
@@ -1373,77 +1295,64 @@ const TourBookings = () => {
         </div>
       )}
 
-      {/* Conditionally render bookings based on selection and data */}
+      {/* Content */}
       {!selectedTourId ? (
-        <div className="p-4 sm:p-6 text-center text-gray-500 text-sm sm:text-base">
-          <p>Please select a tour to view bookings.</p>
+        <div className="text-center text-gray-500 p-6">
+          Please select a tour to view bookings.
         </div>
       ) : isLoadingBookings ? (
-        <div className="p-4 sm:p-6 text-center text-gray-500 text-sm sm:text-base">
-          <p>Loading bookings...</p>
-        </div>
+        <div className="text-center text-gray-500 p-6">Loading bookings...</div>
       ) : filteredBookings.length === 0 ? (
-        <div className="p-4 sm:p-6 text-center text-gray-500 text-sm sm:text-base">
-          <p>No bookings found matching the filters.</p>
-        </div>
+        <div className="text-center text-gray-500 p-6">No bookings found.</div>
       ) : (
         <>
-          {/* Active Bookings */}
           {activeBookings.length > 0 && (
             <div className="space-y-4 mb-8">
               <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4">
                 Active Bookings
               </h3>
-              {activeBookings.map((booking) =>
-                renderBookingCard(booking, "active")
-              )}
+              {activeBookings.map((b) => renderBookingCard(b, "active"))}
             </div>
           )}
 
-          {/* Completed Bookings */}
           {completedBookings.length > 0 && (
             <div className="space-y-4 mb-8">
               <h3 className="text-lg sm:text-xl font-semibold text-green-600 mb-4">
                 Completed Bookings
               </h3>
-              {completedBookings.map((booking) =>
-                renderBookingCard(booking, "completed")
-              )}
+              {completedBookings.map((b) => renderBookingCard(b, "completed"))}
             </div>
           )}
 
-          {/* Cancellation Requests */}
           {cancellationRequestBookings.length > 0 && (
             <div className="space-y-4 mb-8">
               <h3 className="text-lg sm:text-xl font-semibold text-orange-600 mb-4">
                 Cancellation Requests
               </h3>
-              {cancellationRequestBookings.map((booking) =>
-                renderBookingCard(booking, "cancellationRequest")
+              {cancellationRequestBookings.map((b) =>
+                renderBookingCard(b, "cancellationRequest")
               )}
             </div>
           )}
 
-          {/* Rejected Bookings */}
           {rejectedByAdminBookings.length > 0 && (
             <div className="space-y-4 mb-8">
               <h3 className="text-lg sm:text-xl font-semibold text-red-600 mb-4">
-                Rejected Bookings (by Admin)
+                Rejected by Admin
               </h3>
-              {rejectedByAdminBookings.map((booking) =>
-                renderBookingCard(booking, "rejected")
+              {rejectedByAdminBookings.map((b) =>
+                renderBookingCard(b, "rejected")
               )}
             </div>
           )}
 
-          {/* Cancelled by Traveller */}
           {cancelledByTravellerBookings.length > 0 && (
             <div className="space-y-4">
               <h3 className="text-lg sm:text-xl font-semibold text-yellow-600 mb-4">
-                Cancellations (by Traveller)
+                Cancelled Bookings
               </h3>
-              {cancelledByTravellerBookings.map((booking) =>
-                renderBookingCard(booking, "cancelledByTraveller")
+              {cancelledByTravellerBookings.map((b) =>
+                renderBookingCard(b, "cancelledByTraveller")
               )}
             </div>
           )}
