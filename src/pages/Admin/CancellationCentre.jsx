@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // import React, { useContext, useEffect, useState } from "react";
 // import { TourAdminContext } from "../../context/TourAdminContext";
 // import { ClipLoader } from "react-spinners";

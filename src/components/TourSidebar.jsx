@@ -13,6 +13,9 @@ import {
   User,
   Settings, // New icon for Booking Controls
   TicketX,
+  CalendarCheck,
+  OctagonAlert,
+  Signature,
 } from "lucide-react";
 
 const TourSidebar = () => {
@@ -141,6 +144,40 @@ const TourSidebar = () => {
                 Cancellation centre
               </span>
             </NavLink>
+            <NavLink
+              className={({ isActive }) =>
+                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
+                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
+                }`
+              }
+              to="/db-migration"
+              aria-label="DB Migration Centre"
+            >
+              <OctagonAlert size={24} className="w-6 h-6 sm:w-7 sm:h-7" />
+              <p className="hidden md:block text-sm sm:text-base">
+                DB Migration centre
+              </p>
+              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                DB Migration centre
+              </span>
+            </NavLink>
+            <NavLink
+              className={({ isActive }) =>
+                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
+                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
+                }`
+              }
+              to="/booking-approvals"
+              aria-label="Booking approvals"
+            >
+              <Signature size={24} className="w-6 h-6 sm:w-7 sm:h-7" />
+              <p className="hidden md:block text-sm sm:text-base">
+                Booking approvals
+              </p>
+              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                Booking approvals
+              </span>
+            </NavLink>
           </ul>
         )}
         {ttoken && (
@@ -239,6 +276,24 @@ const TourSidebar = () => {
               </p>
               <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
                 Cancellation Controls
+              </span>
+            </NavLink>
+            <NavLink
+              className={({ isActive }) =>
+                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
+                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
+                }`
+              }
+              to="/tour-managebooking"
+              aria-label="managebooking"
+            >
+              <CalendarCheck size={24} className="w-6 h-6 sm:w-7 sm:h-7" />{" "}
+              {/* Changed to Settings icon */}
+              <p className="hidden md:block text-sm sm:text-base">
+                Manage Booking
+              </p>
+              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                Manage Booking
               </span>
             </NavLink>
           </ul>
