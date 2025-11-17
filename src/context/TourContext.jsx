@@ -12,6 +12,8 @@ const TourContextProvider = (props) => {
   const [dashData, setDashData] = useState(false);
   const [profileData, setProfileData] = useState(false);
   const [tourList, setTourList] = useState([]);
+  // Add new state near other states
+  const [advanceDetails, setAdvanceDetails] = useState(null);
   const [balanceDetails, setBalanceDetails] = useState(null);
   const [singleBooking, setSingleBooking] = useState(null); // NEW: For viewBooking
   const [managedBookingsHistory, setManagedBookingsHistory] = useState([]);
@@ -353,7 +355,109 @@ const TourContextProvider = (props) => {
       };
     }
   };
+  // ==================== VIEW TOUR ADVANCE ====================
+  const viewTourAdvance = async (bookingId) => {
+    try {
+      if (!bookingId) {
+        return { success: false, message: "Booking ID is required" };
+      }
 
+      const { data } = await axios.get(
+        `${backendUrl}/api/tour/view-tour-advance/${bookingId}`,
+        { headers: { ttoken } }
+      );
+
+      if (data.success) {
+        setAdvanceDetails(data.data);
+      }
+
+      return data;
+    } catch (error) {
+      console.error("viewTourAdvance error:", error);
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message,
+      };
+    }
+  };
+
+  // ==================== UPDATE TOUR ADVANCE (Shift Advance → Balance) ====================
+  const updateTourAdvance = async (bookingId, updates) => {
+    try {
+      if (!Array.isArray(updates) || updates.length === 0) {
+        return { success: false, message: "Updates array is required" };
+      }
+
+      const { data } = await axios.post(
+        `${backendUrl}/api/tour/update-tour-advance/${bookingId}`,
+        { updates },
+        { headers: { ttoken } }
+      );
+
+      if (data.success) {
+        const updatedData = data.data;
+
+        // Update local advance details
+        setAdvanceDetails(updatedData);
+
+        // Optimistically update bookings list (if loaded)
+        setBookings((prevBookings) =>
+          prevBookings.map((booking) =>
+            booking._id === bookingId
+              ? {
+                  ...booking,
+                  payment: {
+                    ...booking.payment,
+                    advance: {
+                      ...booking.payment.advance,
+                      amount: updatedData.updatedAdvanceAmount,
+                    },
+                    balance: {
+                      ...booking.payment.balance,
+                      amount: updatedData.updatedBalanceAmount,
+                      paid: false,
+                      paymentVerified: false,
+                    },
+                  },
+                  advanceAdminRemarks: updatedData.advanceAdminRemarks,
+                  isTripCompleted: true,
+                }
+              : booking
+          )
+        );
+
+        // Also update singleBooking if it's currently viewed
+        if (singleBooking?._id === bookingId) {
+          setSingleBooking((prev) => ({
+            ...prev,
+            payment: {
+              ...prev.payment,
+              advance: {
+                ...prev.payment.advance,
+                amount: updatedData.updatedAdvanceAmount,
+              },
+              balance: {
+                ...prev.payment.balance,
+                amount: updatedData.updatedBalanceAmount,
+                paid: false,
+                paymentVerified: false,
+              },
+            },
+            advanceAdminRemarks: updatedData.advanceAdminRemarks,
+            isTripCompleted: true,
+          }));
+        }
+      }
+
+      return data;
+    } catch (error) {
+      console.error("updateTourAdvance error:", error.response?.data || error);
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message,
+      };
+    }
+  };
   const updateTourBalance = async (bookingId, updates) => {
     try {
       const { data } = await axios.post(
@@ -567,6 +671,11 @@ const TourContextProvider = (props) => {
     updateTravellerDetails,
     tourList,
     getTourList,
+    updateTourAdvance,
+    viewTourAdvance,
+    setAdvanceDetails,
+    advanceDetails,
+
     updateTourBalance,
     viewTourBalance,
     balanceDetails,
