@@ -251,11 +251,15 @@ const TourAdminContextProvider = (props) => {
     }
   }, [aToken, backendUrl, validateApiResponse]);
 
-  const approveCancellation = async (bookingId, travellerIds) => {
+  const approveCancellation = async (
+    bookingId,
+    travellerIds,
+    cancellationId
+  ) => {
     try {
       const { data } = await axios.post(
         `${backendUrl}/api/touradmin/approvecancellation`,
-        { bookingId, travellerIds },
+        { bookingId, travellerIds, cancellationId },
         { headers: { aToken } }
       );
       const validated = validateApiResponse(data, "Failed to approve");
