@@ -13,12 +13,14 @@ const CancellationCentre = () => {
   const [expandedIds, setExpandedIds] = useState(new Set());
   const [toastQueue, setToastQueue] = useState([]);
 
-  // Auto-dismiss toast
+  // Auto-dismiss toast after 5 seconds (5000ms)
   useEffect(() => {
     if (toastQueue.length === 0) return;
+
     const timer = setTimeout(() => {
       setToastQueue((prev) => prev.slice(1));
-    }, 3000);
+    }, 5000); // Changed from 3000 → 5000
+
     return () => clearTimeout(timer);
   }, [toastQueue]);
 
@@ -43,7 +45,7 @@ const CancellationCentre = () => {
   }, [getCancellations]);
 
   const showToast = (type, msg) => {
-    setToastQueue((prev) => [...prev, { type, msg }]);
+    setToastQueue((prev) => [...prev, { type, msg, id: Date.now() }]);
   };
 
   // CONFIRM + APPROVE
@@ -57,13 +59,11 @@ const CancellationCentre = () => {
       ? `${leadTraveller.title} ${leadTraveller.firstName} ${leadTraveller.lastName}`
       : "Traveller";
 
-    const tourTitle = cancellation.booking?.tourData?.title || "Unknown Tour";
     const count = cancellation.travellerIds?.length || 0;
 
     const confirmed = window.confirm(
-      `⚠️ APPROVE CANCELLATION?\n\n` +
+      `APPROVE CANCELLATION?\n\n` +
         `Traveller: ${leadName}\n` +
-        `Tour: ${tourTitle}\n` +
         `Cancelling: ${count} traveller(s)\n\n` +
         `This will deduct charges and update balance.\n\n` +
         `Are you sure you want to APPROVE?`
@@ -79,7 +79,7 @@ const CancellationCentre = () => {
       const res = await approveCancellation(
         cancellation.bookingId,
         cancellation.travellerIds,
-        cancellation._id // ← THIS IS THE KEY FIX
+        cancellation._id
       );
       showToast("success", res.message || "Cancellation approved successfully");
       const fresh = await getCancellations();
@@ -106,13 +106,11 @@ const CancellationCentre = () => {
       ? `${leadTraveller.title} ${leadTraveller.firstName} ${leadTraveller.lastName}`
       : "Traveller";
 
-    const tourTitle = cancellation.booking?.tourData?.title || "Unknown Tour";
     const count = cancellation.travellerIds?.length || 0;
 
     const confirmed = window.confirm(
       `REJECT CANCELLATION?\n\n` +
         `Traveller: ${leadName}\n` +
-        `Tour: ${tourTitle}\n` +
         `Request for: ${count} traveller(s)\n\n` +
         `This will keep travellers in the tour and clear the request.\n\n` +
         `Are you sure you want to REJECT?`
@@ -165,27 +163,29 @@ const CancellationCentre = () => {
 
   return (
     <div className="container mx-auto p-4 md:p-6 bg-gray-50 min-h-screen relative">
-      {/* Toast */}
-      <div className="fixed top-4 right-4 z-50 space-y-2">
-        {toastQueue.map((t, i) => (
+      {/* Toast - Now stays for 5 seconds */}
+      <div className="fixed top-4 right-4 z-50 space-y-3 max-w-sm">
+        {toastQueue.map((t) => (
           <div
-            key={i}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg text-white font-medium text-sm transition-all animate-slide-in-right ${
+            key={t.id}
+            className={`flex items-start gap-3 px-5 py-4 rounded-xl shadow-2xl text-white font-medium text-sm transition-all animate-slide-in-right border-l-4 ${
               t.type === "success"
-                ? "bg-green-600"
+                ? "bg-green-600 border-green-800"
                 : t.type === "info"
-                ? "bg-blue-600"
-                : "bg-red-600"
+                ? "bg-blue-600 border-blue-800"
+                : "bg-red-600 border-red-800"
             }`}
           >
-            <span>
+            <span className="mt-0.5">
               {t.type === "success"
                 ? "Success"
                 : t.type === "info"
                 ? "Info"
                 : "Error"}
             </span>
-            <span>{t.msg}</span>
+            <div className="flex-1 whitespace-pre-line leading-tight">
+              {t.msg}
+            </div>
           </div>
         ))}
       </div>
@@ -215,7 +215,6 @@ const CancellationCentre = () => {
                 } ${leadTraveller.lastName || ""}`.trim()
               : "Unknown Traveller";
 
-            const tourTitle = c.booking?.tourData?.title || "Unknown Tour";
             const mobile = c.booking?.contact?.mobile || "N/A";
 
             return (
@@ -234,9 +233,6 @@ const CancellationCentre = () => {
                         {leadName}
                       </span>
                       <span className="text-gray-500">•</span>
-                      <span className="font-bold text-blue-700">
-                        {tourTitle}
-                      </span>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-600">
