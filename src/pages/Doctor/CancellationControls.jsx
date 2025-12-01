@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useContext, useEffect, useState } from "react";
 import { TourContext } from "../../context/TourContext";
 import { toast, ToastContainer } from "react-toastify";

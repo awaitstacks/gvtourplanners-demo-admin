@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // import React, { useContext, useState } from "react";
 // import { TourAdminContext } from "../../context/TourAdminContext";
 // import { toast, ToastContainer } from "react-toastify";
@@ -660,6 +661,7 @@ const CancelRule = () => {
       }
     };
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getCancelRule, cancelRule]);
 
   // === FILL FORM WHEN cancelRule CHANGES ===

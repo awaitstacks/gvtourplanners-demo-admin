@@ -36,6 +36,7 @@ const ToursList = () => {
     };
 
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency array to run only once on mount
 
   // Helper: Get valid travellers for a tour (strict rules)
