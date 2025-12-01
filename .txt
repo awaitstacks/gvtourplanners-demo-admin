@@ -1,68 +1,207 @@
-
-//ADVANCE ONLY PAID LOGICS
-
-in this create one controller where cancellation date is passed from front end by selecting dates from calendar
-
-calculation logic
-
-First it should check for wherther it is only must advance paid and should not accept if balance also paid and not paid advance itself(Should check for booking level not for traveller level)
-
-for advance paid i have shared the SS for the Percentage to be calculated
-
-that percentage is that  we are going to deduct 
-
-so logic is first it should check where the booking has one traveller or more than one traveller
-
-if it is one traveller should skip and exit if more than one traveller in a bookingId(Not cancelled one just total pax count)
-
-it should check whether the traveller is chosen main package or variant package
-
-accordingly 
-
-1st step (A) --- should calculate net amount paid (advance - (negative admin remarks amount)) should store in net amount paid
-
-2nd step (B) --- Should calculate the cancellation amount (advance amount from the tour model should be taken for calculation ...once amount calculated should be stored in gvcancellation amount --- should not change the status like cancelled by traveller to true or nothing else should not touch anything beyond this caculation
-
-3rd step (C) ---  FIRST OF ALL ONCE TRAVELLER IS CACNELLED EXCEPT THAT TRAVELLER FOR THE REMAINING TRAVELLER CACLULATE THE FIRST TOTAL TOUR PACKAGE COST (MAIN/VAIRANT IN THAT DOUBLE SHARINGPRICE/TRIPLE SHARING/CHILDWITH BERTH/WITHOUT BERTH ) NOTE THAT NOT BALANCE I AM TELLING THE FULL PACKAGE COST PLUS ADD ONS AMOUNT THEY SELECTED JUST STORE THIS AMOUNT ALONE
-
-4th step (D) --- Check for any remarks and amount passed from front end if store that value too in remarksAmount
+First of all check if it is advance paid or not if no throw error like cannot proceed without advance payment
 
 
 
-For storing value in updated balance in this case ---> (D(REMARKS AMOUNT) + C(preBalanceAmount) + B(gvCancellationAmount)) - A
+but if yes received then go for this global check first.....if that booking id has advance payment paid and verified and also balance amount is zero but paid and verified...then calculate as follows
 
 
 
-refund amount is --- A - updatedbalance in DB
-
-----------------------------
-
-//FULLY PAID LOGICS
-
-1st step (A) --- In this for net amount paid it should again check in booking level as it already has advance - (sum of negative admin remarks amount ) + balance amount (paid and verified like advance in booking level cacn find in tourbooking model)
-2nd step (B) --- Should calculate the cancellation amount (TOTAL PACKAGE PRICE FROM TOUR MODEL AS PER MAIN OR VARIANT ---- IN THAT DOUBLE OR TRIPLE OR CHILD WITH BERTH OR CHILD WITHOUT BERTH)...once amount calculated should be stored in gvcancellation amount --- should not change the status like cancelled by traveller to true or nothing else should not touch anything beyond this caculation 
-3rd step (C) --- DELETE AND SKIP THIS STEP 
-4th step (D) --- Check for any remarks and amount passed from front end if store that value too in remarksAmount 
-5th step (E) --- In this the toubookingmodel under we added via admin remarks only positve amount should be summed up and stored in this 
-
-For storing value in updated balance in this case ---> ( D(REMARKS AMOUNT) + B(gvCancellationAmount)) - A 
-
-refund amount is --- if updatedbalance is negative it should again multiply with -1 so that is the refund amount to be stored in DB
+1 -> Calculate the gvcancellationamount from the advance amount and also follow advance paid rules and store in gvcancellationamount availabe in cancellationmodel
 
 
 
-As per IRCTC i will share you the rules you carry out as per that ok
+2 -> Sum up IRCTC amount provided and store in irctccancellationamount available in cancellation model
 
-FLAT MINIIMUM CHARGES
 
-EC - EXECUTIVE CHAR CAR AC, 1A - FIRST AC - 240 INR + 5% GST
 
-3A - THREE TIER AC , 3E - THREE TIER ECONOMY AC , CC - CHAIR CAR AC = 180 INR + 5% GST
+3 -> Remarks amount sum up all these provided and store in remarksamount available in cancellationmodel
 
-2A - TWO TIER AC - 200 + 5% GST
 
-SL - SLEEPER = 120 INR (NO GST)
 
-2S - SECOND SITTING = 60 (NO GST)
+Kindly note that should not consider or add that  already available Gvpool and irctcpool amount with this one
 
-GST IS 5%
+4 -> Then calculate the cancelled traveller total packageamount with addons and store this same value in prebalanceamount available in cancellationmodel
+
+
+
+5 ->1 + 2+ 3 add this and store in total cancellation amount available in cancellation model
+
+
+
+6-> 4-5 this value should be stored in refund amount 
+
+
+
+After successful response update cancellationrequest to true in toubookignmodel and raised by to true in cancellation model
+
+
+
+Then
+
+
+
+If advance paid and balance > 0 but unpaid and has more than one traveler in that booking id then calculate as follows 
+
+
+
+A - advance amount paid and verified
+
+B-sum of negative admin remarks but result should be positve 
+
+1-> A+B this resulting value should be stored in netamount paid field available in cancellationmodel 
+
+
+
+C -> sum up all active travellers (Cancelled by traveller and admin both should be false) total package cost with addons
+
+D -> Calculate GV Cancellation amount based on advance amounts also advancepaid rule also add the amount if any amount exists in gvpool in that booking if available add that amount too and store this value in gvcancellation amount in that cancellation model
+
+E -> sum up IRCTC amount provided and store in irctccancellationamount available in cancellation model if any amount in irctc pool for that booking id is available add that too with this value
+
+F -> Sum up the remarks amount provided and store the same in remarks amount in the cancellation model NO POOL IN THIS 
+
+G -> Sum up the positive admin remarks and store that same amount in bookingbalancemanagementamount available in cancellation model
+
+
+
+2 -> Sum of C + D + E + F + G Store in prebalance amount available in cancellation model
+
+
+
+3 -> 2 - 1 if this value is positive store in updated balance  but if negative this amount should be multiplied by -1 and should be stored in refund amount available in cancellation model.
+
+
+
+after successfull responcse update cancellation request to true in the tourbooking model for that booking id and then update raised by to true in the cancellation model
+
+
+
+Then
+
+
+
+If advance paid and balance > 0 but unpaid and unverified and has only one trvaller then calculation as follows
+
+
+
+A - advance amount paid and verified
+
+B-sum of negative admin remarks but result should be positve 
+
+1-> A+B this resulting value should be stored in netamoount paid field available in cancellationmodel 
+
+
+
+C -> No need skip this step becuase only one traverller
+
+D -> Calculate GV Cancellation amount based on advance amounts also advancepaid rule store this value in gvcancellation amount in that cancellation model
+
+E -> sum up IRCTC amount provided and store in irctccancellationamount available in cancellation model
+
+F -> Sum up the remarks amount provided and store the same in remarks amount in the cancellation model
+
+G -> Sum up the positive admin remarks and store that same amount in bookingbalancemanagementamount available in cancellation model
+
+
+
+2 -> Sum of D + E + F + G Store in prebalance amount available in cancellation model
+
+
+
+3 -> 2 - 1 if this value is positive store in updated balance  but if negative this amount should be multiplied by -1 and should be stored in refund amount available in cancellation model.
+
+
+
+after successfull responcse update cancellation request to true in the tourbooking model for that booking id and then update raised by to true in the cancellation model
+
+
+
+then
+
+
+
+IF advance paid is true and balance > 0 also paid and verified and has only one traveller
+
+
+
+A - Calculate total package price with addons of that cancelled traveller store this value in prebalance amount available in cancellation model
+
+
+
+B - Sum of positive admin remarks store that same in bookingbalance management amount
+
+
+
+C - GV Cancellation amount from tour package base price without addons also follow fully paid rules store the same in gvcancellationamount available in canellation model
+
+
+
+D - IRCTC cancellation sum up this values provided and store in irctccancellationamount available in cancellation model
+
+
+
+E - Sum up all remarks amount and store in remarks amount available in cancellation model
+
+
+
+Updated balance -> A - B - C - D - E.... if the result is positve thenstore the same value in refundamount field available in cancellation model
+
+
+
+if it is negative the. make refund amount as zero and store the same value in updated balance
+
+
+
+after successfull responcse update cancellation request to true in the tourbooking model for that booking id and then update raised by to true in the cancellation model
+
+
+
+then
+
+
+
+IF advance paid is true and balance > 0 also paid and verified and has more than  one traveller
+
+
+
+A - Calculate total package price with addons for that cancellaed trvaler store this value in prebalance amount available in cancellation model
+
+
+
+B - Sum of positive admin remarks store that same in bookingbalance management amount
+
+
+
+C - GV Cancellation amount from tour package base price without addons also follow fully paid rules store the same in gvcancellationamount available in canellation model
+
+
+
+D - IRCTC cancellation sum up this values provided and store in irctccancellationamount available in cancellation model
+
+
+
+E - Sum up all remarks amount and store in remarks amount available in cancellation model
+
+
+
+In this before updated balance check another condition in that booking if any traveller has no condition like this --> (Cancelled by traveller and admin both true ) then
+
+Updated balance -> A - B - C - D - E.... if the result is positve thenstore the same value in refundamount field available in cancellation model
+
+
+
+if it is negative the. make refund amount as zero and store the same value in updated balance
+
+....
+
+check another condition in that booking if any one traveller has  condition like this --> (Cancelled by traveller and admin both true ) then
+
+Updated balance -> A - C - D - E.... if the result is positve thenstore the same value in refundamount field available in cancellation model
+
+
+
+if it is negative the. make refund amount as zero and store the same value in updated balance
+
+
+
+after successfull responcse update cancellation request to true in the tourbooking model for that booking id and then update raised by to true in the cancellation model

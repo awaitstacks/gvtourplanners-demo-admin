@@ -672,10 +672,10 @@ const TourContextProvider = (props) => {
     tourList,
     getTourList,
     updateTourAdvance,
-    viewTourAdvance,
     setAdvanceDetails,
     advanceDetails,
 
+    viewTourAdvance,
     updateTourBalance,
     viewTourBalance,
     balanceDetails,
