@@ -3,7 +3,7 @@
 import React, { useContext, useState } from "react";
 import { TourContext } from "../context/TourContext";
 import { TourAdminContext } from "../context/TourAdminContext";
-import { NavLink } from "react-router-dom";
+import { NavLink, useMatch } from "react-router-dom";
 import {
   Home,
   Calendar,
@@ -25,33 +25,34 @@ const TourSidebar = () => {
   const { ttoken } = useContext(TourContext);
   const [isOpen, setIsOpen] = useState(false);
 
-  const toggleSidebar = () => setIsOpen(!isOpen);
-
   return (
     <>
-      {/* Mobile Toggle Button — Smaller, elegant & perfectly placed */}
+      {/* Mobile Hamburger Button - Auto sizes with icon */}
       <button
-        className="md:hidden fixed top-16 left-2 z-50 p-2 bg-primary text-white rounded-full shadow-lg hover:bg-primary/90 transition-all duration-200 border-2 border-white/40"
-        onClick={toggleSidebar}
-        aria-label={isOpen ? "Close menu" : "Open menu"}
+        onClick={() => setIsOpen(!isOpen)}
+        className="md:hidden fixed top-20 left-4 z-50 
+                   flex items-center justify-center 
+                   w-10 h-10                /* Fixed size - change here if you want smaller/bigger */
+                   bg-green-600 text-white 
+                   rounded-full shadow-2xl hover:bg-green-700 
+                   transition-all duration-200"
       >
-        {isOpen ? <X size={20} /> : <Menu size={20} />}
+        {isOpen ? <X size={28} /> : <Menu size={28} />}{" "}
+        {/* Just change size here */}
       </button>
 
-      {/* Sidebar — Starts below navbar */}
-      <div
+      {/* Sidebar */}
+      <aside
         className={`
-          fixed left-0 z-40 w-72 bg-white border-r border-gray-200 shadow-lg
-          top-16 bottom-0
-          transform transition-transform duration-300 ease-in-out overflow-y-auto
+          fixed left-0 top-16 bottom-0 w-72 bg-white border-r border-gray-200 shadow-xl 
+          transform transition-transform duration-300 ease-in-out overflow-y-auto z-40
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
           md:translate-x-0
         `}
       >
-        <div className="pt-8 pb-8">
-          {/* Admin Menu */}
+        <div className="pt-20 pb-20 px-6 md:pt-10">
           {aToken && (
-            <ul className="text-[#515151] space-y-1 px-4">
+            <nav className="space-y-3">
               {adminMenuItems.map((item) => (
                 <SidebarItem
                   key={item.to}
@@ -59,12 +60,11 @@ const TourSidebar = () => {
                   onClick={() => setIsOpen(false)}
                 />
               ))}
-            </ul>
+            </nav>
           )}
 
-          {/* Tour Operator Menu */}
           {ttoken && (
-            <ul className="text-[#515151] space-y-1 px-4">
+            <nav className="space-y-3">
               {tourMenuItems.map((item) => (
                 <SidebarItem
                   key={item.to}
@@ -72,45 +72,42 @@ const TourSidebar = () => {
                   onClick={() => setIsOpen(false)}
                 />
               ))}
-            </ul>
+            </nav>
           )}
         </div>
-      </div>
+      </aside>
 
-      {/* Mobile Overlay */}
+      {/* Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
-          onClick={toggleSidebar}
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setIsOpen(false)}
         />
       )}
     </>
   );
 };
 
-// Reusable Sidebar Item
-const SidebarItem = ({ to, icon: Icon, label, onClick }) => (
-  <NavLink
-    to={to}
-    onClick={onClick}
-    className={({ isActive }) =>
-      `flex items-center gap-3 py-3 px-4 rounded-lg transition-all duration-200 group relative
-      ${
-        isActive
-          ? "bg-[#F2F3FF] text-primary border-r-4 border-primary font-medium"
-          : "hover:bg-gray-100"
-      }`
-    }
-  >
-    <Icon size={22} />
-    <span className="text-sm font-medium">{label}</span>
-    <span className="absolute left-full ml-3 px-3 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-      {label}
-    </span>
-  </NavLink>
-);
+const SidebarItem = ({ to, icon: Icon, label, onClick }) => {
+  const match = useMatch({ path: to, end: true });
 
-// Menu Items
+  return (
+    <NavLink
+      to={to}
+      onClick={onClick}
+      className={`flex items-center gap-4 px-6 py-4 rounded-2xl font-medium text-sm transition-all
+        ${
+          match
+            ? "bg-green-600 text-white shadow-lg"
+            : "text-gray-700 hover:bg-green-50 hover:text-green-700"
+        }`}
+    >
+      <Icon size={23} className={match ? "text-white" : "text-gray-600"} />
+      <span className="truncate">{label}</span>
+    </NavLink>
+  );
+};
+
 const adminMenuItems = [
   { to: "/admin-dashboard", icon: Home, label: "Dashboard" },
   { to: "/all-bookings", icon: Calendar, label: "Bookings" },
