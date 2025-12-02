@@ -101,36 +101,33 @@ const TourLogin = () => {
     <>
       {/* PREMIUM ANIMATED BACKGROUND */}
       <div className="fixed inset-0 -z-10 overflow-hidden bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-100">
-        {/* FLOATING ICONS + FLYING AIRPLANE (BOTTOM-RIGHT → TOP-LEFT) */}
+        {/* FLOATING ICONS + FLYING AIRPLANE */}
         <div className="absolute inset-0 pointer-events-none">
-          {/* Flying Airplane – Bottom-Right to Top-Left with Contrail */}
-          <div className="absolute bottom-10 -right-40 animate-fly-diagonal">
-            {/* Airplane */}
-            <svg
-              className="relative w-28 h-28 text-emerald-700 drop-shadow-2xl z-10"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
-            </svg>
+          <div className="absolute inset-0 pointer-events-none">
+            {/* Flying Airplane – Twin Long Green Contrails */}
+            <div className="absolute bottom-10 -right-40 animate-fly-diagonal">
+              {/* Airplane Icon */}
+              <svg
+                className="relative w-28 h-28 text-indigo-600 drop-shadow-2xl z-50 rotate-[-10deg]"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
+              </svg>
 
-            {/* Glowing Contrail (Trail) */}
-            <div className="absolute top-11 -left-12 w-72 h-3 bg-gradient-to-r from-transparent via-emerald-300/80 to-emerald-400/90 rounded-full blur-xl animate-pulse"></div>
-            <div className="absolute top-12 -left-20 w-80 h-1 bg-gradient-to-r from-transparent via-white/70 to-emerald-200/50 rounded-full blur-lg"></div>
+              {/* LEFT ENGINE – Perfect */}
+              <div className="absolute top-20 left-7 w-[1200px] h-1 bg-gradient-to-r from-green-300 via-green-200/70 to-transparent rounded-full blur-[3px] origin-left rotate-[-640deg] opacity-80"></div>
+
+              <div className="absolute top-14 left-7 w-[700px] h-[1px] bg-green-100/90 rounded-full blur-[1px] origin-left rotate-[90deg] opacity-90"></div>
+
+              {/* RIGHT ENGINE – Fixed (no crossing) */}
+              <div className="absolute top-14 right-7 w-[1200px] h-1 bg-gradient-to-l from-green-300 via-green-200/70 to-transparent rounded-full blur-[3px] origin-right rotate-[-100deg] opacity-80"></div>
+
+              <div className="absolute top-14 right-7 w-[700px] h-[1px] bg-green-100/90 rounded-full blur-[1px] origin-left rotate-[90deg] opacity-90"></div>
+            </div>
           </div>
 
-          {/* Optional Second Airplane (uncomment if you want two planes) */}
-          {/* 
-          <div className="absolute bottom-10 -right-40 animate-fly-diagonal" style={{ animationDelay: '8s' }}>
-            <svg className="relative w-28 h-28 text-emerald-700 drop-shadow-2xl z-10" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
-            </svg>
-            <div className="absolute top-11 -left-12 w-72 h-3 bg-gradient-to-r from-transparent via-emerald-300/80 to-emerald-400/90 rounded-full blur-xl animate-pulse"></div>
-            <div className="absolute top-12 -left-20 w-80 h-1 bg-gradient-to-r from-transparent via-white/70 to-emerald-200/50 rounded-full blur-lg"></div>
-          </div>
-          */}
-
-          {/* Compass */}
+          {/* Rest of floating icons */}
           <div className="absolute top-32 right-16 animate-float-fast">
             <svg
               className="w-24 h-24 text-teal-600 opacity-30"
@@ -141,7 +138,6 @@ const TourLogin = () => {
             </svg>
           </div>
 
-          {/* Map Pin */}
           <div className="absolute bottom-40 left-20 animate-float-medium">
             <svg
               className="w-16 h-16 text-cyan-600 opacity-30"
@@ -152,7 +148,6 @@ const TourLogin = () => {
             </svg>
           </div>
 
-          {/* Camera */}
           <div className="absolute top-1/4 right-32 animate-float-fast">
             <svg
               className="w-14 h-14 text-emerald-500 opacity-25"
@@ -163,7 +158,6 @@ const TourLogin = () => {
             </svg>
           </div>
 
-          {/* Suitcase */}
           <div className="absolute bottom-28 right-24 animate-float-medium">
             <svg
               className="w-20 h-20 text-teal-600 opacity-25"
@@ -212,7 +206,7 @@ const TourLogin = () => {
                 className="mx-auto w-48 sm:w-56 md:w-64 h-auto object-contain drop-shadow-2xl -mb-6 sm:-mb-8"
               />
               <h1 className="mt-10 sm:mt-12 text-2xl sm:text-3xl font-bold text-gray-800">
-                <span className="text-green-600">
+                <span className="text-indigo-600">
                   {state === "Admin" ? "Admin" : "Tour Admin"}
                 </span>{" "}
                 Login
@@ -294,7 +288,7 @@ const TourLogin = () => {
                         setPassword("");
                         setErrors({ email: "", password: "", server: "" });
                       }}
-                      className="text-green-600 font-bold underline cursor-pointer hover:text-green-700"
+                      className="text-indigo-600 font-bold underline cursor-pointer hover:text-indigo-700"
                     >
                       Click here
                     </span>
@@ -309,7 +303,7 @@ const TourLogin = () => {
                         setPassword("");
                         setErrors({ email: "", password: "", server: "" });
                       }}
-                      className="text-green-600 font-bold underline cursor-pointer hover:text-green-700"
+                      className="text-indigo-600 font-bold underline cursor-pointer hover:text-indigo-700"
                     >
                       Click here
                     </span>
@@ -358,16 +352,41 @@ const TourLogin = () => {
           }
         }
 
+        @keyframes ping {
+          0% {
+            transform: scale(0.2);
+            opacity: 0.8;
+          }
+          80% {
+            transform: scale(2);
+            opacity: 0.3;
+          }
+          100% {
+            transform: scale(3);
+            opacity: 0;
+          }
+        }
+
         .animate-fly-diagonal {
           animation: fly-diagonal 15s linear infinite;
         }
-
         .animate-float-fast {
           animation: float-fast 9s ease-in-out infinite;
         }
-
         .animate-float-medium {
           animation: float-medium 11s ease-in-out infinite;
+        }
+        .animate-ping {
+          animation: ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        .delay-200 {
+          animation-delay: 0.2s;
+        }
+        .delay-500 {
+          animation-delay: 0.5s;
+        }
+        .delay-700 {
+          animation-delay: 0.7s;
         }
       `}</style>
     </>
