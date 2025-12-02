@@ -19,7 +19,7 @@ const CancellationCentre = () => {
 
     const timer = setTimeout(() => {
       setToastQueue((prev) => prev.slice(1));
-    }, 5000); // Changed from 3000 → 5000
+    }, 10000); // Changed from 3000 → 5000
 
     return () => clearTimeout(timer);
   }, [toastQueue]);

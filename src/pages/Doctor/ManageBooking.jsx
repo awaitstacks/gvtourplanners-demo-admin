@@ -1,5 +1,4 @@
 /* eslint-disable no-unused-vars */
-
 import React, { useContext, useEffect, useState, useMemo } from "react";
 import { TourContext } from "../../context/TourContext";
 import {
@@ -11,7 +10,6 @@ import {
   Users,
   Save,
   MessageSquare,
-  DollarSign,
   IndianRupee,
 } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
@@ -39,6 +37,17 @@ const ManageBooking = () => {
   useEffect(() => {
     if (tourList.length === 0) getTourList();
   }, [tourList, getTourList]);
+
+  /* ------------------------------------------------------------------ */
+  /*  Is booking FULLY PAID? → Check payment.advance.paid && payment.balance.paid */
+  /* ------------------------------------------------------------------ */
+  const isFullyPaid = useMemo(() => {
+    if (!booking?.payment) return false;
+    return (
+      booking.payment.advance.paid === true &&
+      booking.payment.balance.paid === true
+    );
+  }, [booking]);
 
   /* ------------------------------------------------------------------ */
   /*  Load booking + tour                                               */
@@ -322,7 +331,6 @@ const ManageBooking = () => {
 
         setOriginalBooking(JSON.parse(JSON.stringify(booking)));
 
-        // Re-fetch balance history after save
         const res = await getManagedBookingsHistory();
         if (res.success && Array.isArray(res.data)) {
           const filtered = res.data.filter(
@@ -463,6 +471,18 @@ const ManageBooking = () => {
       {/* Form */}
       {booking && tour && (
         <div className="space-y-8">
+          {/* FULLY PAID BANNER */}
+          {isFullyPaid && (
+            <div className="p-5 bg-green-100 border-2 border-green-600 rounded-xl text-green-900 font-bold text-center text-lg shadow-md">
+              This booking is FULLY PAID
+              <br />
+              <span className="text-base font-medium">
+                Package, Sharing Type & Add-ons are now LOCKED and cannot be
+                changed.
+              </span>
+            </div>
+          )}
+
           {/* Booking ID + Tour Title */}
           <div className="grid md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded">
             <div>
@@ -834,7 +854,7 @@ const ManageBooking = () => {
                   )}
 
                   <div className="grid md:grid-cols-3 gap-4 mb-4">
-                    {/* Package */}
+                    {/* Package - LOCKED IF FULLY PAID */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         Package *
@@ -859,7 +879,7 @@ const ManageBooking = () => {
                             );
                           }
                         }}
-                        disabled={isCancelled}
+                        disabled={isCancelled || isFullyPaid}
                         className="mt-1 w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-200"
                       >
                         <option value="main">Main Package</option>
@@ -958,7 +978,7 @@ const ManageBooking = () => {
                       </select>
                     </div>
 
-                    {/* Sharing */}
+                    {/* Sharing Type - LOCKED IF FULLY PAID */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         Sharing *
@@ -968,7 +988,7 @@ const ManageBooking = () => {
                         onChange={(e) =>
                           updateTraveller(idx, "sharingType", e.target.value)
                         }
-                        disabled={isCancelled}
+                        disabled={isCancelled || isFullyPaid}
                         className="mt-1 w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-200"
                       >
                         <option value="">Select</option>
@@ -1038,7 +1058,7 @@ const ManageBooking = () => {
                       </select>
                     </div>
 
-                    {/* Add-on */}
+                    {/* Add-on - LOCKED IF FULLY PAID */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         Add-on
@@ -1054,7 +1074,7 @@ const ManageBooking = () => {
                             price: a?.amount || 0,
                           });
                         }}
-                        disabled={isCancelled}
+                        disabled={isCancelled || isFullyPaid}
                         className="mt-1 w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-200"
                       >
                         <option value="">None</option>

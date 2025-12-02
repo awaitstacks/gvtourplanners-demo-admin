@@ -33,32 +33,34 @@ const TourApp = () => {
   return aToken || ttoken ? (
     <div className="bg-[#F8F9FD]">
       <TourNavbar />
-      <div className="flex items-start">
+      <div className="flex">
         <TourSidebar />
-        <Routes>
-          {/* Admin Routes */}
-          <Route path="/" element={<></>} />
-          <Route path="/admin-dashboard" element={<TourAdminDashboard />} />
-          <Route path="/all-bookings" element={<AllBookings />} />
-          <Route path="/add-tour" element={<AddTour />} />
-          <Route path="/tour-list" element={<ToursList />} />
-          <Route path="/cancel-rule" element={<CancelRule />} />
-          <Route path="/cancel-centre" element={<CancellationCentre />} />
-          <Route path="/db-migration" element={<DBMigrationCenter />} />
-          <Route path="/booking-approvals" element={<BookingApprovals />} />
+        <main className="flex-1 ml-0 md:ml-72 pt-16 min-h-screen bg-[#F8F9FD] transition-all duration-300">
+          <Routes>
+            {/* Admin Routes */}
+            <Route path="/" element={<></>} />
+            <Route path="/admin-dashboard" element={<TourAdminDashboard />} />
+            <Route path="/all-bookings" element={<AllBookings />} />
+            <Route path="/add-tour" element={<AddTour />} />
+            <Route path="/tour-list" element={<ToursList />} />
+            <Route path="/cancel-rule" element={<CancelRule />} />
+            <Route path="/cancel-centre" element={<CancellationCentre />} />
+            <Route path="/db-migration" element={<DBMigrationCenter />} />
+            <Route path="/booking-approvals" element={<BookingApprovals />} />
 
-          {/* Doctor Routes */}
-          <Route path="/tour-dashboard" element={<TourDashboard />} />
-          <Route path="/tour-bookings" element={<TourBookings />} />
-          <Route path="/tour-profile" element={<TourProfile />} />
-          <Route path="/tour-namelist" element={<TourNameList />} />
-          <Route path="/tour-updateBalance" element={<BookingControls />} />
-          <Route
-            path="/tour-cancelTraveller"
-            element={<CancellationControls />}
-          />
-          <Route path="/tour-managebooking" element={<ManageBooking />} />
-        </Routes>
+            {/* Doctor Routes */}
+            <Route path="/tour-dashboard" element={<TourDashboard />} />
+            <Route path="/tour-bookings" element={<TourBookings />} />
+            <Route path="/tour-profile" element={<TourProfile />} />
+            <Route path="/tour-namelist" element={<TourNameList />} />
+            <Route path="/tour-updateBalance" element={<BookingControls />} />
+            <Route
+              path="/tour-cancelTraveller"
+              element={<CancellationControls />}
+            />
+            <Route path="/tour-managebooking" element={<ManageBooking />} />
+          </Routes>
+        </main>
       </div>
     </div>
   ) : (

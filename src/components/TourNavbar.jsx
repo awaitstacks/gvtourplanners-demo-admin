@@ -1,8 +1,9 @@
 import React, { useContext } from "react";
 import { assets } from "../assets/assets";
 import { TourAdminContext } from "../context/TourAdminContext";
-import { useNavigate } from "react-router-dom";
 import { TourContext } from "../context/TourContext";
+import { useNavigate } from "react-router-dom";
+import { Menu } from "lucide-react";
 
 const TourNavbar = () => {
   const navigate = useNavigate();
@@ -11,27 +12,48 @@ const TourNavbar = () => {
 
   const logout = () => {
     navigate("/");
-    aToken && setAToken("");
-    aToken && localStorage.removeItem("aToken");
-    ttoken && setttoken("");
-    ttoken && localStorage.removeItem("ttoken");
+    if (aToken) {
+      setAToken("");
+      localStorage.removeItem("aToken");
+    }
+    if (ttoken) {
+      setttoken("");
+      localStorage.removeItem("ttoken");
+    }
   };
 
+  const roleText = aToken ? "Admin" : "Tour admin";
+
   return (
-    <div className="flex justify-between items-center px-4 sm:px-6 md:px-10 py-2 sm:py-3 border-b bg-white">
+    <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 shadow-sm">
+      {/* Left side – Logo + Role */}
       <div className="flex items-center gap-2 sm:gap-3">
+        {/* Logo */}
         <img
-          className="w-32 sm:w-36 md:w-40 cursor-pointer"
           src={assets.admin_logo}
-          alt="Admin Logo"
+          alt="GV Tour Planners"
+          className="h-8 sm:h-9 md:h-10 object-contain"
         />
-        <p className="border px-2 py-0.5 rounded-full border-gray-500 text-gray-600 text-xs sm:text-sm">
-          {aToken ? "Admin" : "Tour"}
-        </p>
+
+        {/* Role badge – always visible, small & beautiful */}
+        <span
+          className={`
+            px-2 py-0.5 text-[10px] sm:text-xs font-semibold rounded-full
+            ${
+              aToken
+                ? "bg-white-100 text-green-800 border border-blue-500"
+                : "bg-white-100 text-green-800 border border-blue-500"
+            }
+          `}
+        >
+          {roleText}
+        </span>
       </div>
+
+      {/* Logout button – compact but tappable */}
       <button
         onClick={logout}
-        className="bg-primary text-white text-xs sm:text-sm px-6 sm:px-8 md:px-10 py-2 rounded-full min-w-[100px] sm:min-w-[120px] hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50"
+        className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-full hover:bg-primary/90 transition-shadow"
       >
         Logout
       </button>

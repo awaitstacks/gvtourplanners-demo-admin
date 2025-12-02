@@ -419,7 +419,9 @@ const AddTour = () => {
     <ErrorBoundary>
       <div className="p-4 sm:p-6 max-w-4xl mx-auto">
         <ToastContainer position="top-right" autoClose={5000} />
-        <h1 className="text-xl sm:text-2xl font-bold mb-6">Add New Tour</h1>
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-6 text-center sm:text-left px-10 sm:px-0">
+          Add New Tour
+        </h1>
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* BASIC DETAILS */}
           <div>

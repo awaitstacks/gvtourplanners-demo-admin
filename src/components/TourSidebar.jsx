@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+
 import React, { useContext, useState } from "react";
 import { TourContext } from "../context/TourContext";
 import { TourAdminContext } from "../context/TourAdminContext";
@@ -11,7 +13,7 @@ import {
   Menu,
   FileText,
   User,
-  Settings, // New icon for Booking Controls
+  Settings,
   TicketX,
   CalendarCheck,
   OctagonAlert,
@@ -21,286 +23,117 @@ import {
 const TourSidebar = () => {
   const { aToken } = useContext(TourAdminContext);
   const { ttoken } = useContext(TourContext);
-  const [isOpen, setIsOpen] = useState(false); // State for mobile sidebar toggle
+  const [isOpen, setIsOpen] = useState(false);
 
-  const toggleSidebar = () => {
-    setIsOpen(!isOpen);
-  };
+  const toggleSidebar = () => setIsOpen(!isOpen);
 
   return (
     <>
-      {/* Mobile Toggle Button */}
+      {/* Mobile Toggle Button — Smaller, elegant & perfectly placed */}
       <button
-        className={`md:hidden fixed left-4 z-50 p-2 bg-primary text-white rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 ${
-          isOpen ? "top-102" : "top-16"
-        }`}
+        className="md:hidden fixed top-16 left-2 z-50 p-2 bg-primary text-white rounded-full shadow-lg hover:bg-primary/90 transition-all duration-200 border-2 border-white/40"
         onClick={toggleSidebar}
-        aria-label={isOpen ? "Close sidebar" : "Open sidebar"}
+        aria-label={isOpen ? "Close menu" : "Open menu"}
       >
         {isOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
 
-      {/* Sidebar */}
+      {/* Sidebar — Starts below navbar */}
       <div
-        className={`min-h-screen bg-white border-r fixed md:static top-7 left-3 h-full z-40 transition-transform duration-300 ease-in-out ${
-          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-        } w-16 sm:w-20 md:w-72`}
+        className={`
+          fixed left-0 z-40 w-72 bg-white border-r border-gray-200 shadow-lg
+          top-16 bottom-0
+          transform transition-transform duration-300 ease-in-out overflow-y-auto
+          ${isOpen ? "translate-x-0" : "-translate-x-full"}
+          md:translate-x-0
+        `}
       >
-        {aToken && (
-          <ul className="text-[#515151] mt-16 md:mt-5">
-            <NavLink
-              className={({ isActive }) =>
-                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
-                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
-                }`
-              }
-              to="/admin-dashboard"
-              aria-label="Dashboard"
-            >
-              <Home size={24} className="w-6 h-6 sm:w-7 sm:h-7" />
-              <p className="hidden md:block text-sm sm:text-base">Dashboard</p>
-              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                Dashboard
-              </span>
-            </NavLink>
-            <NavLink
-              className={({ isActive }) =>
-                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
-                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
-                }`
-              }
-              to="/all-bookings"
-              aria-label="Bookings"
-            >
-              <Calendar size={24} className="w-6 h-6 sm:w-7 sm:h-7" />
-              <p className="hidden md:block text-sm sm:text-base">Bookings</p>
-              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                Bookings
-              </span>
-            </NavLink>
-            <NavLink
-              className={({ isActive }) =>
-                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
-                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
-                }`
-              }
-              to="/add-tour"
-              aria-label="Add Tour"
-            >
-              <Plus size={24} className="w-6 h-6 sm:w-7 sm:h-7" />
-              <p className="hidden md:block text-sm sm:text-base">Add Tour</p>
-              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                Add Tour
-              </span>
-            </NavLink>
-            <NavLink
-              className={({ isActive }) =>
-                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
-                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
-                }`
-              }
-              to="/tour-list"
-              aria-label="Tour Controls and Data"
-            >
-              <Users size={24} className="w-6 h-6 sm:w-7 sm:h-7" />
-              <p className="hidden md:block text-sm sm:text-base">
-                Tour Controls and Data
-              </p>
-              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                Tour Controls and Data
-              </span>
-            </NavLink>
-            <NavLink
-              className={({ isActive }) =>
-                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
-                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
-                }`
-              }
-              to="/cancel-rule"
-              aria-label="Cancellation Rule"
-            >
-              <FileText size={24} className="w-6 h-6 sm:w-7 sm:h-7" />
-              <p className="hidden md:block text-sm sm:text-base">
-                Cancellation Rule
-              </p>
-              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                Cancellation Rule
-              </span>
-            </NavLink>
-            <NavLink
-              className={({ isActive }) =>
-                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
-                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
-                }`
-              }
-              to="/cancel-centre"
-              aria-label="Cancellation centre"
-            >
-              <TicketX size={24} className="w-6 h-6 sm:w-7 sm:h-7" />
-              <p className="hidden md:block text-sm sm:text-base">
-                Cancellation centre
-              </p>
-              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                Cancellation centre
-              </span>
-            </NavLink>
-            <NavLink
-              className={({ isActive }) =>
-                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
-                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
-                }`
-              }
-              to="/db-migration"
-              aria-label="DB Migration Centre"
-            >
-              <OctagonAlert size={24} className="w-6 h-6 sm:w-7 sm:h-7" />
-              <p className="hidden md:block text-sm sm:text-base">
-                DB Migration centre
-              </p>
-              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                DB Migration centre
-              </span>
-            </NavLink>
-            <NavLink
-              className={({ isActive }) =>
-                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
-                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
-                }`
-              }
-              to="/booking-approvals"
-              aria-label="Booking approvals"
-            >
-              <Signature size={24} className="w-6 h-6 sm:w-7 sm:h-7" />
-              <p className="hidden md:block text-sm sm:text-base">
-                Booking approvals
-              </p>
-              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                Booking approvals
-              </span>
-            </NavLink>
-          </ul>
-        )}
-        {ttoken && (
-          <ul className="text-[#515151] mt-16 md:mt-5">
-            <NavLink
-              className={({ isActive }) =>
-                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
-                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
-                }`
-              }
-              to="/tour-dashboard"
-              aria-label="Dashboard"
-            >
-              <Home size={24} className="w-6 h-6 sm:w-7 sm:h-7" />
-              <p className="hidden md:block text-sm sm:text-base">Dashboard</p>
-              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                Dashboard
-              </span>
-            </NavLink>
-            <NavLink
-              className={({ isActive }) =>
-                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
-                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
-                }`
-              }
-              to="/tour-bookings"
-              aria-label="Bookings"
-            >
-              <Calendar size={24} className="w-6 h-6 sm:w-7 sm:h-7" />
-              <p className="hidden md:block text-sm sm:text-base">Bookings</p>
-              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                Bookings
-              </span>
-            </NavLink>
-            <NavLink
-              className={({ isActive }) =>
-                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
-                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
-                }`
-              }
-              to="/tour-profile"
-              aria-label="Profile"
-            >
-              <User size={24} className="w-6 h-6 sm:w-7 sm:h-7" />
-              <p className="hidden md:block text-sm sm:text-base">Profile</p>
-              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                Profile
-              </span>
-            </NavLink>
-            <NavLink
-              className={({ isActive }) =>
-                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
-                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
-                }`
-              }
-              to="/tour-namelist"
-              aria-label="Name List"
-            >
-              <FileText size={24} className="w-6 h-6 sm:w-7 sm:h-7" />
-              <p className="hidden md:block text-sm sm:text-base">Name List</p>
-              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                Name List
-              </span>
-            </NavLink>
-            <NavLink
-              className={({ isActive }) =>
-                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
-                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
-                }`
-              }
-              to="/tour-updateBalance"
-              aria-label="Booking Controls"
-            >
-              <Settings size={24} className="w-6 h-6 sm:w-7 sm:h-7" />{" "}
-              {/* Changed to Settings icon */}
-              <p className="hidden md:block text-sm sm:text-base">
-                Booking Controls
-              </p>
-              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                Booking Controls
-              </span>
-            </NavLink>
-            <NavLink
-              className={({ isActive }) =>
-                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
-                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
-                }`
-              }
-              to="/tour-cancelTraveller"
-              aria-label="Cancellation Controls"
-            >
-              <TicketX size={24} className="w-6 h-6 sm:w-7 sm:h-7" />{" "}
-              {/* Changed to Settings icon */}
-              <p className="hidden md:block text-sm sm:text-base">
-                Cancellation Controls
-              </p>
-              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                Cancellation Controls
-              </span>
-            </NavLink>
-            <NavLink
-              className={({ isActive }) =>
-                `flex items-center gap-2 sm:gap-3 py-3 px-2 sm:px-3 md:px-9 w-full cursor-pointer group relative ${
-                  isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
-                }`
-              }
-              to="/tour-managebooking"
-              aria-label="managebooking"
-            >
-              <CalendarCheck size={24} className="w-6 h-6 sm:w-7 sm:h-7" />{" "}
-              {/* Changed to Settings icon */}
-              <p className="hidden md:block text-sm sm:text-base">
-                Manage Booking
-              </p>
-              <span className="absolute left-full md:hidden ml-2 px-2 py-1 text-xs bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                Manage Booking
-              </span>
-            </NavLink>
-          </ul>
-        )}
+        <div className="pt-8 pb-8">
+          {/* Admin Menu */}
+          {aToken && (
+            <ul className="text-[#515151] space-y-1 px-4">
+              {adminMenuItems.map((item) => (
+                <SidebarItem
+                  key={item.to}
+                  {...item}
+                  onClick={() => setIsOpen(false)}
+                />
+              ))}
+            </ul>
+          )}
+
+          {/* Tour Operator Menu */}
+          {ttoken && (
+            <ul className="text-[#515151] space-y-1 px-4">
+              {tourMenuItems.map((item) => (
+                <SidebarItem
+                  key={item.to}
+                  {...item}
+                  onClick={() => setIsOpen(false)}
+                />
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
+
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
+          onClick={toggleSidebar}
+        />
+      )}
     </>
   );
 };
+
+// Reusable Sidebar Item
+const SidebarItem = ({ to, icon: Icon, label, onClick }) => (
+  <NavLink
+    to={to}
+    onClick={onClick}
+    className={({ isActive }) =>
+      `flex items-center gap-3 py-3 px-4 rounded-lg transition-all duration-200 group relative
+      ${
+        isActive
+          ? "bg-[#F2F3FF] text-primary border-r-4 border-primary font-medium"
+          : "hover:bg-gray-100"
+      }`
+    }
+  >
+    <Icon size={22} />
+    <span className="text-sm font-medium">{label}</span>
+    <span className="absolute left-full ml-3 px-3 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+      {label}
+    </span>
+  </NavLink>
+);
+
+// Menu Items
+const adminMenuItems = [
+  { to: "/admin-dashboard", icon: Home, label: "Dashboard" },
+  { to: "/all-bookings", icon: Calendar, label: "Bookings" },
+  { to: "/add-tour", icon: Plus, label: "Add Tour" },
+  { to: "/tour-list", icon: Users, label: "Tour Controls and Data" },
+  { to: "/cancel-rule", icon: FileText, label: "Cancellation Rule" },
+  { to: "/cancel-centre", icon: TicketX, label: "Cancellation centre" },
+  { to: "/db-migration", icon: OctagonAlert, label: "DB Migration centre" },
+  { to: "/booking-approvals", icon: Signature, label: "Booking approvals" },
+];
+
+const tourMenuItems = [
+  { to: "/tour-dashboard", icon: Home, label: "Dashboard" },
+  { to: "/tour-bookings", icon: Calendar, label: "Bookings" },
+  { to: "/tour-profile", icon: User, label: "Profile" },
+  { to: "/tour-namelist", icon: FileText, label: "Name List" },
+  { to: "/tour-updateBalance", icon: Settings, label: "Booking Controls" },
+  {
+    to: "/tour-cancelTraveller",
+    icon: TicketX,
+    label: "Cancellation Controls",
+  },
+  { to: "/tour-managebooking", icon: CalendarCheck, label: "Manage Booking" },
+];
 
 export default TourSidebar;
