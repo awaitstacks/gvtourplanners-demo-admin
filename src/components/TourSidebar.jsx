@@ -13,7 +13,7 @@ import {
   Menu,
   FileText,
   User,
-  Settings,
+  IndianRupee,
   TicketX,
   CalendarCheck,
   OctagonAlert,
@@ -117,23 +117,27 @@ const adminMenuItems = [
   { to: "/add-tour", icon: Plus, label: "Add Tour" },
   { to: "/tour-list", icon: Users, label: "Tour Controls and Data" },
   { to: "/cancel-rule", icon: FileText, label: "Cancellation Rule" },
-  { to: "/cancel-centre", icon: TicketX, label: "Cancellation centre" },
   { to: "/db-migration", icon: OctagonAlert, label: "DB Migration centre" },
   { to: "/booking-approvals", icon: Signature, label: "Booking approvals" },
+  { to: "/cancel-centre", icon: TicketX, label: "Cancellation approvals" },
 ];
 
 const tourMenuItems = [
   { to: "/tour-dashboard", icon: Home, label: "Dashboard" },
   { to: "/tour-bookings", icon: Calendar, label: "Bookings" },
-  { to: "/tour-profile", icon: User, label: "Profile" },
+  { to: "/tour-profile", icon: User, label: "Tour profile" },
   { to: "/tour-namelist", icon: FileText, label: "Name List" },
-  { to: "/tour-updateBalance", icon: Settings, label: "Booking Controls" },
+  { to: "/tour-updateBalance", icon: IndianRupee, label: "Payment controller" },
   {
     to: "/tour-cancelTraveller",
     icon: TicketX,
-    label: "Cancellation Controls",
+    label: "Cancellation Controller",
   },
-  { to: "/tour-managebooking", icon: CalendarCheck, label: "Manage Booking" },
+  {
+    to: "/tour-managebooking",
+    icon: CalendarCheck,
+    label: "Booking controller",
+  },
 ];
 
 export default TourSidebar;

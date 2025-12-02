@@ -38,9 +38,6 @@ const ManageBooking = () => {
     if (tourList.length === 0) getTourList();
   }, [tourList, getTourList]);
 
-  /* ------------------------------------------------------------------ */
-  /*  Is booking FULLY PAID? → Check payment.advance.paid && payment.balance.paid */
-  /* ------------------------------------------------------------------ */
   const isFullyPaid = useMemo(() => {
     if (!booking?.payment) return false;
     return (
@@ -49,9 +46,6 @@ const ManageBooking = () => {
     );
   }, [booking]);
 
-  /* ------------------------------------------------------------------ */
-  /*  Load booking + tour                                               */
-  /* ------------------------------------------------------------------ */
   const handleGetDetails = async () => {
     if (!bookingId.trim()) return setError("Enter a Booking ID");
 
@@ -89,9 +83,6 @@ const ManageBooking = () => {
     setLoading(false);
   };
 
-  /* ------------------------------------------------------------------ */
-  /*  Helper – get the correct package (main / variant)                 */
-  /* ------------------------------------------------------------------ */
   const getPackage = (traveller) => {
     if (!tour) return null;
     return traveller.packageType === "main"
@@ -99,9 +90,6 @@ const ManageBooking = () => {
       : tour.variantPackage?.[traveller.variantPackageIndex] || null;
   };
 
-  /* ------------------------------------------------------------------ */
-  /*  Reset helper – clears the fields we want to wipe                   */
-  /* ------------------------------------------------------------------ */
   const resetTravellerFields = (idx, fieldsToReset = {}) => {
     const upd = { ...booking };
     const t = upd.travellers[idx];
@@ -115,9 +103,6 @@ const ManageBooking = () => {
     setBooking(upd);
   };
 
-  /* ------------------------------------------------------------------ */
-  /*  Central update – ONLY reset on package change                     */
-  /* ------------------------------------------------------------------ */
   const updateTraveller = (idx, field, value) => {
     const upd = { ...booking };
     const t = upd.travellers[idx];
@@ -161,9 +146,6 @@ const ManageBooking = () => {
     return JSON.stringify(booking) !== JSON.stringify(originalBooking);
   }, [booking, originalBooking]);
 
-  /* ------------------------------------------------------------------ */
-  /*  Price preview (UI only)                                            */
-  /* ------------------------------------------------------------------ */
   const travellerPrice = (t) => {
     const pkg =
       t.packageType === "main"
@@ -190,9 +172,6 @@ const ManageBooking = () => {
     return base + (t.selectedAddon?.price ?? 0);
   };
 
-  /* ------------------------------------------------------------------ */
-  /*  Validation – boarding & de-boarding are required                  */
-  /* ------------------------------------------------------------------ */
   const validateBeforeSave = () => {
     const errors = {};
     let hasError = false;
@@ -223,21 +202,14 @@ const ManageBooking = () => {
     return !hasError;
   };
 
-  /* ------------------------------------------------------------------ */
-  /*  Save – send diff payload + show balance update                     */
-  /* ------------------------------------------------------------------ */
   const handleSaveUpdate = async () => {
     if (!hasChanges) {
-      toast.info("No changes to save.", {
-        containerId: "manage-booking-toast",
-      });
+      toast.info("No changes to save.");
       return;
     }
 
     if (!validateBeforeSave()) {
-      toast.error("Please fix validation errors before saving.", {
-        containerId: "manage-booking-toast",
-      });
+      toast.error("Please fix validation errors before saving.");
       return;
     }
 
@@ -318,9 +290,7 @@ const ManageBooking = () => {
       const result = await response.json();
 
       if (result.success) {
-        toast.success("Manage Booking updated successfully!", {
-          containerId: "manage-booking-toast",
-        });
+        toast.success("Booking update request raised successfully!");
 
         const { gvCancellationPool, irctcCancellationPool } = result.data || {};
 
@@ -339,21 +309,16 @@ const ManageBooking = () => {
           setBalanceHistory(filtered);
         }
       } else {
-        toast.error(result.message || "Failed to save", {
-          containerId: "manage-booking-toast",
-        });
+        toast.error(result.message || "Failed to save");
       }
     } catch (err) {
       console.error("Save error:", err);
-      toast.error("Network error", { containerId: "manage-booking-toast" });
+      toast.error("Network error");
     } finally {
       setSaving(false);
     }
   };
 
-  /* ------------------------------------------------------------------ */
-  /*  Fetch Balance History when booking loads                          */
-  /* ------------------------------------------------------------------ */
   useEffect(() => {
     if (!booking?._id) return;
 
@@ -381,30 +346,35 @@ const ManageBooking = () => {
     fetchHistory();
   }, [booking?._id, getManagedBookingsHistory]);
 
-  /* ------------------------------------------------------------------ */
-  /*  Render                                                            */
-  /* ------------------------------------------------------------------ */
   return (
     <div className="relative max-w-5xl mx-auto p-6 bg-white shadow-lg rounded-lg mt-10">
-      <div className="absolute top-4 right-4 z-50 pointer-events-none">
+      {/* TOAST CONTAINER – FIXED & ALWAYS VISIBLE */}
+      <div className="fixed inset-0 pointer-events-none z-[9999]">
         <ToastContainer
-          containerId="manage-booking-toast"
           position="top-right"
-          autoClose={5000}
+          autoClose={4000}
           hideProgressBar={false}
+          newestOnTop
           closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
           pauseOnHover
-          theme="colored"
-          limit={1}
-          toastClassName="!w-72"
+          limit={6}
+          toastClassName="min-w-[320px] max-w-[420px] !bg-white !shadow-2xl !rounded-xl !border !border-gray-200 overflow-hidden"
+          bodyClassName="text-sm font-semibold text-gray-800 px-5 py-4"
+          progressClassName="!bg-green-500 h-1"
+          className="top-4 right-4"
         />
       </div>
 
-      {/* Header + Save */}
-      <div className="flex items-center justify-between border-b pb-4 mb-6">
-        <div className="flex items-center gap-3">
-          <CalendarCheck className="w-8 h-8 text-indigo-600" />
-          <h1 className="text-2xl font-bold text-gray-800">Manage Booking</h1>
+      {/* HEADER – Mobile: slightly right | Desktop: centered */}
+      <div className="flex items-center justify-between border-b pb-6 mb-8">
+        <div className="flex items-center justify-center sm:justify-center gap-6 py-8 px-10 sm:px-0 w-full">
+          <CalendarCheck className="w-11 h-11 text-indigo-600 flex-shrink-0" />
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-800">
+            Booking Controller
+          </h1>
         </div>
 
         {booking && (
@@ -412,22 +382,22 @@ const ManageBooking = () => {
             onClick={handleSaveUpdate}
             disabled={saving || !hasChanges}
             className={`
-              flex items-center gap-2 px-5 py-2 rounded-md font-medium text-white transition-all
+              flex items-center gap-3 px-8 py-4 rounded-xl font-bold text-white transition-all shadow-lg
               ${
                 saving || !hasChanges
                   ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-green-600 hover:bg-green-700 active:bg-green-800"
+                  : "bg-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
               }
             `}
           >
             {saving ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <Loader2 className="w-6 h-6 animate-spin" />
                 Saving...
               </>
             ) : (
               <>
-                <Save className="w-5 h-5" />
+                <Save className="w-6 h-6" />
                 Save Update
               </>
             )}
@@ -435,45 +405,49 @@ const ManageBooking = () => {
         )}
       </div>
 
-      {/* Booking ID input */}
-      <div className="flex gap-3 mb-6">
-        <input
-          type="text"
-          placeholder="Paste Booking ID here..."
-          value={bookingId}
-          onChange={(e) => setBookingId(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleGetDetails()}
-          className="flex-1 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        />
-        <button
-          onClick={handleGetDetails}
-          disabled={loading}
-          className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Loading...
-            </>
-          ) : (
-            "Get Details"
-          )}
-        </button>
+      {/* Booking ID Input */}
+      <div className="max-w-2xl mx-auto mb-10">
+        <label className="block text-sm font-semibold text-gray-700 mb-3">
+          Enter Booking ID
+        </label>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <input
+            type="text"
+            placeholder="Paste Booking ID here..."
+            value={bookingId}
+            onChange={(e) => setBookingId(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleGetDetails()}
+            className="flex-1 px-6 py-4 text-lg border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-200 focus:border-indigo-500 shadow-sm transition-all"
+          />
+          <button
+            onClick={handleGetDetails}
+            disabled={loading}
+            className="px-10 py-4 bg-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 shadow-lg transition-all transform hover:scale-105"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-6 h-6 animate-spin inline mr-2" />
+                Loading...
+              </>
+            ) : (
+              "Get Details"
+            )}
+          </button>
+        </div>
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md flex items-center gap-2 text-red-700">
-          <AlertCircle className="w-5 h-5" />
-          {error}
+        <div className="mb-8 p-6 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-red-700">
+          <AlertCircle className="w-7 h-7 flex-shrink-0" />
+          <span className="font-medium">{error}</span>
         </div>
       )}
 
-      {/* Form */}
       {booking && tour && (
-        <div className="space-y-8">
+        <div className="space-y-10">
           {/* FULLY PAID BANNER */}
           {isFullyPaid && (
-            <div className="p-5 bg-green-100 border-2 border-green-600 rounded-xl text-green-900 font-bold text-center text-lg shadow-md">
+            <div className="p-6 bg-green-100 border-2 border-green-600 rounded-xl text-green-900 font-bold text-center text-lg shadow-md">
               This booking is FULLY PAID
               <br />
               <span className="text-base font-medium">
@@ -484,7 +458,7 @@ const ManageBooking = () => {
           )}
 
           {/* Booking ID + Tour Title */}
-          <div className="grid md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded">
+          <div className="grid md:grid-cols-2 gap-6 p-6 bg-gray-50 rounded-xl">
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Booking ID
@@ -493,7 +467,7 @@ const ManageBooking = () => {
                 type="text"
                 value={booking._id}
                 disabled
-                className="mt-1 w-full px-3 py-2 border rounded-md bg-gray-100"
+                className="mt-2 w-full px-4 py-3 border rounded-lg bg-gray-100 font-mono text-sm"
               />
             </div>
             <div>
@@ -504,18 +478,18 @@ const ManageBooking = () => {
                 type="text"
                 value={tour.title}
                 disabled
-                className="mt-1 w-full px-3 py-2 border rounded-md bg-gray-100"
+                className="mt-2 w-full px-4 py-3 border rounded-lg bg-gray-100"
               />
             </div>
           </div>
 
           {/* Admin Remarks */}
           {booking.adminRemarks && booking.adminRemarks.length > 0 && (
-            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
-              <h3 className="flex items-center gap-2 font-semibold mb-3 text-yellow-800">
-                <MessageSquare className="w-5 h-5" /> Admin Remarks
+            <div className="p-6 bg-yellow-50 border border-yellow-200 rounded-xl">
+              <h3 className="flex items-center gap-2 font-bold mb-4 text-yellow-800 text-lg">
+                <MessageSquare className="w-6 h-6" /> Admin Remarks
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {booking.adminRemarks.map((remark, i) => {
                   const amount = Number(remark.amount) || 0;
                   const isNegative = amount < 0;
@@ -534,7 +508,7 @@ const ManageBooking = () => {
                   return (
                     <div
                       key={i}
-                      className={`p-3 rounded-lg text-sm font-medium border ${
+                      className={`p-4 rounded-lg text-sm font-medium border ${
                         isNegative
                           ? "bg-red-50 text-red-800 border-red-200"
                           : "bg-green-50 text-green-800 border-green-200"
@@ -545,7 +519,7 @@ const ManageBooking = () => {
                           {isNegative ? "-₹" : "+₹"}
                           {Math.abs(amount)}
                         </span>
-                        <span className="text-base opacity-75">
+                        <span className="text-sm opacity-75">
                           {formattedDate} at {formattedTime}
                         </span>
                       </div>
@@ -560,11 +534,11 @@ const ManageBooking = () => {
           {/* Cancellation Pools */}
           {(booking.gvCancellationPool !== undefined ||
             booking.irctcCancellationPool !== undefined) && (
-            <div className="p-4 bg-purple-50 border border-purple-200 rounded">
-              <h3 className="flex items-center gap-2 font-semibold mb-3 text-purple-800">
-                <IndianRupee className="w-5 h-5" /> Cancellation Pools
+            <div className="p-6 bg-purple-50 border border-purple-200 rounded-xl">
+              <h3 className="flex items-center gap-2 font-bold mb-4 text-purple-800 text-lg">
+                <IndianRupee className="w-6 h-6" /> Cancellation Pools
               </h3>
-              <div className="grid grid-cols-2 gap-4 text-base">
+              <div className="grid grid-cols-2 gap-6 text-base">
                 {booking.gvCancellationPool !== undefined && (
                   <div>
                     <span className="font-medium">GV Pool:</span>{" "}
@@ -585,11 +559,11 @@ const ManageBooking = () => {
             </div>
           )}
 
-          {/* === BALANCE UPDATE HISTORY === */}
-          <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="flex items-center gap-2 font-semibold text-indigo-800">
-                <IndianRupee className="w-5 h-5" />
+          {/* Balance Update History */}
+          <div className="p-6 bg-indigo-50 border border-indigo-200 rounded-xl">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="flex items-center gap-2 font-bold text-indigo-800 text-lg">
+                <IndianRupee className="w-6 h-6" />
                 Balance Update History
               </h3>
               <button
@@ -606,7 +580,7 @@ const ManageBooking = () => {
                   }
                   setHistoryLoading(false);
                 }}
-                className="text-xs text-indigo-600 hover:underline"
+                className="text-sm text-indigo-600 hover:underline font-medium"
                 disabled={historyLoading}
               >
                 {historyLoading ? "Refreshing..." : "Refresh"}
@@ -614,14 +588,14 @@ const ManageBooking = () => {
             </div>
 
             {historyLoading && (
-              <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
-                <Loader2 className="w-5 h-5 animate-spin inline-block mr-2" />
+              <div className="p-6 bg-gray-50 border border-gray-200 rounded-lg text-center">
+                <Loader2 className="w-6 h-6 animate-spin inline-block mr-2" />
                 Loading history...
               </div>
             )}
 
             {historyError && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-center text-red-800">
+              <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-center text-red-800 font-medium">
                 {historyError}
               </div>
             )}
@@ -629,37 +603,29 @@ const ManageBooking = () => {
             {!historyLoading &&
               !historyError &&
               balanceHistory.length === 0 && (
-                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-center text-yellow-800 font-medium">
+                <div className="p-6 bg-yellow-50 border border-yellow-200 rounded-lg text-center text-yellow-800 font-medium">
                   No balance update history found for this booking.
                 </div>
               )}
 
             {!historyLoading && !historyError && balanceHistory.length > 0 && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {balanceHistory.map((entry) => {
                   const isApproved = entry.approvedBy;
-                  const isPending = !isApproved && entry.raisedBy;
-
                   return (
                     <div
                       key={entry._id}
-                      className={`p-4 rounded-lg border text-sm font-medium transition-all
-                        ${
-                          isApproved
-                            ? "bg-green-50 text-green-800 border-green-300"
-                            : "bg-red-50 text-red-800 border-red-300"
-                        }`}
+                      className={`p-5 rounded-xl border text-sm font-medium transition-all ${
+                        isApproved
+                          ? "bg-green-50 text-green-800 border-green-300"
+                          : "bg-red-50 text-red-800 border-red-300"
+                      }`}
                     >
-                      <div className="flex justify-between items-start mb-2">
+                      <div className="flex justify-between items-start mb-3">
                         <div>
-                          <span className="font-bold">
+                          <span className="font-bold text-lg">
                             {isApproved ? "Approved" : "Not Approved"}
                           </span>
-                          {isPending && (
-                            <span className="ml-2 text-xs bg-red-200 text-red-800 px-2 py-1 rounded">
-                              Not Approved
-                            </span>
-                          )}
                         </div>
                         <span className="text-xs opacity-75">
                           {new Date(
@@ -675,7 +641,7 @@ const ManageBooking = () => {
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="grid grid-cols-2 gap-3 text-sm">
                         <div>
                           <span className="font-medium">Old Advance:</span>{" "}
                           <span className="font-bold">
@@ -703,12 +669,12 @@ const ManageBooking = () => {
                       </div>
 
                       {entry.adminRemarks?.length > 0 && (
-                        <div className="mt-3 pt-3 border-t border-gray-300">
-                          <p className="font-medium text-xs mb-1">
+                        <div className="mt-4 pt-4 border-t border-gray-300">
+                          <p className="font-medium text-sm mb-2">
                             Admin Remarks:
                           </p>
                           {entry.adminRemarks.map((r, i) => (
-                            <div key={i} className="text-xs">
+                            <div key={i} className="text-sm">
                               {r.amount ? (
                                 <span
                                   className={`font-bold ${
@@ -734,11 +700,11 @@ const ManageBooking = () => {
           </div>
 
           {/* Contact */}
-          <div className="p-4 bg-blue-50 rounded">
-            <h3 className="flex items-center gap-2 font-semibold mb-3">
-              <Mail className="w-5 h-5" /> Contact
+          <div className="p-6 bg-blue-50 rounded-xl">
+            <h3 className="flex items-center gap-2 font-bold mb-5 text-blue-800 text-lg">
+              <Mail className="w-6 h-6" /> Contact
             </h3>
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Email
@@ -749,7 +715,7 @@ const ManageBooking = () => {
                   onChange={(e) =>
                     updateNested("contact.email", e.target.value)
                   }
-                  className="mt-1 w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                  className="mt-2 w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
@@ -762,18 +728,18 @@ const ManageBooking = () => {
                   onChange={(e) =>
                     updateNested("contact.mobile", e.target.value)
                   }
-                  className="mt-1 w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                  className="mt-2 w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
           </div>
 
           {/* Billing Address */}
-          <div className="p-4 bg-green-50 rounded">
-            <h3 className="flex items-center gap-2 font-semibold mb-3">
-              <MapPin className="w-5 h-5" /> Billing Address
+          <div className="p-6 bg-green-50 rounded-xl">
+            <h3 className="flex items-center gap-2 font-bold mb-5 text-green-800 text-lg">
+              <MapPin className="w-6 h-6" /> Billing Address
             </h3>
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-2 gap-6">
               {[
                 "addressLine1",
                 "addressLine2",
@@ -792,7 +758,7 @@ const ManageBooking = () => {
                     onChange={(e) =>
                       updateNested(`billingAddress.${f}`, e.target.value)
                     }
-                    className="mt-1 w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500"
+                    className="mt-2 w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500"
                   />
                 </div>
               ))}
@@ -801,8 +767,8 @@ const ManageBooking = () => {
 
           {/* Travellers */}
           <div>
-            <h3 className="flex items-center gap-2 font-semibold mb-4">
-              <Users className="w-6 h-6" /> Travellers
+            <h3 className="flex items-center gap-3 font-bold mb-6 text-gray-800 text-xl">
+              <Users className="w-8 h-8" /> Travellers
             </h3>
 
             {booking.travellers.map((t, idx) => {
@@ -828,33 +794,36 @@ const ManageBooking = () => {
               return (
                 <div
                   key={idx}
-                  className={`mb-6 p-4 border rounded-lg ${
-                    isCancelled ? "bg-red-50 border-red-300" : "bg-gray-50"
+                  className={`mb-8 p-6 border-2 rounded-xl ${
+                    isCancelled
+                      ? "bg-red-50 border-red-300 opacity-75"
+                      : "bg-gray-50 border-gray-300"
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-medium">Traveller {idx + 1}</h4>
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-lg font-bold text-gray-800">
+                      Traveller {idx + 1}
+                    </h4>
                     {isCancelled && (
-                      <span className="text-sm font-semibold text-red-600 bg-red-100 px-2 py-1 rounded">
+                      <span className="text-sm font-bold text-red-600 bg-red-100 px-3 py-1 rounded-full">
                         Cancelled – No edits allowed
                       </span>
                     )}
                   </div>
 
-                  <div className="mb-3 text-sm font-medium text-indigo-700">
+                  <div className="mb-4 text-lg font-bold text-indigo-700">
                     Price: ₹{travellerPrice(t)}
                   </div>
 
                   {fieldErrors.length > 0 && (
-                    <div className="mb-3 p-2 bg-red-100 border border-red-300 rounded text-red-700 text-sm">
+                    <div className="mb-5 p-4 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm">
                       {fieldErrors.map((e, i) => (
                         <div key={i}>• {e}</div>
                       ))}
                     </div>
                   )}
 
-                  <div className="grid md:grid-cols-3 gap-4 mb-4">
-                    {/* Package - LOCKED IF FULLY PAID */}
+                  <div className="grid md:grid-cols-3 gap-5">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         Package *
@@ -880,7 +849,7 @@ const ManageBooking = () => {
                           }
                         }}
                         disabled={isCancelled || isFullyPaid}
-                        className="mt-1 w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-200"
+                        className="mt-2 w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-200"
                       >
                         <option value="main">Main Package</option>
                         {tour.variantPackage?.map((_, i) => (
@@ -891,7 +860,6 @@ const ManageBooking = () => {
                       </select>
                     </div>
 
-                    {/* Title */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         Title
@@ -902,7 +870,7 @@ const ManageBooking = () => {
                           updateTraveller(idx, "title", e.target.value)
                         }
                         disabled={isCancelled}
-                        className="mt-1 w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-200"
+                        className="mt-2 w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-200"
                       >
                         <option>Mr</option>
                         <option>Mrs</option>
@@ -910,7 +878,6 @@ const ManageBooking = () => {
                       </select>
                     </div>
 
-                    {/* First Name */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         First Name
@@ -922,11 +889,10 @@ const ManageBooking = () => {
                           updateTraveller(idx, "firstName", e.target.value)
                         }
                         disabled={isCancelled}
-                        className="mt-1 w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-200"
+                        className="mt-2 w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-200"
                       />
                     </div>
 
-                    {/* Last Name */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         Last Name
@@ -938,11 +904,10 @@ const ManageBooking = () => {
                           updateTraveller(idx, "lastName", e.target.value)
                         }
                         disabled={isCancelled}
-                        className="mt-1 w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-200"
+                        className="mt-2 w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-200"
                       />
                     </div>
 
-                    {/* Age */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         Age
@@ -954,11 +919,10 @@ const ManageBooking = () => {
                           updateTraveller(idx, "age", Number(e.target.value))
                         }
                         disabled={isCancelled}
-                        className="mt-1 w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-200"
+                        className="mt-2 w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-200"
                       />
                     </div>
 
-                    {/* Gender */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         Gender
@@ -969,7 +933,7 @@ const ManageBooking = () => {
                           updateTraveller(idx, "gender", e.target.value)
                         }
                         disabled={isCancelled}
-                        className="mt-1 w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-200"
+                        className="mt-2 w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-200"
                       >
                         <option value="">Select</option>
                         <option>Male</option>
@@ -978,7 +942,6 @@ const ManageBooking = () => {
                       </select>
                     </div>
 
-                    {/* Sharing Type - LOCKED IF FULLY PAID */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         Sharing *
@@ -989,7 +952,7 @@ const ManageBooking = () => {
                           updateTraveller(idx, "sharingType", e.target.value)
                         }
                         disabled={isCancelled || isFullyPaid}
-                        className="mt-1 w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-200"
+                        className="mt-2 w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-200"
                       >
                         <option value="">Select</option>
                         {Number(t.age) >= 11 ? (
@@ -1008,7 +971,6 @@ const ManageBooking = () => {
                       </select>
                     </div>
 
-                    {/* Boarding Point */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         Boarding Point *
@@ -1022,7 +984,7 @@ const ManageBooking = () => {
                           updateTraveller(idx, "boardingPoint", p || null);
                         }}
                         disabled={isCancelled}
-                        className="mt-1 w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-200"
+                        className="mt-2 w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-200"
                       >
                         <option value="">Select</option>
                         {boardingOpts.map((bp) => (
@@ -1033,7 +995,6 @@ const ManageBooking = () => {
                       </select>
                     </div>
 
-                    {/* De-boarding Point */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         De-boarding Point *
@@ -1047,7 +1008,7 @@ const ManageBooking = () => {
                           updateTraveller(idx, "deboardingPoint", p || null);
                         }}
                         disabled={isCancelled}
-                        className="mt-1 w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-200"
+                        className="mt-2 w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-200"
                       >
                         <option value="">Select</option>
                         {deboardingOpts.map((dp) => (
@@ -1058,7 +1019,6 @@ const ManageBooking = () => {
                       </select>
                     </div>
 
-                    {/* Add-on - LOCKED IF FULLY PAID */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         Add-on
@@ -1075,7 +1035,7 @@ const ManageBooking = () => {
                           });
                         }}
                         disabled={isCancelled || isFullyPaid}
-                        className="mt-1 w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-200"
+                        className="mt-2 w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-200"
                       >
                         <option value="">None</option>
                         {addonOpts.map((a) => (
@@ -1086,7 +1046,6 @@ const ManageBooking = () => {
                       </select>
                     </div>
 
-                    {/* Remarks */}
                     <div className="md:col-span-3">
                       <label className="block text-sm font-medium text-gray-700">
                         Remarks (optional)
@@ -1097,8 +1056,8 @@ const ManageBooking = () => {
                           updateTraveller(idx, "remarks", e.target.value)
                         }
                         disabled={isCancelled}
-                        className="mt-1 w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-200"
-                        rows={2}
+                        className="mt-2 w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-200"
+                        rows={3}
                       />
                     </div>
                   </div>

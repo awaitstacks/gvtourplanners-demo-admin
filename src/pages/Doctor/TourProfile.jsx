@@ -788,7 +788,7 @@ const TourProfile = () => {
           draggable
           pauseOnHover
         />
-        <h1 className="text-xl sm:text-2xl font-bold mb-6">
+        <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-center mb-6 text-gray-800">
           Update Tour Profile
         </h1>
         <div className="mb-6">

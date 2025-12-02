@@ -160,7 +160,7 @@ const BookingControls = () => {
       <div className="max-w-4xl mx-auto mb-8">
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-4 text-center">
-            Booking Payment Management
+            Payment controller
           </h2>
           <div className="flex flex-col sm:flex-row gap-4">
             <input
@@ -194,7 +194,7 @@ const BookingControls = () => {
         {/* ==================== BALANCE MANAGEMENT ==================== */}
         <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 md:p-8">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-4 sm:mb-6 text-center">
-            Booking Balance Management
+            Booking Balance controller
           </h2>
 
           {balanceDetails && (
@@ -296,7 +296,7 @@ const BookingControls = () => {
         {/* ==================== ADVANCE MANAGEMENT ==================== */}
         <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 md:p-8">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-4 sm:mb-6 text-center">
-            Booking Advance Management
+            Booking Advance controller
           </h2>
 
           {advanceDetails && (

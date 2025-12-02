@@ -698,26 +698,27 @@ const TourNameList = () => {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-full mx-auto">
       {/* Compact ToastContainer */}
+      {/* Replace your current ToastContainer with this */}
       <ToastContainer
         position="top-right"
-        autoClose={2000}
-        hideProgressBar
+        autoClose={3000}
+        hideProgressBar={false}
         newestOnTop
         closeOnClick
         rtl={false}
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        className="fixed top-2 right-2 max-w-[280px] w-auto z-50"
-        toastClassName="text-xs bg-white shadow-sm rounded-lg p-2 border border-gray-100 flex items-center gap-2"
-        style={{
-          fontSize: "clamp(10px, 2.5vw, 12px)",
-        }}
+        limit={5}
+        className="fixed top-4 right-4 z-[9999]"
+        toastClassName="min-w-[280px] max-w-[380px] bg-white shadow-xl rounded-lg border border-gray-200"
+        bodyClassName="text-sm font-medium text-gray-800"
+        progressClassName="bg-gradient-to-r from-blue-500 to-indigo-600 h-1 rounded-full"
       />
 
       <div className="mb-4 sm:mb-6 lg:mb-8">
         <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold mb-4 sm:mb-6 text-center">
-          Traveller Name List
+          Tour Name List
         </h2>
         <div className="mb-4 sm:mb-6">
           <label

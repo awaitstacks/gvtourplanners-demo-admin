@@ -583,7 +583,7 @@ const TourAdminDashboard = () => {
       />
 
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-center text-gray-900 mb-10">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-center text-gray-900 mb-8 sm:mb-10 leading-tight">
           Super Admin Dashboard
         </h1>
 
