@@ -235,9 +235,14 @@ const SidebarItem = ({ to, icon: Icon, label, onClick }) => {
       to={to}
       onClick={onClick}
       className={`
-        flex items-center gap-5 px-6 py-5 rounded-2xl
+        flex items-center gap-5 
+        px-1                    /* more left/right padding */
+        py-2 
+        rounded-2xl
         font-semibold text-base tracking-wide
         transition-all duration-200
+        w-full                  /* forces full width */
+        justify-start           /* keeps icon + text aligned left */
         ${
           match
             ? "bg-green-600 text-white shadow-lg"
@@ -246,7 +251,11 @@ const SidebarItem = ({ to, icon: Icon, label, onClick }) => {
       `}
     >
       <Icon size={26} className={match ? "text-white" : "text-gray-600"} />
-      <span className="truncate">{label}</span>
+
+      {/* Removed truncate → now full text shows */}
+      <span className="whitespace-nowrap overflow-hidden text-ellipsis">
+        {label}
+      </span>
     </NavLink>
   );
 };
