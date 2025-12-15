@@ -18,6 +18,10 @@ const TourContextProvider = (props) => {
   const [balanceDetails, setBalanceDetails] = useState(null);
   const [singleBooking, setSingleBooking] = useState(null); // NEW: For viewBooking
   const [managedBookingsHistory, setManagedBookingsHistory] = useState([]);
+  // 1. Add new state (near other states)
+  const [roomAllocation, setRoomAllocation] = useState(null);
+  const [roomAllocationLoading, setRoomAllocationLoading] = useState(false);
+  const [roomAllocationError, setRoomAllocationError] = useState(null);
   // ----------------- API Functions -----------------
 
   const getTourList = useCallback(async () => {
@@ -649,6 +653,58 @@ const TourContextProvider = (props) => {
       };
     }
   }, [backendUrl, ttoken]);
+  // 2. Add the API function (near other API functions like getDashData, viewBooking, etc.)
+  const getRoomAllocation = useCallback(
+    async (tourId) => {
+      if (!tourId) {
+        setRoomAllocation(null);
+        setRoomAllocationError("Tour ID is required");
+        return { success: false, message: "Tour ID is required" };
+      }
+
+      setRoomAllocationLoading(true);
+      setRoomAllocationError(null);
+
+      try {
+        const { data } = await axios.get(
+          `${backendUrl}/api/tour/allot-rooms/${tourId}`,
+          {
+            headers: { ttoken },
+          }
+        );
+
+        if (data.saved || data.roomAllocations) {
+          setRoomAllocation(data);
+          console.log("Room allocation loaded:", data);
+          return { success: true, data };
+        } else {
+          setRoomAllocation(null);
+          setRoomAllocationError(
+            data.message || "Failed to load room allocation"
+          );
+          return { success: false, message: data.message };
+        }
+      } catch (error) {
+        console.error("getRoomAllocation error:", error);
+        const message =
+          error.response?.data?.error ||
+          error.response?.data?.message ||
+          error.message ||
+          "Failed to fetch room allocation";
+
+        setRoomAllocationError(message);
+        setRoomAllocation(null);
+
+        return {
+          success: false,
+          message,
+        };
+      } finally {
+        setRoomAllocationLoading(false);
+      }
+    },
+    [backendUrl, ttoken]
+  );
   // ----------------- Context Value -----------------
   const value = {
     ttoken,
@@ -691,6 +747,11 @@ const TourContextProvider = (props) => {
     managedBookingsHistory,
     setManagedBookingsHistory,
     getManagedBookingsHistory,
+    roomAllocation,
+    setRoomAllocation,
+    roomAllocationLoading,
+    roomAllocationError,
+    getRoomAllocation,
   };
 
   return (

@@ -18,6 +18,7 @@ import {
   CalendarCheck,
   OctagonAlert,
   Signature,
+  Hotel,
 } from "lucide-react";
 
 const TourSidebar = () => {
@@ -137,6 +138,11 @@ const tourMenuItems = [
   { to: "/tour-bookings", icon: Calendar, label: "Bookings" },
   { to: "/tour-profile", icon: User, label: "Tour profile" },
   { to: "/tour-namelist", icon: FileText, label: "Name List" },
+  {
+    to: "/tour-roomlist",
+    icon: Hotel,
+    label: "Room list",
+  },
   { to: "/tour-updateBalance", icon: IndianRupee, label: "Payment controller" },
   {
     to: "/tour-cancelTraveller",

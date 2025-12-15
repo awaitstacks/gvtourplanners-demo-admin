@@ -25,6 +25,7 @@ import CancellationCentre from "./pages/Admin/CancellationCentre.jsx";
 import ManageBooking from "./pages/Doctor/ManageBooking.jsx";
 import DBMigrationCenter from "./pages/Admin/DBMigrationCenter.jsx";
 import BookingApprovals from "./pages/Admin/BookingApprovals.jsx";
+import TourRoomList from "./pages/Doctor/TourRoomList.jsx";
 
 const TourApp = () => {
   const { aToken } = useContext(TourAdminContext);
@@ -59,6 +60,7 @@ const TourApp = () => {
               element={<CancellationControls />}
             />
             <Route path="/tour-managebooking" element={<ManageBooking />} />
+            <Route path="/tour-roomlist" element={<TourRoomList />} />
           </Routes>
         </main>
       </div>
