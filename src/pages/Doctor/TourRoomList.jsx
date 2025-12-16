@@ -5,6 +5,9 @@ import html2canvas from "html2canvas";
 
 const CHUNK_SIZE = 8;
 
+const COMPANY_NAME = "GV - Tour Planners LLP";
+const COMPANY_ADDRESS = "15/4, Nehru Street, Jaihindpuram, Madurai - 625011";
+
 const TourRoomList = () => {
   const {
     tourList,
@@ -17,6 +20,7 @@ const TourRoomList = () => {
 
   const [selectedTourId, setSelectedTourId] = useState("");
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [isGeneratingVendorPDF, setIsGeneratingVendorPDF] = useState(false);
 
   useEffect(() => {
     if (tourList.length === 0) getTourList();
@@ -29,12 +33,9 @@ const TourRoomList = () => {
   const selectedTour = tourList.find((t) => t._id === selectedTourId);
 
   /* ---------------- HELPERS ---------------- */
-
   const chunkArray = (arr, size) => {
     const out = [];
-    for (let i = 0; i < arr.length; i += size) {
-      out.push(arr.slice(i, i + size));
-    }
+    for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
     return out;
   };
 
@@ -45,8 +46,14 @@ const TourRoomList = () => {
     return "QUAD";
   };
 
-  /* ---------------- ROOM STATS ---------------- */
+  const getSharingColor = (count) => {
+    if (count === 1) return "bg-amber-100 text-amber-800";
+    if (count === 2) return "bg-blue-100 text-blue-800";
+    if (count === 3) return "bg-emerald-100 text-emerald-800";
+    return "bg-purple-100 text-purple-800";
+  };
 
+  /* ---------------- ROOM STATS ---------------- */
   const getRoomStats = () => {
     const stats = { total: 0, single: 0, double: 0, triple: 0, quad: 0 };
     if (!roomAllocation?.groupedByMobile) return stats;
@@ -61,19 +68,15 @@ const TourRoomList = () => {
         else if (c >= 4) stats.quad++;
       });
     });
-
     return stats;
   };
 
-  /* ---------------- GROUP LABELS (FROM groupedByMobile) ---------------- */
-  // Maps contactMobile to Group Label (F1, F2, F3...)
+  /* ---------------- GROUP LABELS ---------------- */
   const getMobileGroupLabels = () => {
     const mobileToGroupMap = {};
     let counter = 1;
-
-    if (!roomAllocation?.groupedByMobile) {
+    if (!roomAllocation?.groupedByMobile)
       return { groupMap: mobileToGroupMap, hasGroups: false };
-    }
 
     roomAllocation.groupedByMobile.forEach((group) => {
       const label = `F${counter++}`;
@@ -83,38 +86,27 @@ const TourRoomList = () => {
     return { groupMap: mobileToGroupMap, hasGroups: counter > 1 };
   };
 
-  /* ---------------- FLATTEN + SORT ROOMS (BY GROUP AND ROOM NUMBER) ---------------- */
-
+  /* ---------------- FLATTEN + SORT ROOMS ---------------- */
   const getAllRooms = (familyLabels) => {
     if (!roomAllocation?.groupedByMobile) return [];
 
     const rooms = [];
-
     roomAllocation.groupedByMobile.forEach((group) => {
-      const groupLabel = familyLabels[group.contactMobile]; // Get the F-label
-
+      const groupLabel = familyLabels[group.contactMobile];
       group.rooms.forEach((room) => {
         rooms.push({
           ...room,
           roomNumber: room.roomNumber,
           contactMobile: group.contactMobile,
-          groupLabel: groupLabel, // Store the F-label for sorting
+          groupLabel: groupLabel,
         });
       });
     });
 
-    // Sort by Group Label (F1 < F2 < F3) first, then by Physical Room Number
     rooms.sort((a, b) => {
-      // 1. Extract the numeric part (e.g., 'F2' -> 2)
-      const labelA = parseInt(a.groupLabel.substring(1));
-      const labelB = parseInt(b.groupLabel.substring(1));
-
-      // Primary sort: Group Label
-      if (labelA !== labelB) {
-        return labelA - labelB;
-      }
-
-      // Secondary sort: Physical Room Number (to keep rooms within the same group ordered)
+      const labelA = parseInt(a.groupLabel?.substring(1) || "999");
+      const labelB = parseInt(b.groupLabel?.substring(1) || "999");
+      if (labelA !== labelB) return labelA - labelB;
       return a.roomNumber - b.roomNumber;
     });
 
@@ -123,21 +115,21 @@ const TourRoomList = () => {
 
   const { groupMap: familyLabels, hasGroups: hasFamilies } =
     getMobileGroupLabels();
-
-  // Pass familyLabels to getAllRooms to enable group sorting
   const allRooms = getAllRooms(familyLabels);
-
   const roomStats = getRoomStats();
   const roomChunks = chunkArray(allRooms, CHUNK_SIZE);
 
   /* ---------------- PDF EXPORT ---------------- */
+  const exportToPDF = async (isVendor = false) => {
+    const generating = isVendor ? isGeneratingVendorPDF : isGeneratingPDF;
+    if (generating) return;
 
-  const exportToPDF = async () => {
-    if (isGeneratingPDF) return;
-    setIsGeneratingPDF(true);
+    if (isVendor) setIsGeneratingVendorPDF(true);
+    else setIsGeneratingPDF(true);
 
-    // Select the hidden, off-screen PDF pages
-    const pages = document.querySelectorAll(".pdf-page");
+    const pages = document.querySelectorAll(
+      isVendor ? ".vendor-pdf-page" : ".admin-pdf-page"
+    );
     const pdf = new jsPDF("l", "mm", "a4");
 
     try {
@@ -152,285 +144,184 @@ const TourRoomList = () => {
         pdf.addImage(img, "PNG", 0, 0, 297, 210);
       }
 
+      const suffix = isVendor ? "_Vendor" : "";
       const fileName =
         (selectedTour?.title || "Room_Allocation")
           .replace(/[^a-zA-Z0-9]/g, "_")
-          .substring(0, 40) + ".pdf";
+          .substring(0, 40) +
+        suffix +
+        ".pdf";
 
       pdf.save(fileName);
     } catch (err) {
       console.error(err);
       alert("PDF generation failed");
     } finally {
-      setIsGeneratingPDF(false);
+      if (isVendor) setIsGeneratingVendorPDF(false);
+      else setIsGeneratingPDF(false);
     }
   };
 
-  /* ================= RENDER ================= */
-
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold text-center mb-6">
-        Tour Room Allocation
-      </h1>
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-4xl font-extrabold text-center text-gray-800 mb-10">
+          Tour Room Allocation
+        </h1>
 
-      <select
-        className="border p-3 rounded w-full max-w-md mx-auto block mb-8"
-        value={selectedTourId}
-        onChange={(e) => setSelectedTourId(e.target.value)}
-      >
-        <option value="">-- Select Tour --</option>
-        {tourList.map((t) => (
-          <option key={t._id} value={t._id}>
-            {t.title}
-          </option>
-        ))}
-      </select>
-
-      {roomAllocationLoading && (
-        <div className="text-center text-blue-600 text-xl">
-          Loading room allocation...
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-10">
+          <select
+            className="w-full max-w-lg mx-auto block border-2 border-gray-300 rounded-lg px-5 py-4 text-lg focus:border-blue-500 focus:outline-none transition"
+            value={selectedTourId}
+            onChange={(e) => setSelectedTourId(e.target.value)}
+          >
+            <option value="">-- Select Tour --</option>
+            {tourList.map((t) => (
+              <option key={t._id} value={t._id}>
+                {t.title}
+              </option>
+            ))}
+          </select>
         </div>
-      )}
 
-      {roomAllocationError && (
-        <div className="text-center text-red-600 text-xl">
-          {roomAllocationError}
-        </div>
-      )}
-
-      {/* NEW: Handle case where tour is selected but no rooms are allocated */}
-      {selectedTourId &&
-        !roomAllocationLoading &&
-        !roomAllocationError &&
-        allRooms.length === 0 && (
-          <div className="text-center text-gray-500 text-xl mt-8 p-4 border border-gray-300 rounded-lg bg-gray-50">
-            No room allocations found for this tour.
+        {roomAllocationLoading && (
+          <div className="text-center text-blue-600 text-xl font-medium">
+            Loading room allocation...
           </div>
         )}
 
-      {allRooms.length > 0 && (
-        <>
-          <div className="text-center mb-8">
-            <button
-              onClick={exportToPDF}
-              disabled={isGeneratingPDF}
-              className="bg-blue-600 text-white px-10 py-4 rounded-lg text-lg font-semibold"
-            >
-              {isGeneratingPDF ? "Generating PDF..." : "Download PDF"}
-            </button>
+        {roomAllocationError && (
+          <div className="text-center text-red-600 text-xl font-medium bg-red-50 py-4 rounded-lg">
+            {roomAllocationError}
           </div>
+        )}
 
-          {/* ================= VISIBLE UI DISPLAY ================= */}
-          <div className="bg-white p-4 shadow-lg rounded-lg mb-10">
-            <h2 className="text-2xl font-bold text-center mb-4">
-              {selectedTour?.title}
-            </h2>
+        {selectedTourId &&
+          !roomAllocationLoading &&
+          !roomAllocationError &&
+          allRooms.length === 0 && (
+            <div className="text-center text-gray-600 text-xl bg-gray-100 py-10 rounded-xl">
+              No room allocations found for this tour.
+            </div>
+          )}
 
-            {hasFamilies && (
-              <p className="text-center text-red-600 italic mb-4">
-                * Rooms are grouped by contact mobile number (F1, F2, F3, etc.)
-              </p>
-            )}
+        {allRooms.length > 0 && (
+          <>
+            {/* Download Buttons */}
+            <div className="flex flex-col sm:flex-row gap-6 justify-center mb-12">
+              <button
+                onClick={() => exportToPDF(false)}
+                disabled={isGeneratingPDF}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-4 px-10 rounded-xl text-lg shadow-md disabled:opacity-60 disabled:cursor-not-allowed transition transform hover:scale-105"
+              >
+                {isGeneratingPDF ? "Generating..." : "Download Full PDF"}
+              </button>
 
-            {/* UI STATS GRID */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-              <Stat label="Total" value={roomStats.total} isUI={true} />
-              <Stat label="Single" value={roomStats.single} isUI={true} />
-              <Stat label="Double" value={roomStats.double} isUI={true} />
-              <Stat label="Triple" value={roomStats.triple} isUI={true} />
-              <Stat label="Quad" value={roomStats.quad} isUI={true} />
+              <button
+                onClick={() => exportToPDF(true)}
+                disabled={isGeneratingVendorPDF}
+                className="bg-gradient-to-r from-green-600 to-green-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-bold py-4 px-10 rounded-xl text-lg shadow-md disabled:opacity-60 disabled:cursor-not-allowed transition transform hover:scale-105"
+              >
+                {isGeneratingVendorPDF
+                  ? "Generating..."
+                  : "Download Vendor File"}
+              </button>
             </div>
 
-            <h3 className="text-xl font-semibold mb-4 border-b pb-2">
-              Room Details
-            </h3>
+            {/* Main Content Card */}
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+              <div className=" bg-white-300 text-blue py-8 px-6">
+                <h2 className="text-3xl font-bold text-center">
+                  {selectedTour?.title}
+                </h2>
+                {hasFamilies && (
+                  <p className="text-center mt-4 text-black-100 italic text-lg">
+                    Rooms grouped by family (F1, F2, F3...)
+                  </p>
+                )}
+              </div>
 
-            {/* UI ROOMS GRID (Sorted by F-Group) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {allRooms.map((room, idx) => {
-                const family = familyLabels[room.contactMobile];
-                const runningRoomIndex = idx + 1; // Sequential index
-
-                return (
-                  <div
-                    key={idx}
-                    className="border-2 border-gray-300 rounded-lg p-4 shadow-md flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="text-lg font-bold text-center mb-2">
-                        Room {runningRoomIndex}
-                        {family && (
-                          <span className="text-red-600 font-bold ml-2">
-                            ({family})
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-sm text-gray-700 text-center mb-2">
-                        Mob: {room.contactMobile}
-                      </div>
-                      <div className="text-sm font-semibold text-center uppercase mb-3">
-                        {getSharingLabel(room.occupants.length)} SHARING
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      {room.occupants.map((p, i) => (
-                        <div className="text-xs" key={i}>
-                          {p.firstName} {p.lastName} ({p.gender})
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="border-t border-dashed border-gray-400 mt-3 pt-2 text-xs text-center text-gray-500">
-                      Physical Room No:
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          {/* ================= END VISIBLE UI DISPLAY ================= */}
-
-          {/* ================= OFFSCREEN PDF RENDER (HIDDEN) ================= */}
-          <div
-            style={{ position: "absolute", left: "-9999px", width: "297mm" }}
-          >
-            <style>
-              {`
-              .pdf-page { width:297mm;height:210mm;padding:12mm;background:white; }
-              .room-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:10mm; }
-              .room-card { border:2px solid #333;border-radius:8px;padding:10mm;height:85mm;display:flex;flex-direction:column;justify-content:space-between; }
-              .room-title { font-size:15pt;font-weight:bold;text-align:center; }
-              .family-badge { color:#d32f2f;font-weight:bold;margin-left:6mm; }
-              .mobile { text-align:center;font-size:10pt;margin:4mm 0;color:#1976d2; }
-              .sharing { text-align:center;font-size:10pt;font-weight:bold; }
-              .guest { font-size:10pt;margin-bottom:2mm; }
-            `}
-            </style>
-
-            {/* Title Page / Stats Page (First Page) */}
-            <div className="pdf-page">
-              <h1 style={{ textAlign: "center", fontSize: "28pt" }}>
-                Room Allocation Report
-              </h1>
-              {/* 1. INCREASE TOUR TITLE SIZE */}
-              <h2
-                style={{
-                  textAlign: "center",
-                  marginTop: "10mm",
-                  fontSize: "22pt",
-                  fontWeight: "bold",
-                }}
-              >
-                {selectedTour?.title}
-              </h2>
-
-              {/* 2. RESTRUCTURE HOTEL/DATE/PLACE FOR BETTER SPACING */}
-              <div
-                style={{
-                  marginTop: "15mm",
-                  marginBottom: "10mm",
-                  lineHeight: "1.2", // Tighten line height for grouping
-                  fontSize: "14pt",
-                  fontWeight: "bold",
-                }}
-              >
-                {/* FIRST LINE: Hotel Name (Left) and Check-in Date (Right) */}
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    marginBottom: "5mm",
-                  }}
-                >
-                  {/* Hotel Name */}
-                  <div style={{ width: "55%" }}>Hotel Name: </div>
-
-                  {/* Check-in Date */}
-                  <div style={{ width: "40%" }}>Check-in Date: </div>
+              <div className="p-6 lg:p-10">
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-6 mb-12">
+                  <StatBox
+                    label="Total Rooms"
+                    value={roomStats.total}
+                    color="blue"
+                  />
+                  <StatBox
+                    label="Single"
+                    value={roomStats.single}
+                    color="amber"
+                  />
+                  <StatBox
+                    label="Double"
+                    value={roomStats.double}
+                    color="emerald"
+                  />
+                  <StatBox
+                    label="Triple"
+                    value={roomStats.triple}
+                    color="purple"
+                  />
+                  <StatBox label="Quad" value={roomStats.quad} color="rose" />
                 </div>
 
-                {/* SECOND LINE: Place (Full width) */}
-                <div style={{ width: "100%", marginTop: "5mm" }}>Place: </div>
-              </div>
+                <h3 className="text-2xl font-bold text-gray-800 mb-8 text-center border-b-2 border-gray-200 pb-4">
+                  Room Details
+                </h3>
 
-              {hasFamilies && (
-                <p
-                  style={{
-                    textAlign: "center",
-                    color: "#d32f2f",
-                    fontStyle: "italic",
-                    marginTop: "15mm", // Added extra spacing after hotel details
-                  }}
-                >
-                  * Rooms are grouped by contact mobile number (F1, F2, F3,
-                  etc.)
-                </p>
-              )}
-
-              {/* PDF STATS GRID */}
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(5, 1fr)",
-                  gap: "10mm",
-                  marginTop: "15mm", // Added extra spacing before stats
-                }}
-              >
-                <Stat label="Total" value={roomStats.total} isPDF={true} />
-                <Stat label="Single" value={roomStats.single} isPDF={true} />
-                <Stat label="Double" value={roomStats.double} isPDF={true} />
-                <Stat label="Triple" value={roomStats.triple} isPDF={true} />
-                <Stat label="Quad" value={roomStats.quad} isPDF={true} />
-              </div>
-            </div>
-
-            {/* Room Detail Pages */}
-            {roomChunks.map((chunk, pageIndex) => (
-              <div className="pdf-page" key={pageIndex}>
-                <div className="room-grid">
-                  {chunk.map((room, idx) => {
-                    // Retrieve the correct group label using the contactMobile
+                {/* Responsive Room Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {allRooms.map((room, idx) => {
                     const family = familyLabels[room.contactMobile];
-
-                    // Sequential Room Count (Room 1, Room 2...)
-                    const runningRoomIndex = pageIndex * CHUNK_SIZE + idx + 1;
+                    const runningRoomIndex = idx + 1;
 
                     return (
-                      <div className="room-card" key={idx}>
+                      <div
+                        key={idx}
+                        className="bg-gray-50 border border-gray-200 rounded-xl p-6 shadow hover:shadow-lg transition-shadow duration-300 flex flex-col justify-between"
+                      >
                         <div>
-                          <div className="room-title">
-                            {/* Display sequential room index and family label (Room 1 (F1)) */}
-                            Room {runningRoomIndex}
+                          <div className="flex justify-between items-start mb-4">
+                            <div className="text-2xl font-bold text-gray-800">
+                              Room {runningRoomIndex}
+                            </div>
                             {family && (
-                              <span className="family-badge">({family})</span>
+                              <span className="bg-red-100 text-red-700 font-bold px-3 py-1 rounded-full text-sm">
+                                {family}
+                              </span>
                             )}
                           </div>
-                          <div className="mobile">
+
+                          <div className="text-center text-gray-600 mb-4">
                             Mob: {room.contactMobile}
                           </div>
-                          <div className="sharing">
-                            {getSharingLabel(room.occupants.length)} SHARING
+
+                          <div
+                            className={`inline-block mx-auto px-6 py-2 rounded-full font-semibold text-sm ${getSharingColor(
+                              room.occupants.length
+                            )}`}
+                          >
+                            {room.occupants.length} SHARING
                           </div>
                         </div>
 
-                        <div>
+                        <div className="mt-6 space-y-2">
                           {room.occupants.map((p, i) => (
-                            <div className="guest" key={i}>
-                              {p.firstName} {p.lastName} ({p.gender})
+                            <div
+                              key={i}
+                              className="text-sm font-medium text-gray-700"
+                            >
+                              {p.firstName} {p.lastName}{" "}
+                              <span className="text-gray-500">
+                                ({p.gender})
+                              </span>
                             </div>
                           ))}
                         </div>
 
-                        <div
-                          style={{
-                            borderTop: "1px dashed #333",
-                            textAlign: "center",
-                            fontSize: "9pt",
-                            paddingTop: "2mm",
-                          }}
-                        >
+                        <div className="border-t border-dashed border-gray-300 mt-6 pt-4 text-center text-xs text-gray-500">
                           Physical Room No:
                         </div>
                       </div>
@@ -438,16 +329,337 @@ const TourRoomList = () => {
                   })}
                 </div>
               </div>
-            ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ================= OFFSCREEN PDFs ================= */}
+      <style>{pdfStyles}</style>
+
+      {/* ADMIN PDF (WITH MOBILE) */}
+      <div style={{ position: "absolute", left: "-9999px", width: "297mm" }}>
+        {/* First Page - Admin (ONLY HERE company header) */}
+        <div className="pdf-page admin-pdf-page">
+          <div style={{ textAlign: "center", marginBottom: "8mm" }}>
+            <div
+              style={{ fontSize: "20pt", fontWeight: "bold", color: "#1e40af" }}
+            >
+              {COMPANY_NAME}
+            </div>
+            <div style={{ fontSize: "12pt", color: "#4b5563" }}>
+              {COMPANY_ADDRESS}
+            </div>
           </div>
-        </>
-      )}
+
+          <h1
+            style={{
+              textAlign: "center",
+              fontSize: "28pt",
+              color: "#1e40af",
+              margin: "10mm 0",
+            }}
+          >
+            Room Allocation Report
+          </h1>
+          <h2
+            style={{
+              textAlign: "center",
+              fontSize: "22pt",
+              fontWeight: "bold",
+            }}
+          >
+            {selectedTour?.title}
+          </h2>
+
+          <div
+            style={{
+              marginTop: "15mm",
+              fontSize: "14pt",
+              fontWeight: "bold",
+              textAlign: "left",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-start",
+                gap: "80mm",
+                maxWidth: "240mm",
+                margin: "0 auto",
+              }}
+            >
+              <div>Hotel Name:</div>
+              <div>Check-in Date:</div>
+            </div>
+            <div
+              style={{
+                width: "100%",
+                marginTop: "5mm",
+                textAlign: "left",
+                maxWidth: "240mm",
+                marginLeft: "auto",
+                marginRight: "auto",
+              }}
+            >
+              Place:
+            </div>
+          </div>
+
+          {hasFamilies && (
+            <p
+              style={{
+                textAlign: "center",
+                color: "#dc2626",
+                fontStyle: "italic",
+                marginTop: "15mm",
+              }}
+            >
+              * Rooms are grouped by contact mobile number (F1, F2, F3, etc.)
+            </p>
+          )}
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(5,1fr)",
+              gap: "10mm",
+              marginTop: "15mm",
+            }}
+          >
+            <Stat label="Total" value={roomStats.total} isPDF />
+            <Stat label="Single" value={roomStats.single} isPDF />
+            <Stat label="Double" value={roomStats.double} isPDF />
+            <Stat label="Triple" value={roomStats.triple} isPDF />
+            <Stat label="Quad" value={roomStats.quad} isPDF />
+          </div>
+        </div>
+
+        {/* Subsequent Room Pages - Admin (NO company header) */}
+        {roomChunks.map((chunk, pageIndex) => (
+          <div className="pdf-page admin-pdf-page" key={`admin-${pageIndex}`}>
+            <div className="room-grid">
+              {chunk.map((room, idx) => {
+                const family = familyLabels[room.contactMobile];
+                const runningRoomIndex = pageIndex * CHUNK_SIZE + idx + 1;
+                return (
+                  <div className="room-card" key={idx}>
+                    <div>
+                      <div className="room-title">
+                        Room {runningRoomIndex}
+                        {family && (
+                          <span className="family-badge">({family})</span>
+                        )}
+                      </div>
+                      <div className="mobile">Mob: {room.contactMobile}</div>
+                      <div className="sharing">
+                        {getSharingLabel(room.occupants.length)} SHARING
+                      </div>
+                    </div>
+                    <div>
+                      {room.occupants.map((p, i) => (
+                        <div className="guest" key={i}>
+                          {p.firstName} {p.lastName} ({p.gender})
+                        </div>
+                      ))}
+                    </div>
+                    <div
+                      style={{
+                        borderTop: "1px dashed #333",
+                        textAlign: "center",
+                        fontSize: "9pt",
+                        paddingTop: "2mm",
+                      }}
+                    >
+                      Physical Room No:
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* VENDOR PDF (NO MOBILE) */}
+      <div style={{ position: "absolute", left: "-9999px", width: "297mm" }}>
+        {/* First Page - Vendor (ONLY HERE company header) */}
+        <div className="pdf-page vendor-pdf-page">
+          <div style={{ textAlign: "center", marginBottom: "8mm" }}>
+            <div
+              style={{ fontSize: "20pt", fontWeight: "bold", color: "#059669" }}
+            >
+              {COMPANY_NAME}
+            </div>
+            <div style={{ fontSize: "12pt", color: "#4b5563" }}>
+              {COMPANY_ADDRESS}
+            </div>
+          </div>
+
+          <h1
+            style={{
+              textAlign: "center",
+              fontSize: "28pt",
+              color: "#059669",
+              margin: "10mm 0",
+            }}
+          >
+            Room Allocation - Vendor Copy
+          </h1>
+          <h2
+            style={{
+              textAlign: "center",
+              fontSize: "22pt",
+              fontWeight: "bold",
+            }}
+          >
+            {selectedTour?.title}
+          </h2>
+
+          <div
+            style={{
+              marginTop: "15mm",
+              fontSize: "14pt",
+              fontWeight: "bold",
+              textAlign: "left",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-start",
+                gap: "80mm",
+                maxWidth: "240mm",
+                margin: "0 auto",
+              }}
+            >
+              <div>Hotel Name:</div>
+              <div>Check-in Date:</div>
+            </div>
+            <div
+              style={{
+                width: "100%",
+                marginTop: "5mm",
+                textAlign: "left",
+                maxWidth: "240mm",
+                marginLeft: "auto",
+                marginRight: "auto",
+              }}
+            >
+              Place:
+            </div>
+          </div>
+          {hasFamilies && (
+            <p
+              style={{
+                textAlign: "center",
+                color: "#dc2626",
+                fontStyle: "italic",
+                marginTop: "15mm",
+              }}
+            >
+              * Rooms are grouped by family (F1, F2, F3, etc.)
+            </p>
+          )}
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(5,1fr)",
+              gap: "10mm",
+              marginTop: "15mm",
+            }}
+          >
+            <Stat label="Total" value={roomStats.total} isPDF />
+            <Stat label="Single" value={roomStats.single} isPDF />
+            <Stat label="Double" value={roomStats.double} isPDF />
+            <Stat label="Triple" value={roomStats.triple} isPDF />
+            <Stat label="Quad" value={roomStats.quad} isPDF />
+          </div>
+        </div>
+
+        {/* Subsequent Room Pages - Vendor (NO company header) */}
+        {roomChunks.map((chunk, pageIndex) => (
+          <div className="pdf-page vendor-pdf-page" key={`vendor-${pageIndex}`}>
+            <div className="room-grid">
+              {chunk.map((room, idx) => {
+                const family = familyLabels[room.contactMobile];
+                const runningRoomIndex = pageIndex * CHUNK_SIZE + idx + 1;
+                return (
+                  <div className="room-card" key={idx}>
+                    <div>
+                      <div className="room-title">
+                        Room {runningRoomIndex}
+                        {family && (
+                          <span className="family-badge">({family})</span>
+                        )}
+                      </div>
+                      {/* Mobile hidden in vendor copy */}
+                      <div className="sharing" style={{ marginTop: "8mm" }}>
+                        {getSharingLabel(room.occupants.length)} SHARING
+                      </div>
+                    </div>
+                    <div>
+                      {room.occupants.map((p, i) => (
+                        <div className="guest" key={i}>
+                          {p.firstName} {p.lastName} ({p.gender})
+                        </div>
+                      ))}
+                    </div>
+                    <div
+                      style={{
+                        borderTop: "1px dashed #333",
+                        textAlign: "center",
+                        fontSize: "9pt",
+                        paddingTop: "2mm",
+                      }}
+                    >
+                      Physical Room No:
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
 
-const Stat = ({ label, value, isUI, isPDF }) => {
-  // Styles for PDF (large, spaced out)
+/* Shared PDF Styles */
+const pdfStyles = `
+  .pdf-page { width:297mm;height:210mm;padding:12mm;background:white; }
+  .room-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:10mm; }
+  .room-card { border:2px solid #333;border-radius:8px;padding:10mm;height:85mm;display:flex;flex-direction:column;justify-content:space-between; }
+  .room-title { font-size:15pt;font-weight:bold;text-align:center; }
+  .family-badge { color:#d32f2f;font-weight:bold;margin-left:6mm; }
+  .mobile { text-align:center;font-size:10pt;margin:4mm 0;color:#1976d2; }
+  .sharing { text-align:center;font-size:10pt;font-weight:bold; }
+  .guest { font-size:10pt;margin-bottom:2mm; }
+`;
+
+/* Stat Components */
+const StatBox = ({ label, value, color }) => {
+  const colorClasses = {
+    blue: "bg-blue-100 text-blue-800 border-blue-200",
+    amber: "bg-amber-100 text-amber-800 border-amber-200",
+    emerald: "bg-emerald-100 text-emerald-800 border-emerald-200",
+    purple: "bg-purple-100 text-purple-800 border-purple-200",
+    rose: "bg-rose-100 text-rose-800 border-rose-200",
+  };
+
+  return (
+    <div
+      className={`border-2 ${colorClasses[color]} rounded-xl p-6 text-center shadow-sm`}
+    >
+      <div className="text-3xl font-bold">{value}</div>
+      <div className="text-sm mt-2">{label}</div>
+    </div>
+  );
+};
+
+const Stat = ({ label, value, isPDF }) => {
   if (isPDF) {
     return (
       <div
@@ -463,17 +675,6 @@ const Stat = ({ label, value, isUI, isPDF }) => {
       </div>
     );
   }
-
-  // Styles for UI (compact, Tailwind)
-  if (isUI) {
-    return (
-      <div className="border border-gray-400 rounded-lg p-3 text-center">
-        <div className="text-xl font-bold">{value}</div>
-        <div className="text-sm">{label}</div>
-      </div>
-    );
-  }
-
   return null;
 };
 
