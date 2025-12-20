@@ -152,6 +152,17 @@ const BookingControls = () => {
     }
   };
 
+  // Helper to render amount with red color if negative
+  const renderAmount = (amount) => {
+    const num = Number(amount);
+    if (isNaN(num)) return <span>₹0</span>;
+    return (
+      <span className={num < 0 ? "text-red-600 font-bold" : ""}>
+        ₹{Math.abs(num)}
+      </span>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-4 sm:p-6 md:p-8 lg:p-10">
       <ToastContainer position="top-right" autoClose={3000} />
@@ -225,8 +236,8 @@ const BookingControls = () => {
                             key={index}
                             className="text-sm sm:text-base md:text-lg"
                           >
-                            ({date}) {r?.remark || "No remark"} - ₹
-                            {r?.amount ?? 0}
+                            ({date}) {r?.remark || "No remark"}{" "}
+                            {renderAmount(r?.amount ?? 0)}
                           </li>
                         );
                       })}
@@ -259,7 +270,7 @@ const BookingControls = () => {
                 />
                 <input
                   type="number"
-                  placeholder="Amount"
+                  placeholder="Amount (negative allowed)"
                   value={u.amount || ""}
                   onChange={(e) =>
                     handleBalanceChange(i, "amount", e.target.value)
@@ -335,8 +346,8 @@ const BookingControls = () => {
                             key={index}
                             className="text-sm sm:text-base md:text-lg"
                           >
-                            ({date}) {r?.remark || "No remark"} - ₹
-                            {r?.amount ?? 0}
+                            ({date}) {r?.remark || "No remark"}{" "}
+                            {renderAmount(r?.amount ?? 0)}
                           </li>
                         );
                       })}
