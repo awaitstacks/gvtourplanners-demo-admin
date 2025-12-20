@@ -451,6 +451,61 @@ const TourBookings = () => {
               </div>
             )}
 
+            {/* Admin Remarks */}
+            <div className="bg-white p-4 rounded-lg border">
+              <h3 className="font-semibold text-gray-800 mb-3">
+                Admin Remarks
+              </h3>
+              {booking.adminRemarks && booking.adminRemarks.length > 0 ? (
+                <div className="space-y-3">
+                  {booking.adminRemarks.map((remark, idx) => (
+                    <div key={idx} className="bg-gray-50 p-3 rounded border">
+                      <p className="text-sm">{remark.remark}</p>
+                      {remark.amount > 0 && (
+                        <p className="text-xs text-gray-600 mt-1">
+                          Amount: ₹{remark.amount}
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-1">
+                        Added on:{" "}
+                        {new Date(remark.addedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 italic">No remarks found</p>
+              )}
+            </div>
+
+            {/* Advance Admin Remarks */}
+            <div className="bg-white p-4 rounded-lg border">
+              <h3 className="font-semibold text-gray-800 mb-3">
+                Advance Admin Remarks
+              </h3>
+              {booking.advanceAdminRemarks &&
+              booking.advanceAdminRemarks.length > 0 ? (
+                <div className="space-y-3">
+                  {booking.advanceAdminRemarks.map((remark, idx) => (
+                    <div key={idx} className="bg-gray-50 p-3 rounded border">
+                      <p className="text-sm">{remark.remark}</p>
+                      {remark.amount > 0 && (
+                        <p className="text-xs text-gray-600 mt-1">
+                          Amount: ₹{remark.amount}
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-1">
+                        Added on:{" "}
+                        {new Date(remark.addedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 italic">No remarks found</p>
+              )}
+            </div>
+
             {booking.travellers.map((trav, idx) => {
               let status = null;
               if (trav.cancelled?.byTraveller && !trav.cancelled?.byAdmin) {
