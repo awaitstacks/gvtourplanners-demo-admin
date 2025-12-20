@@ -4,7 +4,6 @@ import { useLocation } from "react-router-dom";
 import { TourAdminContext } from "../../context/TourAdminContext";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { ChevronUp, ChevronDown } from "lucide-react";
 import {
   Users,
   User,
@@ -16,6 +15,8 @@ import {
   Copy,
   Loader2,
   FilePenLine,
+  Check,
+  X,
 } from "lucide-react";
 
 const TourAdminDashboard = () => {
@@ -32,7 +33,7 @@ const TourAdminDashboard = () => {
   const [expanded, setExpanded] = useState({});
   const [showMore, setShowMore] = useState({});
   const [isLoading, setIsLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState({});
+  const [actionLoading, setActionLoading] = useState({}); // per-booking loading
   const location = useLocation();
 
   useEffect(() => {
@@ -53,6 +54,87 @@ const TourAdminDashboard = () => {
     };
     loadDashboard();
   }, [getAllBookings, getPendingApprovals]);
+
+  const handleApiResponse = useCallback((response, successMsg, errorMsg) => {
+    if (response?.success) {
+      toast.success(successMsg || "Success");
+      return true;
+    } else {
+      toast.error(response?.message || errorMsg || "Failed");
+      return false;
+    }
+  }, []);
+
+  const filters = {
+    advance: (b) =>
+      (b.payment?.advance?.paid &&
+        !b.payment?.balance?.paid &&
+        !b.receipts?.advanceReceiptSent &&
+        b.travellers?.some(
+          (t) => !t.cancelled?.byTraveller && !t.cancelled?.byAdmin
+        )) ||
+      (b.payment?.advance?.paid &&
+        b.payment?.balance?.paid &&
+        !b.receipts?.advanceReceiptSent &&
+        b.travellers?.some(
+          (t) => !t.cancelled?.byTraveller && !t.cancelled?.byAdmin
+        )),
+
+    balance: (b) =>
+      b.payment?.advance?.paid &&
+      b.payment?.balance?.paid &&
+      !b.receipts?.balanceReceiptSent &&
+      b.travellers?.some(
+        (t) => !t.cancelled?.byTraveller && !t.cancelled?.byAdmin
+      ),
+
+    completion: (b) =>
+      b.payment?.advance?.paid &&
+      b.payment?.balance?.paid &&
+      b.receipts?.advanceReceiptSent &&
+      b.receipts?.balanceReceiptSent &&
+      !b.isBookingCompleted,
+
+    cancellation: (b) =>
+      b.travellers?.some(
+        (t) => t.cancelled?.byTraveller && !t.cancelled?.byAdmin
+      ),
+
+    modifyReceipt: (b) =>
+      b.isTripCompleted &&
+      b.travellers?.some(
+        (t) => !t.cancelled?.byTraveller && !t.cancelled?.byAdmin
+      ),
+  };
+
+  const categorized = {
+    advance: bookings.filter(filters.advance),
+    balance: bookings.filter(filters.balance),
+    completion: bookings.filter(filters.completion),
+    cancellation: bookings.filter(filters.cancellation),
+    modifyReceipt: bookings.filter(filters.modifyReceipt),
+    manageRequests: Array.isArray(pendingApprovals) ? pendingApprovals : [],
+  };
+
+  const totalTravellers = bookings.reduce((count, b) => {
+    if (
+      b.payment?.advance?.paid &&
+      b.payment?.balance?.paid &&
+      b.isBookingCompleted
+    ) {
+      const valid =
+        b.travellers?.filter(
+          (t) => !t.cancelled?.byTraveller && !t.cancelled?.byAdmin
+        ) || [];
+      return count + valid.length;
+    }
+    return count;
+  }, 0);
+
+  const uniqueUsers = new Set(
+    bookings.map((b) => b.userData?._id || b.contact?.email)
+  ).size;
+  const pendingManageCount = categorized.manageRequests.length;
 
   const toggleExpand = (category, id) => {
     setExpanded((prev) => ({
@@ -99,17 +181,16 @@ const TourAdminDashboard = () => {
     setIsLoading(true);
     try {
       const res = await releaseBooking(bookingId, [travellerId]);
-      if (res?.success) {
-        toast.success("Cancellation rejected");
-        await getAllBookings();
-      } else {
-        toast.error(res?.message || "Failed to reject");
-      }
+      handleApiResponse(res, "Cancellation rejected", "Failed to reject");
     } catch (err) {
       toast.error(err.response?.data?.message || "Error");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const formatDate = (date) => {
+    return date ? new Date(date).toLocaleString() : "—";
   };
 
   const BookingItem = ({
@@ -126,11 +207,10 @@ const TourAdminDashboard = () => {
 
     return (
       <div
-        className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer"
+        className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 p-4 cursor-pointer"
         onClick={() => toggleExpand(category, booking._id)}
       >
-        {/* Header Summary */}
-        <div className="p-4 flex justify-between items-center">
+        <div className="flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center">
               <Icon className="w-5 h-5 text-blue-600" />
@@ -140,36 +220,22 @@ const TourAdminDashboard = () => {
                 {booking.tourData?.title || "Untitled Tour"}
               </p>
               <p className="text-sm text-gray-600">
-                <strong>{name}</strong> ({booking.travellers?.length || 0}{" "}
-                traveller{booking.travellers?.length !== 1 ? "s" : ""})
-              </p>
-              <p className="text-xs text-gray-500">
-                {new Date(booking.bookingDate).toLocaleDateString()} •{" "}
-                {booking.bookingType}
+                <strong>{name}</strong>
               </p>
             </div>
           </div>
-          <div className="text-right">
-            <span
-              className={`text-xs font-medium ${statusColor} px-3 py-1 rounded-full bg-opacity-10`}
-            >
-              {statusLabel}
-            </span>
-            {expanded[category]?.[booking._id] ? (
-              <ChevronUp className="w-5 h-5 text-gray-400 mt-2 mx-auto" />
-            ) : (
-              <ChevronDown className="w-5 h-5 text-gray-400 mt-2 mx-auto" />
-            )}
-          </div>
+          <span
+            className={`text-xs font-medium ${statusColor} px-2 py-1 rounded-full bg-opacity-10`}
+          >
+            {statusLabel}
+          </span>
         </div>
 
-        {/* Expanded Detailed View */}
         {expanded[category]?.[booking._id] && (
-          <div className="px-4 pb-6 pt-2 border-t border-gray-100 space-y-5 text-sm text-gray-700">
-            {/* Booking ID + Copy */}
-            <div className="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-lg">
+          <div className="mt-4 pt-4 border-t border-gray-100 space-y-4 text-sm text-gray-700">
+            <div className="flex items-center gap-2">
               <strong>Booking ID:</strong>
-              <code className="bg-gray-200 px-3 py-1 rounded text-xs font-mono">
+              <code className="bg-gray-100 px-2 py-1 rounded text-xs font-mono">
                 {booking._id}
               </code>
               <button
@@ -177,236 +243,229 @@ const TourAdminDashboard = () => {
                   e.stopPropagation();
                   copyToClipboard(booking._id);
                 }}
-                className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-xs font-medium"
               >
-                <Copy className="w-4 h-4" /> Copy
+                <Copy className="w-3 h-3" /> Copy
               </button>
             </div>
-
-            {/* Contact Info */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+              <p>
                 <strong>Email:</strong> {booking.contact?.email || "—"}
-              </div>
-              <div>
+              </p>
+              <p>
                 <strong>Mobile:</strong> {booking.contact?.mobile || "—"}
-              </div>
+              </p>
+              <p>
+                <strong>Booking Type:</strong> {booking.bookingType || "—"}
+              </p>
+              <p>
+                <strong>Booking Date:</strong> {formatDate(booking.bookingDate)}
+              </p>
+              <p>
+                <strong>Trip Completed:</strong>{" "}
+                {booking.isTripCompleted ? "Yes" : "No"}
+              </p>
+              <p>
+                <strong>Booking Completed:</strong>{" "}
+                {booking.isBookingCompleted ? "Yes" : "No"}
+              </p>
+              <p>
+                <strong>Manage Booking:</strong>{" "}
+                {booking.manageBooking ? "Yes" : "No"}
+              </p>
+              <p>
+                <strong>GV Cancellation Pool:</strong>{" "}
+                {booking.gvCancellationPool || "—"}
+              </p>
+              <p>
+                <strong>IRCTC Cancellation Pool:</strong>{" "}
+                {booking.irctcCancellationPool || "—"}
+              </p>
             </div>
 
-            {/* Payment Summary */}
-            <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-              <h4 className="font-semibold text-gray-800 mb-3">
-                Payment Details
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <p>
-                    <strong>Advance:</strong> ₹
-                    {booking.payment?.advance?.amount || 0}
-                  </p>
-                  <p
-                    className={
-                      booking.payment?.advance?.paid
-                        ? "text-green-600"
-                        : "text-red-600"
-                    }
-                  >
-                    → {booking.payment?.advance?.paid ? "Paid" : "Pending"}
-                    {booking.payment?.advance?.paidAt && (
-                      <span className="text-xs block text-gray-500">
-                        on{" "}
-                        {new Date(
-                          booking.payment.advance.paidAt
-                        ).toLocaleDateString()}
-                      </span>
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <p>
-                    <strong>Balance:</strong> ₹
-                    {booking.payment?.balance?.amount || 0}
-                  </p>
-                  <p
-                    className={
-                      booking.payment?.balance?.paid
-                        ? "text-green-600"
-                        : "text-red-600"
-                    }
-                  >
-                    → {booking.payment?.balance?.paid ? "Paid" : "Pending"}
-                    {booking.payment?.balance?.paidAt && (
-                      <span className="text-xs block text-gray-500">
-                        on{" "}
-                        {new Date(
-                          booking.payment.balance.paidAt
-                        ).toLocaleDateString()}
-                      </span>
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Admin Remarks */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-gray-800 mb-3">
-                Admin Remarks
-              </h4>
-              {booking.adminRemarks && booking.adminRemarks.length > 0 ? (
-                <div className="space-y-3">
-                  {booking.adminRemarks.map((remark, idx) => (
-                    <div
-                      key={idx}
-                      className="bg-white p-3 rounded-lg border border-gray-200"
-                    >
-                      <p className="text-sm font-medium">{remark.remark}</p>
-                      {remark.amount !== undefined && remark.amount > 0 && (
-                        <p className="text-sm text-gray-600 mt-1">
-                          Amount: ₹{remark.amount}
-                        </p>
-                      )}
-                      <p className="text-xs text-gray-500 mt-1">
-                        Added on:{" "}
-                        {new Date(remark.addedAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 italic">No remarks found</p>
-              )}
-            </div>
-
-            {/* Advance Admin Remarks */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-gray-800 mb-3">
-                Advance Admin Remarks
-              </h4>
-              {booking.advanceAdminRemarks &&
-              booking.advanceAdminRemarks.length > 0 ? (
-                <div className="space-y-3">
-                  {booking.advanceAdminRemarks.map((remark, idx) => (
-                    <div
-                      key={idx}
-                      className="bg-white p-3 rounded-lg border border-gray-200"
-                    >
-                      <p className="text-sm font-medium">{remark.remark}</p>
-                      {remark.amount !== undefined && remark.amount > 0 && (
-                        <p className="text-sm text-gray-600 mt-1">
-                          Amount: ₹{remark.amount}
-                        </p>
-                      )}
-                      <p className="text-xs text-gray-500 mt-1">
-                        Added on:{" "}
-                        {new Date(remark.addedAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 italic">No remarks found</p>
-              )}
-            </div>
-
-            {/* Travellers List */}
             <div>
-              <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                <Users className="w-5 h-5" /> Travellers (
-                {booking.travellers?.length})
+              <h4 className="font-semibold mb-2 text-sm flex items-center gap-1">
+                <Users className="w-4 h-4" /> Travellers
               </h4>
               <div className="space-y-3">
-                {booking.travellers?.map((t, i) => {
-                  const status =
-                    t.cancelled?.byTraveller && t.cancelled?.byAdmin
-                      ? "Cancelled"
-                      : t.cancelled?.byTraveller && !t.cancelled?.byAdmin
-                      ? "Cancellation Requested"
-                      : t.cancelled?.byAdmin && !t.cancelled?.byTraveller
-                      ? "Rejected"
-                      : null;
-
-                  return (
-                    <div
-                      key={i}
-                      className={`p-4 rounded-lg border ${
-                        status
-                          ? "bg-red-50 border-red-200"
-                          : "bg-gray-50 border-gray-200"
-                      }`}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-medium">
-                            {t.title} {t.firstName} {t.lastName} ({t.age} yrs,{" "}
-                            {t.gender})
-                          </p>
-                          <p className="text-xs text-gray-600">
-                            Package: {t.packageType} • Sharing: {t.sharingType}
-                          </p>
-                          {t.boardingPoint?.stationName && (
-                            <p className="text-xs text-gray-600 mt-1">
-                              Boarding: {t.boardingPoint.stationName} (
-                              {t.boardingPoint.stationCode})
-                            </p>
-                          )}
-                          {t.deboardingPoint?.stationName && (
-                            <p className="text-xs text-gray-600">
-                              Deboarding: {t.deboardingPoint.stationName} (
-                              {t.deboardingPoint.stationCode})
-                            </p>
-                          )}
-                          {t.selectedAddon?.name && (
-                            <p className="text-xs text-gray-600">
-                              Add-on: {t.selectedAddon.name} (₹
-                              {t.selectedAddon.price})
-                            </p>
-                          )}
-                          {t.remarks && (
-                            <p className="italic text-gray-500 text-xs mt-1">
-                              Remarks: {t.remarks}
-                            </p>
-                          )}
-                        </div>
-                        {status && (
-                          <span className="text-xs font-medium text-red-700 bg-red-100 px-2 py-1 rounded">
-                            {status}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                {booking.travellers?.map((t, i) => (
+                  <div
+                    key={i}
+                    className="bg-gray-50 p-3 rounded-lg space-y-1 text-xs"
+                  >
+                    <p className="font-medium">
+                      {t.title} {t.firstName} {t.lastName} ({t.age} yrs,{" "}
+                      {t.gender || "—"})
+                    </p>
+                    <p>Sharing Type: {t.sharingType || "—"}</p>
+                    <p>
+                      Package Type: {t.packageType || "—"}
+                      {t.variantPackageIndex !== null
+                        ? ` (Variant ${t.variantPackageIndex})`
+                        : ""}
+                    </p>
+                    {t.selectedAddon && (
+                      <p>
+                        Addon: {t.selectedAddon.name || "—"} (
+                        {t.selectedAddon.price || 0})
+                      </p>
+                    )}
+                    {t.boardingPoint && (
+                      <p>
+                        Boarding Point: {t.boardingPoint.stationName || "—"} (
+                        {t.boardingPoint.stationCode || "—"})
+                      </p>
+                    )}
+                    {t.deboardingPoint && (
+                      <p>
+                        Deboarding Point: {t.deboardingPoint.stationName || "—"}{" "}
+                        ({t.deboardingPoint.stationCode || "—"})
+                      </p>
+                    )}
+                    {t.trainSeats?.length > 0 && (
+                      <p>
+                        Train Seats:{" "}
+                        {t.trainSeats
+                          .map(
+                            (s) => `${s.trainName || "—"}: ${s.seatNo || "—"}`
+                          )
+                          .join(", ")}
+                      </p>
+                    )}
+                    {t.flightSeats?.length > 0 && (
+                      <p>
+                        Flight Seats:{" "}
+                        {t.flightSeats
+                          .map(
+                            (s) => `${s.flightName || "—"}: ${s.seatNo || "—"}`
+                          )
+                          .join(", ")}
+                      </p>
+                    )}
+                    <p>Staff Remarks: {t.staffRemarks || "—"}</p>
+                    <p>Remarks: {t.remarks || "—"}</p>
+                    {(t.cancelled?.byTraveller || t.cancelled?.byAdmin) && (
+                      <p className="text-red-600">
+                        Cancelled by{" "}
+                        {t.cancelled.byAdmin ? "Admin" : "Traveller"} at{" "}
+                        {formatDate(t.cancelled.cancelledAt)}
+                        {t.cancelled.reason
+                          ? ` (Reason: ${t.cancelled.reason})`
+                          : ""}
+                        {t.cancelled.releaseddAt
+                          ? `, Released at ${formatDate(
+                              t.cancelled.releaseddAt
+                            )}`
+                          : ""}
+                      </p>
+                    )}
+                  </div>
+                )) || <p>No travellers</p>}
               </div>
             </div>
 
-            {/* Billing Address */}
-            {booking.billingAddress && (
-              <div>
-                <h4 className="font-semibold text-gray-800 mb-2">
-                  Billing Address
+            <div>
+              <h4 className="font-semibold mb-2 text-sm">Billing Address</h4>
+              <p>
+                {booking.billingAddress?.addressLine1 || "—"}{" "}
+                {booking.billingAddress?.addressLine2 || ""}
+              </p>
+              <p>
+                {booking.billingAddress?.city || "—"},{" "}
+                {booking.billingAddress?.state || "—"}{" "}
+                {booking.billingAddress?.pincode || "—"},{" "}
+                {booking.billingAddress?.country || "India"}
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-2 text-sm">Payment Details</h4>
+              <p>
+                Advance: ₹{booking.payment?.advance?.amount || 0} -
+                {booking.payment?.advance?.paid
+                  ? `Paid at ${formatDate(booking.payment.advance.paidAt)}`
+                  : "Pending"}
+                {booking.payment?.advance?.paymentVerified ? " (Verified)" : ""}
+              </p>
+              <p>
+                Balance: ₹{booking.payment?.balance?.amount || 0} -
+                {booking.payment?.balance?.paid
+                  ? `Paid at ${formatDate(booking.payment.balance.paidAt)}`
+                  : "Pending"}
+                {booking.payment?.balance?.paymentVerified ? " (Verified)" : ""}
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-2 text-sm">Receipts</h4>
+              <p>
+                Advance Receipt Sent:{" "}
+                {booking.receipts?.advanceReceiptSent
+                  ? `Yes at ${formatDate(
+                      booking.receipts.advanceReceiptSentAt
+                    )}`
+                  : "No"}
+              </p>
+              <p>
+                Balance Receipt Sent:{" "}
+                {booking.receipts?.balanceReceiptSent
+                  ? `Yes at ${formatDate(
+                      booking.receipts.balanceReceiptSentAt
+                    )}`
+                  : "No"}
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-2 text-sm">
+                Advance Admin Remarks
+              </h4>
+              <div className="space-y-1">
+                {booking.advanceAdminRemarks?.map((r, i) => (
+                  <div key={i} className="bg-gray-50 p-2 rounded text-xs">
+                    <p>
+                      {r.remark || "—"} (₹{r.amount || 0})
+                    </p>
+                    <p>Added at: {formatDate(r.addedAt)}</p>
+                  </div>
+                )) || <p>None</p>}
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-2 text-sm">Admin Remarks</h4>
+              <div className="space-y-1">
+                {booking.adminRemarks?.map((r, i) => (
+                  <div key={i} className="bg-gray-50 p-2 rounded text-xs">
+                    <p>
+                      {r.remark || "—"} (₹{r.amount || 0})
+                    </p>
+                    <p>Added at: {formatDate(r.addedAt)}</p>
+                  </div>
+                )) || <p>None</p>}
+              </div>
+            </div>
+
+            {booking.cancelled?.byAdmin || booking.cancelled?.byTraveller ? (
+              <div className="text-red-600">
+                <h4 className="font-semibold mb-2 text-sm">
+                  Booking Cancellation
                 </h4>
-                <p className="text-sm text-gray-600">
-                  {booking.billingAddress.addressLine1}
-                  {booking.billingAddress.addressLine2 &&
-                    `, ${booking.billingAddress.addressLine2}`}
-                  <br />
-                  {booking.billingAddress.city}, {booking.billingAddress.state}{" "}
-                  - {booking.billingAddress.pincode}
-                  <br />
-                  {booking.billingAddress.country}
+                <p>
+                  Cancelled by{" "}
+                  {booking.cancelled.byAdmin ? "Admin" : "Traveller"} at{" "}
+                  {formatDate(booking.cancelled.cancelledAt)}
+                  {booking.cancelled.reason
+                    ? ` (Reason: ${booking.cancelled.reason})`
+                    : ""}
+                  {booking.cancelled.releaseddAt
+                    ? `, Released at ${formatDate(
+                        booking.cancelled.releaseddAt
+                      )}`
+                    : ""}
                 </p>
               </div>
-            )}
-
-            {/* Completion Status */}
-            {booking.isBookingCompleted && (
-              <div className="text-center py-2 bg-green-50 rounded-lg">
-                <span className="text-green-700 font-medium">
-                  ✓ Booking Marked as Completed
-                </span>
-              </div>
-            )}
+            ) : null}
           </div>
         )}
       </div>
@@ -502,6 +561,7 @@ const TourAdminDashboard = () => {
     );
   };
 
+  // NEW: Manage Booking Request Item
   const ManageRequestItem = ({ booking }) => {
     const first = booking.travellers?.[0] || {};
     const name =
@@ -560,28 +620,7 @@ const TourAdminDashboard = () => {
               </p>
             </div>
 
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleApprove(booking._id);
-                }}
-                disabled={isActing === "approve"}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-              >
-                Approve
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleReject(booking._id);
-                }}
-                disabled={isActing === "reject"}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
-              >
-                Reject
-              </button>
-            </div>
+            <div className="flex gap-3 justify-end"></div>
           </div>
         )}
       </div>
@@ -643,72 +682,6 @@ const TourAdminDashboard = () => {
       </section>
     );
   };
-
-  const filters = {
-    advance: (b) =>
-      (b.payment?.advance?.paid &&
-        !b.payment?.balance?.paid &&
-        b.travellers?.some(
-          (t) => !t.cancelled?.byTraveller && !t.cancelled?.byAdmin
-        )) ||
-      (b.payment?.advance?.paid &&
-        b.payment?.balance?.paid &&
-        b.travellers?.some(
-          (t) => !t.cancelled?.byTraveller && !t.cancelled?.byAdmin
-        )),
-
-    balance: (b) =>
-      b.payment?.advance?.paid &&
-      b.payment?.balance?.paid &&
-      b.travellers?.some(
-        (t) => !t.cancelled?.byTraveller && !t.cancelled?.byAdmin
-      ),
-
-    completion: (b) =>
-      b.payment?.advance?.paid &&
-      b.payment?.balance?.paid &&
-      !b.isBookingCompleted,
-
-    cancellation: (b) =>
-      b.travellers?.some(
-        (t) => t.cancelled?.byTraveller && !t.cancelled?.byAdmin
-      ),
-
-    modifyReceipt: (b) =>
-      b.isTripCompleted &&
-      b.travellers?.some(
-        (t) => !t.cancelled?.byTraveller && !t.cancelled?.byAdmin
-      ),
-  };
-
-  const categorized = {
-    advance: bookings.filter(filters.advance),
-    balance: bookings.filter(filters.balance),
-    completion: bookings.filter(filters.completion),
-    cancellation: bookings.filter(filters.cancellation),
-    modifyReceipt: bookings.filter(filters.modifyReceipt),
-    manageRequests: Array.isArray(pendingApprovals) ? pendingApprovals : [],
-  };
-
-  const totalTravellers = bookings.reduce((count, b) => {
-    if (
-      b.payment?.advance?.paid &&
-      b.payment?.balance?.paid &&
-      b.isBookingCompleted
-    ) {
-      const valid =
-        b.travellers?.filter(
-          (t) => !t.cancelled?.byTraveller && !t.cancelled?.byAdmin
-        ) || [];
-      return count + valid.length;
-    }
-    return count;
-  }, 0);
-
-  const uniqueUsers = new Set(
-    bookings.map((b) => b.userData?._id || b.contact?.email)
-  ).size;
-  const pendingManageCount = categorized.manageRequests.length;
 
   const metrics = [
     {
