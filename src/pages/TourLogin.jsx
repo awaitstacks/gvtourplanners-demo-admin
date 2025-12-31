@@ -316,7 +316,7 @@ const TourLogin = () => {
       </div>
 
       {/* ANIMATIONS */}
-      <style jsx>{`
+      <style>{`
         @keyframes fly-diagonal {
           0% {
             transform: translateX(0) translateY(0) rotate(-35deg);
