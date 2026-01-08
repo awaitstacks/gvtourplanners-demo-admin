@@ -286,7 +286,7 @@ const TourNameList = () => {
     return genderAbbrev;
   };
 
-  // Export to PDF
+  // // Export to PDF
   // const exportToPDF = () => {
   //   const doc = new jsPDF("landscape", "pt", "a4");
   //   const tourTitle =
