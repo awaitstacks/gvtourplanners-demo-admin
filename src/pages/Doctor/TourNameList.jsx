@@ -353,22 +353,24 @@ const TourNameList = () => {
 const exportToPDF = () => {
   const doc = new jsPDF("landscape", "pt", "a4");
 
-  // Database-ல இருந்து direct raw title எடுக்குறோம் (no changes)
-  const rawTitle =
-    bookings[0]?.tourData?.title ||
-    tourList.find((tour) => tour._id === selectedTourId)?.title ||
-    "Tour Traveller List";
+  // IMPORTANT: tourList-ல இருந்து மட்டும் title எடு (main tour - JAN 26)
+  const tourFromList = tourList.find((tour) => tour._id === selectedTourId);
+  const rawTitle = tourFromList?.title || "Tour Traveller List";
 
-  // இதுல எந்த replacement-ம் பண்ணாம direct-ஆ use பண்ணுறோம்
-  const displayTitle = rawTitle.trim(); // just extra spaces remove பண்ணி
+  // Optional: Console-ல check பண்ணி confirm பண்ணுங்க (பிறகு remove பண்ணலாம்)
+  console.log("Selected Tour ID:", selectedTourId);
+  console.log("Raw Title (from tourList):", rawTitle);
+  // இது "GRAND GUJARAT YATRA JAN 26" ஆக print ஆகணும்
 
-  // PDF title - database-ல இருக்குறது அப்படியே
+  const displayTitle = rawTitle.trim(); // database-ல இருக்குறது அப்படியே
+
+  // PDF title
   doc.setFontSize(18);
   doc.text(displayTitle, doc.internal.pageSize.getWidth() / 2, 50, {
     align: "center",
   });
 
-  // Table headers
+  // Table headers & body (same)
   const head = [
     [
       "SL NO",
@@ -383,7 +385,6 @@ const exportToPDF = () => {
     ],
   ];
 
-  // Table body
   const body = filteredTravellers.map((trav, idx) => [
     String(idx + 1).padStart(2, "0"),
     trav.name || "—",
@@ -396,7 +397,6 @@ const exportToPDF = () => {
     ...tableData.flightColumns.map((c) => trav.flightSeats?.[c] ?? "—"),
   ]);
 
-  // Table
   autoTable(doc, {
     head,
     body,
@@ -414,15 +414,13 @@ const exportToPDF = () => {
       fontStyle: "bold",
     },
     alternateRowStyles: { fillColor: [240, 248, 243] },
-    columnStyles: {
-      1: { halign: "left" }, // Name left align
-    },
+    columnStyles: { 1: { halign: "left" } },
   });
 
-  // Filename-லயும் database raw title அப்படியே (safe characters only)
+  // Filename - database raw title அப்படியே
   const safeFileName = displayTitle
-    .replace(/[^a-zA-Z0-9\s-]/g, "") // special characters remove
-    .replace(/\s+/g, "_") // spaces to underscore
+    .replace(/[^a-zA-Z0-9\s-]/g, "")
+    .replace(/\s+/g, "_")
     .trim();
 
   doc.save(`${safeFileName}_Traveller_List.pdf`);
