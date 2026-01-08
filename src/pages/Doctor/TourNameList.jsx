@@ -353,67 +353,42 @@ const TourNameList = () => {
 const exportToPDF = () => {
   const doc = new jsPDF("landscape", "pt", "a4");
 
-  // Raw title database-ல இருந்து எடுக்குறோம்
-  const rawTitle =
-    bookings[0]?.tourData?.title ||
-    tourList.find((tour) => tour._id === selectedTourId)?.title ||
-    "Tour Traveller List";
+  // PRIORITY: tourList-ல இருந்து மட்டும் title எடு (main tour – always 2026)
+  const tourFromList = tourList.find((tour) => tour._id === selectedTourId);
+  const rawTitle = tourFromList?.title || "Tour Traveller List";
 
-  // ================ TITLE FORMATTING – MAIN FIX ================
-  let displayTitle = "Tour Traveller List"; // default fallback
+  // DEBUG: Console-ல check பண்ணுங்க (test-க்கு வெச்சு remove பண்ணலாம்)
+  console.log("SELECTED TOUR ID:", selectedTourId);
+  console.log("RAW TITLE FROM tourList:", rawTitle);
+  console.log("FULL TOUR OBJECT:", tourFromList);
 
-  const cleanedTitle = rawTitle.trim();
+  let displayTitle = "Tour Traveller List";
 
-  // Exact match for current tour (DB-ல இருக்குற value)
-  if (cleanedTitle === "GRAND GUJARAT YATRA JAN 26") {
+  const cleaned = rawTitle.trim();
+
+  // FORCE 2026 for this tour
+  if (cleaned === "GRAND GUJARAT YATRA JAN 26" || 
+      (cleaned.toUpperCase().includes("GRAND GUJARAT") && cleaned.toUpperCase().includes("JAN 26"))) {
     displayTitle = "Grand Gujarat 2026";
-  }
-  // Extra safety – case insensitive + partial match (future-proof)
-  else if (
-    cleanedTitle.toUpperCase().includes("GRAND GUJARAT") &&
-    cleanedTitle.toUpperCase().includes("JAN 26")
-  ) {
-    displayTitle = "Grand Gujarat 2026";
-  }
-  // இன்னும் வேற old batch இருந்தா (example JAN 25) → optional
-  else if (
-    cleanedTitle.toUpperCase().includes("GRAND GUJARAT") &&
-    cleanedTitle.toUpperCase().includes("JAN 25")
-  ) {
-    displayTitle = "Grand Gujarat 2025";
-  }
-  // வேற எந்த tour-க்கும் normal title case போடலாம்
-  else {
-    displayTitle = cleanedTitle
+  } else {
+    // Other tours – normal title case
+    displayTitle = cleaned
       .toLowerCase()
       .split(" ")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
       .join(" ");
   }
-  // =================================================================
 
-  // PDF-ல title center-ல போடுறோம்
+  // PDF Title
   doc.setFontSize(18);
-  doc.text(displayTitle, doc.internal.pageSize.getWidth() / 2, 50, {
-    align: "center",
-  });
+  doc.text(displayTitle, doc.internal.pageSize.getWidth() / 2, 50, { align: "center" });
 
-  // Table headers
-  const head = [
-    [
-      "SL NO",
-      "NAME",
-      "AGE",
-      "GENDER",
-      "MOBILE",
-      "BOARDING POINT",
-      "DEBOARDING POINT",
-      ...tableData.trainColumns,
-      ...tableData.flightColumns,
-    ],
-  ];
+  // Table headers & body (same as before)
+  const head = [[
+    "SL NO", "NAME", "AGE", "GENDER", "MOBILE", "BOARDING POINT", "DEBOARDING POINT",
+    ...tableData.trainColumns, ...tableData.flightColumns
+  ]];
 
-  // Table body
   const body = filteredTravellers.map((trav, idx) => [
     String(idx + 1).padStart(2, "0"),
     trav.name || "—",
@@ -422,48 +397,29 @@ const exportToPDF = () => {
     trav.mobile || "—",
     trav.boardingPoint || "—",
     trav.deboardingPoint || "—",
-    ...tableData.trainColumns.map((c) => trav.trainSeats?.[c] ?? "—"),
-    ...tableData.flightColumns.map((c) => trav.flightSeats?.[c] ?? "—"),
+    ...tableData.trainColumns.map(c => trav.trainSeats?.[c] ?? "—"),
+    ...tableData.flightColumns.map(c => trav.flightSeats?.[c] ?? "—"),
   ]);
 
-  // Table generate
   autoTable(doc, {
-    head,
-    body,
-    startY: 80, // title-க்கு கீழ space
-    styles: {
-      fontSize: 10,
-      cellPadding: 5,
-      halign: "center",
-      valign: "middle",
-      overflow: "linebreak",
-    },
-    headStyles: {
-      fillColor: [40, 167, 69],
-      textColor: [255, 255, 255],
-      fontStyle: "bold",
-    },
+    head, body, startY: 80,
+    styles: { fontSize: 10, cellPadding: 5, halign: "center", valign: "middle", overflow: "linebreak" },
+    headStyles: { fillColor: [40, 167, 69], textColor: [255, 255, 255], fontStyle: "bold" },
     alternateRowStyles: { fillColor: [240, 248, 243] },
-    columnStyles: {
-      1: { halign: "left" }, // Name left align
-    },
+    columnStyles: { 1: { halign: "left" } },
   });
 
-  // Safe & clean filename
+  // Filename – 2026 guaranteed
   const fileName = `${displayTitle.replace(/[^a-zA-Z0-9]/g, "_")}_Traveller_List.pdf`;
-  // Example: Grand_Gujarat_2026_Traveller_List.pdf
-
   doc.save(fileName);
 
-  // Success message
   toast.success(
-    <div className="flex items-center gap-2">
-      <span>✅</span>
-      <span>PDF exported successfully</span>
-    </div>,
+    <div className="flex items-center gap-2"><span>✅</span><span>PDF exported successfully</span></div>,
     { toastId: "pdf-export-success" }
   );
+  console.log("Toast displayed: pdf-export-success")
 };
+
   // Add train/flight column
   const handleAddGlobalColumn = (type) => {
     const maxColumns = 15;
