@@ -353,42 +353,37 @@ const TourNameList = () => {
 const exportToPDF = () => {
   const doc = new jsPDF("landscape", "pt", "a4");
 
-  // PRIORITY: tourList-ல இருந்து மட்டும் title எடு (main tour – always 2026)
-  const tourFromList = tourList.find((tour) => tour._id === selectedTourId);
-  const rawTitle = tourFromList?.title || "Tour Traveller List";
+  // Database-ல இருந்து direct raw title எடுக்குறோம் (no changes)
+  const rawTitle =
+    bookings[0]?.tourData?.title ||
+    tourList.find((tour) => tour._id === selectedTourId)?.title ||
+    "Tour Traveller List";
 
-  // DEBUG: Console-ல check பண்ணுங்க (test-க்கு வெச்சு remove பண்ணலாம்)
-  console.log("SELECTED TOUR ID:", selectedTourId);
-  console.log("RAW TITLE FROM tourList:", rawTitle);
-  console.log("FULL TOUR OBJECT:", tourFromList);
+  // இதுல எந்த replacement-ம் பண்ணாம direct-ஆ use பண்ணுறோம்
+  const displayTitle = rawTitle.trim(); // just extra spaces remove பண்ணி
 
-  let displayTitle = "Tour Traveller List";
-
-  const cleaned = rawTitle.trim();
-
-  // FORCE 2026 for this tour
-  if (cleaned === "GRAND GUJARAT YATRA JAN 26" || 
-      (cleaned.toUpperCase().includes("GRAND GUJARAT") && cleaned.toUpperCase().includes("JAN 26"))) {
-    displayTitle = "Grand Gujarat 2026";
-  } else {
-    // Other tours – normal title case
-    displayTitle = cleaned
-      .toLowerCase()
-      .split(" ")
-      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(" ");
-  }
-
-  // PDF Title
+  // PDF title - database-ல இருக்குறது அப்படியே
   doc.setFontSize(18);
-  doc.text(displayTitle, doc.internal.pageSize.getWidth() / 2, 50, { align: "center" });
+  doc.text(displayTitle, doc.internal.pageSize.getWidth() / 2, 50, {
+    align: "center",
+  });
 
-  // Table headers & body (same as before)
-  const head = [[
-    "SL NO", "NAME", "AGE", "GENDER", "MOBILE", "BOARDING POINT", "DEBOARDING POINT",
-    ...tableData.trainColumns, ...tableData.flightColumns
-  ]];
+  // Table headers
+  const head = [
+    [
+      "SL NO",
+      "NAME",
+      "AGE",
+      "GENDER",
+      "MOBILE",
+      "BOARDING POINT",
+      "DEBOARDING POINT",
+      ...tableData.trainColumns,
+      ...tableData.flightColumns,
+    ],
+  ];
 
+  // Table body
   const body = filteredTravellers.map((trav, idx) => [
     String(idx + 1).padStart(2, "0"),
     trav.name || "—",
@@ -397,27 +392,49 @@ const exportToPDF = () => {
     trav.mobile || "—",
     trav.boardingPoint || "—",
     trav.deboardingPoint || "—",
-    ...tableData.trainColumns.map(c => trav.trainSeats?.[c] ?? "—"),
-    ...tableData.flightColumns.map(c => trav.flightSeats?.[c] ?? "—"),
+    ...tableData.trainColumns.map((c) => trav.trainSeats?.[c] ?? "—"),
+    ...tableData.flightColumns.map((c) => trav.flightSeats?.[c] ?? "—"),
   ]);
 
+  // Table
   autoTable(doc, {
-    head, body, startY: 80,
-    styles: { fontSize: 10, cellPadding: 5, halign: "center", valign: "middle", overflow: "linebreak" },
-    headStyles: { fillColor: [40, 167, 69], textColor: [255, 255, 255], fontStyle: "bold" },
+    head,
+    body,
+    startY: 80,
+    styles: {
+      fontSize: 10,
+      cellPadding: 5,
+      halign: "center",
+      valign: "middle",
+      overflow: "linebreak",
+    },
+    headStyles: {
+      fillColor: [40, 167, 69],
+      textColor: [255, 255, 255],
+      fontStyle: "bold",
+    },
     alternateRowStyles: { fillColor: [240, 248, 243] },
-    columnStyles: { 1: { halign: "left" } },
+    columnStyles: {
+      1: { halign: "left" }, // Name left align
+    },
   });
 
-  // Filename – 2026 guaranteed
-  const fileName = `${displayTitle.replace(/[^a-zA-Z0-9]/g, "_")}_Traveller_List.pdf`;
-  doc.save(fileName);
+  // Filename-லயும் database raw title அப்படியே (safe characters only)
+  const safeFileName = displayTitle
+    .replace(/[^a-zA-Z0-9\s-]/g, "") // special characters remove
+    .replace(/\s+/g, "_") // spaces to underscore
+    .trim();
+
+  doc.save(`${safeFileName}_Traveller_List.pdf`);
+  // Result: GRAND_GUJARAT_YATRA_JAN_26_Traveller_List.pdf
 
   toast.success(
-    <div className="flex items-center gap-2"><span>✅</span><span>PDF exported successfully</span></div>,
+    <div className="flex items-center gap-2">
+      <span>✅</span>
+      <span>PDF exported successfully</span>
+    </div>,
     { toastId: "pdf-export-success" }
   );
-  console.log("Toast displayed: pdf-export-success")
 };
 
   // Add train/flight column
