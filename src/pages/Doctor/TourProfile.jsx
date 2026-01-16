@@ -839,9 +839,9 @@ const TourProfile = () => {
               <option value="Religious">Religious</option>
               <option value="Honeymoon">Honeymoon</option>
               <option value="Jolly">Jolly</option>
-              <option value="Spritual">Spritual</option>
-              <option value="Spritual+Sightseeing">
-                Spritual + Sightseeing
+              <option value="Spiritual">Spiritual</option>
+              <option value="Spiritual+Sightseeing">
+                Spiritual + Sightseeing
               </option>
             </select>
           </div>
