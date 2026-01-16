@@ -453,8 +453,8 @@ const AddTour = () => {
               <option value="Religious">Religious</option>
               <option value="Honeymoon">Honeymoon</option>
               <option value="Jolly">Jolly</option>
-              <option value="Spritual">Spiritual</option>
-              <option value="Spritual+Sightseeing">
+              <option value="Spiritual">Spiritual</option>
+              <option value="Spiritual+Sightseeing">
                 Spiritual + Sightseeing
               </option>
             </select>
