@@ -5,6 +5,7 @@ import axios from "axios";
 import { TourContext } from "../../context/TourContext";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useNavigate } from "react-router-dom";
 
 // Error Boundary Component
 class ErrorBoundary extends React.Component {
@@ -136,6 +137,55 @@ const TourProfile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [addingTransport, setAddingTransport] = useState({});
   const [fetchCount, setFetchCount] = useState(0);
+  const [showConfirm, setShowConfirm] = useState(false);
+    const [formIsDirty, setFormIsDirty] = useState(false);
+    const [showBackConfirm, setShowBackConfirm] = useState(false);
+  
+    // Detect unsaved changes
+    useEffect(() => {
+      const formChanged = JSON.stringify(formData) !== JSON.stringify(initialForm);
+      const imagesChanged =
+        images.titleImage !== null ||
+        images.mapImage !== null ||
+        images.galleryImages.length > 0;
+  
+      setFormIsDirty(formChanged || imagesChanged);
+    }, [formData, images]);
+  
+    // Browser protection (refresh, back arrow, back swipe, tab close)
+    useEffect(() => {
+      if (!formIsDirty) return;
+  
+      const handleBeforeUnload = (event) => {
+        event.preventDefault();
+        event.returnValue = "Unsaved changes இருக்கு. Sure ah leave பண்ணுறீங்களா?";
+      };
+  
+      window.addEventListener("beforeunload", handleBeforeUnload);
+  
+      return () => {
+        window.removeEventListener("beforeunload", handleBeforeUnload);
+      };
+    }, [formIsDirty]);
+  
+    // Custom back/swipe protection (push history to trap back action)
+    useEffect(() => {
+      if (!formIsDirty) return;
+  
+      // Create a history entry so back button triggers popstate
+      window.history.pushState(null, null, window.location.href);
+  
+      const handlePopState = (event) => {
+        event.preventDefault();
+        setShowBackConfirm(true);
+      };
+  
+      window.addEventListener("popstate", handlePopState);
+  
+      return () => {
+        window.removeEventListener("popstate", handlePopState);
+      };
+    }, [formIsDirty]);
 
   // Clear toasts on route change
   useEffect(() => {
@@ -835,14 +885,13 @@ const TourProfile = () => {
               disabled={isLoading}
             >
               <option value="">Select tour category</option>
-              <option value="Devotional">Devotional</option>
-              <option value="Religious">Religious</option>
-              <option value="Honeymoon">Honeymoon</option>
+              <option value="Historical">Historical</option>
               <option value="Jolly">Jolly</option>
               <option value="Spiritual">Spiritual</option>
               <option value="Spiritual+Sightseeing">
                 Spiritual + Sightseeing
               </option>
+              <option value="International">International</option>
             </select>
           </div>
 
@@ -2246,9 +2295,48 @@ const TourProfile = () => {
             )}
           </div>
         </form>
+        
+
+        {/* Back/Swipe/Leave Confirmation Popup - centered */}
+        {showBackConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 px-4">
+            <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full text-center">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                Unsaved Changes
+              </h2>
+              <p className="text-gray-600 mb-6">
+                You have unsaved changes.<br />
+                Going back will reload the page and you will lose them.<br />
+                Are you sure you want to go back?
+              </p>
+              <div className="flex justify-center gap-6">
+                <button
+                  onClick={() => {
+                    setShowBackConfirm(false);
+                    window.history.pushState(null, null, window.location.href);
+                  }}
+                  className="px-8 py-3 bg-gray-200 text-gray-800 rounded-xl font-medium hover:bg-gray-300 transition"
+                >
+                  Cancel (Stay)
+                </button>
+                <button
+                  onClick={() => {
+                    setShowBackConfirm(false);
+                    history.back();
+                  }}
+                  className="px-8 py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition"
+                >
+                  OK (Go Back)
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        
       </div>
     </ErrorBoundary>
   );
 };
 
 export default TourProfile;
+

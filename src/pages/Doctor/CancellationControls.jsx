@@ -85,6 +85,71 @@ const CancellationControls = () => {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState(null);
 
+// ──────────────────────────────────────────────
+  // UNSAVED CHANGES PROTECTION + BACK/SWIPE POPUP
+  // ──────────────────────────────────────────────
+  const [formIsDirty, setFormIsDirty] = useState(false);
+  const [showBackConfirm, setShowBackConfirm] = useState(false);
+
+  // Detect unsaved changes
+  useEffect(() => {
+    const hasChanges =
+      bookingId.trim() !== "" ||
+      selectedIndexes.length > 0 ||
+      cancellationDate !== "" ||
+      Object.keys(trainCancellations).length > 0 ||
+      Object.keys(flightCancellations).length > 0 ||
+      customAddons.some(
+        (a) => a.name.trim() || a.amount.trim() || a.remark.trim()
+      ) ||
+      submitting;
+
+    setFormIsDirty(hasChanges);
+  }, [
+    bookingId,
+    selectedIndexes,
+    cancellationDate,
+    trainCancellations,
+    flightCancellations,
+    customAddons,
+    submitting,
+  ]);
+
+  // Browser refresh / tab close protection
+  useEffect(() => {
+    if (!formIsDirty) return;
+
+    const handleBeforeUnload = (event) => {
+      event.preventDefault();
+      event.returnValue = "You have unsaved cancellation changes. Are you sure you want to leave?";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [formIsDirty]);
+
+  // Back button / swipe protection (push dummy history)
+  useEffect(() => {
+    if (!formIsDirty) return;
+
+    window.history.pushState(null, null, window.location.href);
+
+    const handlePopState = (event) => {
+      event.preventDefault();
+      setShowBackConfirm(true);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [formIsDirty]);
+
+
   // ────────────────────── EFFECTS ──────────────────────
   useEffect(() => {
     if (singleBooking) {
@@ -1003,6 +1068,43 @@ const CancellationControls = () => {
           )}
         </div>
       </div>
+
+      
+      {/* Back/Swipe/Leave Confirmation Popup - centered */}
+      {showBackConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full text-center">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+              Unsaved Changes
+            </h2>
+            <p className="text-gray-600 mb-6">
+              You have unsaved cancellation changes.<br />
+              Going back will reload the page and you will lose them.<br />
+              Are you sure you want to go back?
+            </p>
+            <div className="flex justify-center gap-6">
+              <button
+                onClick={() => {
+                  setShowBackConfirm(false);
+                  window.history.pushState(null, null, window.location.href);
+                }}
+                className="px-8 py-3 bg-gray-200 text-gray-800 rounded-xl font-medium hover:bg-gray-300 transition"
+              >
+                Cancel (Stay)
+              </button>
+              <button
+                onClick={() => {
+                  setShowBackConfirm(false);
+                  history.back();
+                }}
+                className="px-8 py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition"
+              >
+                OK (Go Back)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
