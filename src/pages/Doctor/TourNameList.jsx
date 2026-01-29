@@ -287,70 +287,7 @@ const TourNameList = () => {
   };
 
   // // Export to PDF
-  // const exportToPDF = () => {
-  //   const doc = new jsPDF("landscape", "pt", "a4");
-  //   const tourTitle =
-  //     bookings[0]?.tourData?.title ||
-  //     tourList.find((tour) => tour._id === selectedTourId)?.title ||
-  //     "Tour Traveller List";
-
-  //   doc.setFontSize(18);
-  //   doc.text(tourTitle, doc.internal.pageSize.getWidth() / 2, 40, {
-  //     align: "center",
-  //   });
-
-  //   const head = [
-  //     [
-  //       "SL NO",
-  //       "NAME",
-  //       "AGE",
-  //       "GENDER",
-  //       "MOBILE",
-  //       "BOARDING POINT",
-  //       "DEBOARDING POINT",
-  //       ...tableData.trainColumns,
-  //       ...tableData.flightColumns,
-  //     ],
-  //   ];
-
-  //   const body = filteredTravellers.map((trav, idx) => [
-  //     String(idx + 1).padStart(2, "0"),
-  //     trav.name,
-  //     trav.age,
-  //     getDisplayGender(trav.age, trav.gender, trav.sharingType),
-  //     trav.mobile || "—",
-  //     trav.boardingPoint || "—",
-  //     trav.deboardingPoint || "—",
-  //     ...tableData.trainColumns.map((c) => trav.trainSeats[c] ?? ""),
-  //     ...tableData.flightColumns.map((c) => trav.flightSeats[c] ?? ""),
-  //   ]);
-
-  //   autoTable(doc, {
-  //     head,
-  //     body,
-  //     startY: 60,
-  //     styles: {
-  //       fontSize: 11,
-  //       cellPadding: 6,
-  //       halign: "center",
-  //       valign: "middle",
-  //     },
-  //     headStyles: { fillColor: [40, 167, 69], halign: "center" },
-  //     alternateRowStyles: { fillColor: [245, 245, 245] },
-  //   });
-
-  //   doc.save(`${tourTitle.replace(/\s+/g, "_")}_Traveller_List.pdf`);
-  //   toast.success(
-  //     <div className="flex items-center gap-2">
-  //       <span>✅</span>
-  //       <span>PDF exported successfully</span>
-  //     </div>,
-  //     { toastId: "pdf-export-success" }
-  //   );
-  //   console.log("Toast displayed: pdf-export-success");
-  // };
-
-const exportToPDF = () => {
+  const exportToPDF = () => {
   const doc = new jsPDF("landscape", "pt", "a4");
 
   // IMPORTANT: tourList-ல இருந்து மட்டும் title எடு (main tour - JAN 26)

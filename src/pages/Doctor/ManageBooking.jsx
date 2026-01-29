@@ -1333,114 +1333,106 @@ const ManageBooking = () => {
     return !hasError;
   };
 
-  const handleSaveUpdate = async () => {
-    if (!hasChanges) {
-      toast.info("No changes to save.");
-      return;
+const handleSaveUpdate = async () => {
+  if (!hasChanges) {
+    toast.info("No changes to save.");
+    return;
+  }
+
+  if (!validateBeforeSave()) {
+    toast.error("Please fix validation errors before saving.");
+    return;
+  }
+
+  setSaving(true);
+  setError("");
+
+  try {
+    const updates = {
+      // Send FULL travellers array (not index-based diffs)
+      travellers: booking.travellers.map((t) => ({
+        _id: t._id || undefined,               // keep _id for existing
+        title: t.title || "",
+        firstName: t.firstName?.trim() || "",
+        lastName: t.lastName?.trim() || "",
+        age: Number(t.age) || null,
+        gender: t.gender || "",
+        packageType: t.packageType || "main",
+        variantPackageIndex: t.variantPackageIndex ?? null,
+        sharingType: t.sharingType || "",
+        selectedAddon: t.selectedAddon ? { name: t.selectedAddon.name, price: t.selectedAddon.price } : null,
+        boardingPoint: t.boardingPoint ? { ...t.boardingPoint } : null,
+        deboardingPoint: t.deboardingPoint ? { ...t.deboardingPoint } : null,
+        remarks: t.remarks?.trim() || "",
+      })),
+
+      contact: {},
+      billingAddress: {},
+    };
+
+    // Only send changed contact fields
+    if (booking.contact?.email !== originalBooking?.contact?.email) {
+      updates.contact.email = booking.contact.email?.trim();
+    }
+    if (booking.contact?.mobile !== originalBooking?.contact?.mobile) {
+      updates.contact.mobile = booking.contact.mobile?.trim();
     }
 
-    if (!validateBeforeSave()) {
-      toast.error("Please fix validation errors before saving.");
-      return;
-    }
+    // Only send changed billing fields
+    const billingFields = ["addressLine1", "addressLine2", "city", "state", "pincode", "country"];
+    billingFields.forEach((f) => {
+      if (booking.billingAddress?.[f] !== originalBooking?.billingAddress?.[f]) {
+        updates.billingAddress[f] = booking.billingAddress[f]?.trim() || "";
+      }
+    });
 
-    setSaving(true);
-    setError("");
+    // Clean empty objects
+    if (!Object.keys(updates.contact).length) delete updates.contact;
+    if (!Object.keys(updates.billingAddress).length) delete updates.billingAddress;
 
-    try {
-      const updates = {
-        travellers: booking.travellers.map((t, i) => {
-          const orig = originalBooking?.travellers?.[i];
-          const diff = {
-            packageType: t.packageType,
-            variantPackageIndex: t.variantPackageIndex,
-            sharingType: t.sharingType,
-            selectedAddon: t.selectedAddon,
-            boardingPoint: t.boardingPoint,
-            deboardingPoint: t.deboardingPoint,
-            title: t.title,
-            firstName: t.firstName,
-            lastName: t.lastName,
-            age: t.age,
-            gender: t.gender,
-            remarks: t.remarks,
-          };
+    const response = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/tour/manage-booking-balance/${booking._id}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ttoken: localStorage.getItem("ttoken"),
+        },
+        body: JSON.stringify({ updates }),
+      }
+    );
 
-          return diff;
-        }),
+    const result = await response.json();
 
-        contact: {},
-        billingAddress: {},
-      };
+    if (result.success) {
+      toast.success("Update request raised! New travellers & balance updated.");
 
-      if (booking.contact.email !== originalBooking.contact.email)
-        updates.contact.email = booking.contact.email;
-      if (booking.contact.mobile !== originalBooking.contact.mobile)
-        updates.contact.mobile = booking.contact.mobile;
-
-      const billingFields = [
-        "addressLine1",
-        "addressLine2",
-        "city",
-        "state",
-        "pincode",
-        "country",
-      ];
-      billingFields.forEach((f) => {
-        if (booking.billingAddress?.[f] !== originalBooking.billingAddress?.[f])
-          updates.billingAddress[f] = booking.billingAddress[f];
+      setBalanceInfo({
+        gvPool: result.data?.gvCancellationPool,
+        irctcPool: result.data?.irctcCancellationPool,
       });
 
-      if (!Object.keys(updates.contact).length) delete updates.contact;
-      if (!Object.keys(updates.billingAddress).length)
-        delete updates.billingAddress;
+      // Reset original to current state
+      setOriginalBooking(JSON.parse(JSON.stringify(booking)));
 
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/tour/manage-booking-balance/${
-          booking._id
-        }`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ttoken: localStorage.getItem("ttoken"),
-          },
-          body: JSON.stringify({ updates }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (result.success) {
-        toast.success("Booking update request raised successfully!");
-
-        const { gvCancellationPool, irctcCancellationPool } = result.data || {};
-
-        setBalanceInfo({
-          gvPool: gvCancellationPool,
-          irctcPool: irctcCancellationPool,
-        });
-
-        setOriginalBooking(JSON.parse(JSON.stringify(booking)));
-
-        const res = await getManagedBookingsHistory();
-        if (res.success && Array.isArray(res.data)) {
-          const filtered = res.data.filter(
-            (e) => e.originalBooking?._id?.toString() === booking._id.toString()
-          );
-          setBalanceHistory(filtered);
-        }
-      } else {
-        toast.error(result.message || "Failed to save");
+      // Refresh history
+      const res = await getManagedBookingsHistory();
+      if (res.success && Array.isArray(res.data)) {
+        const filtered = res.data.filter(
+          (e) => e.originalBooking?._id?.toString() === booking._id.toString()
+        );
+        setBalanceHistory(filtered);
       }
-    } catch (err) {
-      console.error("Save error:", err);
-      toast.error("Network error");
-    } finally {
-      setSaving(false);
+    } else {
+      toast.error(result.message || "Failed to raise update request");
     }
-  };
-
+  } catch (err) {
+    console.error("Save error:", err);
+    toast.error("Network or server error");
+  } finally {
+    setSaving(false);
+  }
+};
   useEffect(() => {
     if (!booking?._id) return;
 
