@@ -57,7 +57,7 @@ const TourBookings = () => {
           toast.error(
             error.response?.data?.message ||
               error.message ||
-              "Failed to fetch bookings"
+              "Failed to fetch bookings",
           );
         })
         .finally(() => {
@@ -103,16 +103,22 @@ const TourBookings = () => {
         toast.error("Invalid response from server");
       }
     },
-    [selectedTourId, getBookings]
+    [selectedTourId, getBookings],
   );
 
   const handleMarkAdvancePaid = async (bookingId, tourId) => {
+    if (!window.confirm("Are you sure you want to mark Advance as PAID?")) {
+      return;
+    }
+
     try {
       const response = await markAdvancePaid(bookingId, tourId);
       handleApiResponse(response, "Advance payment marked successfully");
     } catch (error) {
       console.error("markAdvancePaid error:", error);
-      toast.error("Failed to mark advance: " + error.message);
+      toast.error(
+        "Failed to mark advance: " + (error.message || "Unknown error"),
+      );
     }
   };
 
@@ -121,24 +127,37 @@ const TourBookings = () => {
       toast.error("Please select a tour first.");
       return;
     }
+
+    if (!window.confirm("Are you sure you want to mark Balance as PAID?")) {
+      return;
+    }
+
     try {
       const response = await markBalancePaid(bookingId, tourId);
       handleApiResponse(response, "Balance payment marked successfully");
     } catch (error) {
       console.error("markBalancePaid error:", error);
-      toast.error("Failed to mark balance: " + error.message);
+      toast.error(
+        "Failed to mark balance: " + (error.message || "Unknown error"),
+      );
     }
   };
-
   const handleCompleteBooking = async (bookingId, tourId) => {
-    const confirm = window.confirm("Mark this booking as completed?");
-    if (!confirm) return;
+    // Already has confirmation — keeping it consistent
+    if (
+      !window.confirm(
+        "Mark this booking as completed? This action cannot be undone easily.",
+      )
+    ) {
+      return;
+    }
+
     try {
       const response = await completeBooking(bookingId, tourId);
       handleApiResponse(response, "Booking completed successfully");
     } catch (error) {
       console.error("completeBooking error:", error);
-      toast.error("Failed to complete: " + error.message);
+      toast.error("Failed to complete: " + (error.message || "Unknown error"));
     }
   };
 
@@ -153,23 +172,23 @@ const TourBookings = () => {
   const areAllTravellersCancelled = (booking) =>
     booking.travellers.length > 0 &&
     booking.travellers.every(
-      (t) => t.cancelled?.byTraveller && t.cancelled?.byAdmin
+      (t) => t.cancelled?.byTraveller && t.cancelled?.byAdmin,
     );
 
   const areAllTravellersRejected = (booking) =>
     booking.travellers.length > 0 &&
     booking.travellers.every(
-      (t) => t.cancelled?.byAdmin && !t.cancelled?.byTraveller
+      (t) => t.cancelled?.byAdmin && !t.cancelled?.byTraveller,
     );
 
   const hasCancellationRequest = (booking) =>
     booking.travellers.some(
-      (t) => t.cancelled?.byTraveller && !t.cancelled?.byAdmin
+      (t) => t.cancelled?.byTraveller && !t.cancelled?.byAdmin,
     ) && !areAllTravellersCancelled(booking);
 
   const hasActiveTraveller = (booking) =>
     booking.travellers.some(
-      (t) => !(t.cancelled?.byTraveller || t.cancelled?.byAdmin)
+      (t) => !(t.cancelled?.byTraveller || t.cancelled?.byAdmin),
     );
 
   // === FILTER BOOKINGS ===
@@ -571,7 +590,7 @@ const TourBookings = () => {
                   {booking.payment.advance.paid ? "Paid" : "Pending"}{" "}
                   {booking.payment.advance.paidAt &&
                     `(on ${new Date(
-                      booking.payment.advance.paidAt
+                      booking.payment.advance.paidAt,
                     ).toLocaleDateString()})`}
                 </p>
                 <p>
@@ -579,7 +598,7 @@ const TourBookings = () => {
                   {booking.payment.balance.paid ? "Paid" : "Pending"}{" "}
                   {booking.payment.balance.paidAt &&
                     `(on ${new Date(
-                      booking.payment.balance.paidAt
+                      booking.payment.balance.paidAt,
                     ).toLocaleDateString()})`}
                 </p>
               </div>
@@ -708,7 +727,7 @@ const TourBookings = () => {
                 Cancellation Requests
               </h3>
               {cancellationRequestBookings.map((b) =>
-                renderBookingCard(b, "cancellationRequest")
+                renderBookingCard(b, "cancellationRequest"),
               )}
             </div>
           )}
@@ -719,7 +738,7 @@ const TourBookings = () => {
                 Rejected by Admin
               </h3>
               {rejectedByAdminBookings.map((b) =>
-                renderBookingCard(b, "rejected")
+                renderBookingCard(b, "rejected"),
               )}
             </div>
           )}
@@ -730,7 +749,7 @@ const TourBookings = () => {
                 Cancelled Bookings
               </h3>
               {cancelledByTravellerBookings.map((b) =>
-                renderBookingCard(b, "cancelledByTraveller")
+                renderBookingCard(b, "cancelledByTraveller"),
               )}
             </div>
           )}

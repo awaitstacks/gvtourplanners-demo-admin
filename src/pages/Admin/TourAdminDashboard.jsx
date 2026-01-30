@@ -71,13 +71,13 @@ const TourAdminDashboard = () => {
         !b.payment?.balance?.paid &&
         !b.receipts?.advanceReceiptSent &&
         b.travellers?.some(
-          (t) => !t.cancelled?.byTraveller && !t.cancelled?.byAdmin
+          (t) => !t.cancelled?.byTraveller && !t.cancelled?.byAdmin,
         )) ||
       (b.payment?.advance?.paid &&
         b.payment?.balance?.paid &&
         !b.receipts?.advanceReceiptSent &&
         b.travellers?.some(
-          (t) => !t.cancelled?.byTraveller && !t.cancelled?.byAdmin
+          (t) => !t.cancelled?.byTraveller && !t.cancelled?.byAdmin,
         )),
 
     balance: (b) =>
@@ -85,7 +85,7 @@ const TourAdminDashboard = () => {
       b.payment?.balance?.paid &&
       !b.receipts?.balanceReceiptSent &&
       b.travellers?.some(
-        (t) => !t.cancelled?.byTraveller && !t.cancelled?.byAdmin
+        (t) => !t.cancelled?.byTraveller && !t.cancelled?.byAdmin,
       ),
 
     completion: (b) =>
@@ -93,17 +93,18 @@ const TourAdminDashboard = () => {
       b.payment?.balance?.paid &&
       b.receipts?.advanceReceiptSent &&
       b.receipts?.balanceReceiptSent &&
+      b?.isTripCompleted === false &&
       !b.isBookingCompleted,
 
     cancellation: (b) =>
       b.travellers?.some(
-        (t) => t.cancelled?.byTraveller && !t.cancelled?.byAdmin
+        (t) => t.cancelled?.byTraveller && !t.cancelled?.byAdmin,
       ),
 
     modifyReceipt: (b) =>
       b.isTripCompleted &&
       b.travellers?.some(
-        (t) => !t.cancelled?.byTraveller && !t.cancelled?.byAdmin
+        (t) => !t.cancelled?.byTraveller && !t.cancelled?.byAdmin,
       ),
   };
 
@@ -124,7 +125,7 @@ const TourAdminDashboard = () => {
     ) {
       const valid =
         b.travellers?.filter(
-          (t) => !t.cancelled?.byTraveller && !t.cancelled?.byAdmin
+          (t) => !t.cancelled?.byTraveller && !t.cancelled?.byAdmin,
         ) || [];
       return count + valid.length;
     }
@@ -132,7 +133,7 @@ const TourAdminDashboard = () => {
   }, 0);
 
   const uniqueUsers = new Set(
-    bookings.map((b) => b.userData?._id || b.contact?.email)
+    bookings.map((b) => b.userData?._id || b.contact?.email),
   ).size;
   const pendingManageCount = categorized.manageRequests.length;
 
@@ -150,7 +151,7 @@ const TourAdminDashboard = () => {
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(
       () => toast.success("Booking ID copied!"),
-      () => toast.error("Failed to copy")
+      () => toast.error("Failed to copy"),
     );
   };
 
@@ -327,7 +328,7 @@ const TourAdminDashboard = () => {
                         Train Seats:{" "}
                         {t.trainSeats
                           .map(
-                            (s) => `${s.trainName || "—"}: ${s.seatNo || "—"}`
+                            (s) => `${s.trainName || "—"}: ${s.seatNo || "—"}`,
                           )
                           .join(", ")}
                       </p>
@@ -337,7 +338,7 @@ const TourAdminDashboard = () => {
                         Flight Seats:{" "}
                         {t.flightSeats
                           .map(
-                            (s) => `${s.flightName || "—"}: ${s.seatNo || "—"}`
+                            (s) => `${s.flightName || "—"}: ${s.seatNo || "—"}`,
                           )
                           .join(", ")}
                       </p>
@@ -354,7 +355,7 @@ const TourAdminDashboard = () => {
                           : ""}
                         {t.cancelled.releaseddAt
                           ? `, Released at ${formatDate(
-                              t.cancelled.releaseddAt
+                              t.cancelled.releaseddAt,
                             )}`
                           : ""}
                       </p>
@@ -402,7 +403,7 @@ const TourAdminDashboard = () => {
                 Advance Receipt Sent:{" "}
                 {booking.receipts?.advanceReceiptSent
                   ? `Yes at ${formatDate(
-                      booking.receipts.advanceReceiptSentAt
+                      booking.receipts.advanceReceiptSentAt,
                     )}`
                   : "No"}
               </p>
@@ -410,7 +411,7 @@ const TourAdminDashboard = () => {
                 Balance Receipt Sent:{" "}
                 {booking.receipts?.balanceReceiptSent
                   ? `Yes at ${formatDate(
-                      booking.receipts.balanceReceiptSentAt
+                      booking.receipts.balanceReceiptSentAt,
                     )}`
                   : "No"}
               </p>
@@ -460,7 +461,7 @@ const TourAdminDashboard = () => {
                     : ""}
                   {booking.cancelled.releaseddAt
                     ? `, Released at ${formatDate(
-                        booking.cancelled.releaseddAt
+                        booking.cancelled.releaseddAt,
                       )}`
                     : ""}
                 </p>
@@ -653,19 +654,19 @@ const TourAdminDashboard = () => {
                     <CancellationItem key={b._id} booking={b} />
                   ))
                 : category === "manageRequests"
-                ? visible.map((b) => (
-                    <ManageRequestItem key={b._id} booking={b} />
-                  ))
-                : visible.map((b) => (
-                    <BookingItem
-                      key={b._id}
-                      booking={b}
-                      category={category}
-                      statusLabel={statusLabel}
-                      statusColor={statusColor}
-                      Icon={Icon}
-                    />
-                  ))}
+                  ? visible.map((b) => (
+                      <ManageRequestItem key={b._id} booking={b} />
+                    ))
+                  : visible.map((b) => (
+                      <BookingItem
+                        key={b._id}
+                        booking={b}
+                        category={category}
+                        statusLabel={statusLabel}
+                        statusColor={statusColor}
+                        Icon={Icon}
+                      />
+                    ))}
             </div>
             {items.length > 5 && (
               <button
