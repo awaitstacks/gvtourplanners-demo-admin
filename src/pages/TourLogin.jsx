@@ -81,7 +81,7 @@ const TourLogin = () => {
           localStorage.setItem("ttoken", data.token);
           setttoken(data.token);
           toast.success("Tour Admin login successful!");
-          navigate("/tour-dashboard");
+          navigate("/task-dashboard");
         } else {
           setErrors((prev) => ({ ...prev, server: data.message }));
           toast.error(data.message);

@@ -28,6 +28,7 @@ import BookingApprovals from "./pages/Admin/BookingApprovals.jsx";
 import TourRoomList from "./pages/Doctor/TourRoomList.jsx";
 import UsersData from "./pages/Admin/UsersData.jsx";
 import AllTourBookings from "./pages/Doctor/AllTourBookings.jsx";
+import TaskDashboard from "./pages/Doctor/TaskDashboard.jsx";
 
 const TourApp = () => {
   const { aToken } = useContext(TourAdminContext);
@@ -52,7 +53,8 @@ const TourApp = () => {
             <Route path="/booking-approvals" element={<BookingApprovals />} />
             <Route path="/all-users" element={<UsersData />} />
 
-            {/* Doctor Routes */}
+            {/* Tour Routes */}
+            <Route path="/task-dashboard" element={<TaskDashboard />} />
             <Route path="/tour-dashboard" element={<TourDashboard />} />
             <Route path="/tour-bookings" element={<TourBookings />} />
             <Route path="/tour-profile" element={<TourProfile />} />

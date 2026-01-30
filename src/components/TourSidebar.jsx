@@ -20,6 +20,11 @@ import {
   Hotel,
   UserCircle,
   User2Icon,
+  LucideThermometerSnowflake,
+  Info,
+  Book,
+  BookAIcon,
+  BookImage,
 } from "lucide-react";
 
 const TourSidebar = () => {
@@ -136,8 +141,14 @@ const adminMenuItems = [
 ];
 
 const tourMenuItems = [
-  { to: "/tour-dashboard", icon: Home, label: "Dashboard" },
-  { to: "/tour-bookings", icon: Calendar, label: "Bookings" },
+  { to: "/task-dashboard", icon: LucideThermometerSnowflake, label: "Task Dashboard" },
+   {
+    to: "/tour-allbookings",
+    icon: Calendar,
+    label: "All Bookings",
+  },
+  { to: "/tour-dashboard", icon: Info, label: "Tour info" },
+  { to: "/tour-bookings", icon: BookImage, label: "Tour Bookings" },
   { to: "/tour-profile", icon: User, label: "Tour profile" },
   { to: "/tour-namelist", icon: FileText, label: "Name List" },
   {
@@ -156,11 +167,7 @@ const tourMenuItems = [
     icon: CalendarCheck,
     label: "Booking controller",
   },
-  {
-    to: "/tour-allbookings",
-    icon: Calendar,
-    label: "All Bookings",
-  },
+ 
   
 ];
 

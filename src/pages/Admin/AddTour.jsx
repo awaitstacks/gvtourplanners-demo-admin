@@ -845,7 +845,7 @@ const AddTour = () => {
           {/* Last Booking Date & Completed Trips */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block font-semibold mb-1">Last Booking Date</label>
+              <label className="block font-semibold mb-1">Trip Start Date</label>
               <input
                 type="date"
                 className="w-full p-3 border rounded"
@@ -1144,7 +1144,7 @@ const AddTour = () => {
 
                 {/* Variant Last Booking Date */}
                 <div>
-                  <label className="block font-semibold mb-1">Last Booking Date</label>
+                  <label className="block font-semibold mb-1">Trip Start Date</label>
                   <input
                     type="date"
                     className="w-full p-3 border rounded"
