@@ -1127,11 +1127,22 @@ const TaskDashboard = () => {
                       className="bg-gray-50 p-3 rounded text-xs border border-gray-200"
                     >
                       <p className="font-medium">{r.remark || "—"}</p>
-                      {r.amount > 0 && (
-                        <p className="text-green-700 font-medium">
-                          Amount: ₹{r.amount}
+
+                      {/* Show amount always — with color based on sign */}
+                      {r.amount !== undefined && r.amount !== null && (
+                        <p
+                          className={`font-medium ${
+                            Number(r.amount) > 0
+                              ? "text-green-700"
+                              : Number(r.amount) < 0
+                                ? "text-red-700"
+                                : "text-gray-700"
+                          }`}
+                        >
+                          Amount: ₹{Number(r.amount).toLocaleString("en-IN")}
                         </p>
                       )}
+
                       <p className="text-gray-500 mt-1">
                         Added: {formatDate(r.addedAt)}
                       </p>
@@ -1143,7 +1154,7 @@ const TaskDashboard = () => {
               )}
             </div>
 
-            {/* Admin Remarks */}
+            {/* Admin Remarks – same improvement */}
             <div>
               <h4 className="font-semibold mb-2 flex items-center gap-2">
                 Admin Remarks
@@ -1156,11 +1167,21 @@ const TaskDashboard = () => {
                       className="bg-gray-50 p-3 rounded text-xs border border-gray-200"
                     >
                       <p className="font-medium">{r.remark || "—"}</p>
-                      {r.amount > 0 && (
-                        <p className="text-green-700 font-medium">
-                          Amount: ₹{r.amount}
+
+                      {r.amount !== undefined && r.amount !== null && (
+                        <p
+                          className={`font-medium ${
+                            Number(r.amount) > 0
+                              ? "text-green-700"
+                              : Number(r.amount) < 0
+                                ? "text-red-700"
+                                : "text-gray-700"
+                          }`}
+                        >
+                          Amount: ₹{Number(r.amount).toLocaleString("en-IN")}
                         </p>
                       )}
+
                       <p className="text-gray-500 mt-1">
                         Added: {formatDate(r.addedAt)}
                       </p>
