@@ -73,7 +73,7 @@ const TourNameList = () => {
             error.response?.data?.message ||
               error.message ||
               "Failed to fetch bookings",
-            { toastId: "bookings-fetch-error" }
+            { toastId: "bookings-fetch-error" },
           );
         })
         .finally(() => {
@@ -110,7 +110,7 @@ const TourNameList = () => {
         } else {
           toast.error(
             response.message || "An error occurred during the operation",
-            { toastId: "api-error" }
+            { toastId: "api-error" },
           );
         }
       } else {
@@ -119,7 +119,7 @@ const TourNameList = () => {
         });
       }
     },
-    [selectedTourId, getBookings]
+    [selectedTourId, getBookings],
   );
 
   // Filter travellers based on name, phone number, boarding point, and deboarding point
@@ -272,8 +272,8 @@ const TourNameList = () => {
       gender.toLowerCase() === "male"
         ? "M"
         : gender.toLowerCase() === "female"
-        ? "F"
-        : "";
+          ? "F"
+          : "";
     if (parsedAge >= 6 && parsedAge <= 10) {
       if (["withBerth", "double", "triple"].includes(sharingType)) {
         return genderAbbrev ? `CWB(${genderAbbrev})` : "CWB";
@@ -288,89 +288,89 @@ const TourNameList = () => {
 
   // // Export to PDF
   const exportToPDF = () => {
-  const doc = new jsPDF("landscape", "pt", "a4");
+    const doc = new jsPDF("landscape", "pt", "a4");
 
-  // IMPORTANT: tourList-ல இருந்து மட்டும் title எடு (main tour - JAN 26)
-  const tourFromList = tourList.find((tour) => tour._id === selectedTourId);
-  const rawTitle = tourFromList?.title || "Tour Traveller List";
+    // IMPORTANT: tourList-ல இருந்து மட்டும் title எடு (main tour - JAN 26)
+    const tourFromList = tourList.find((tour) => tour._id === selectedTourId);
+    const rawTitle = tourFromList?.title || "Tour Traveller List";
 
-  // Optional: Console-ல check பண்ணி confirm பண்ணுங்க (பிறகு remove பண்ணலாம்)
-  console.log("Selected Tour ID:", selectedTourId);
-  console.log("Raw Title (from tourList):", rawTitle);
-  // இது "GRAND GUJARAT YATRA JAN 26" ஆக print ஆகணும்
+    // Optional: Console-ல check பண்ணி confirm பண்ணுங்க (பிறகு remove பண்ணலாம்)
+    console.log("Selected Tour ID:", selectedTourId);
+    console.log("Raw Title (from tourList):", rawTitle);
+    // இது "GRAND GUJARAT YATRA JAN 26" ஆக print ஆகணும்
 
-  const displayTitle = rawTitle.trim(); // database-ல இருக்குறது அப்படியே
+    const displayTitle = rawTitle.trim(); // database-ல இருக்குறது அப்படியே
 
-  // PDF title
-  doc.setFontSize(18);
-  doc.text(displayTitle, doc.internal.pageSize.getWidth() / 2, 50, {
-    align: "center",
-  });
+    // PDF title
+    doc.setFontSize(18);
+    doc.text(displayTitle, doc.internal.pageSize.getWidth() / 2, 50, {
+      align: "center",
+    });
 
-  // Table headers & body (same)
-  const head = [
-    [
-      "SL NO",
-      "NAME",
-      "AGE",
-      "GENDER",
-      "MOBILE",
-      "BOARDING POINT",
-      "DEBOARDING POINT",
-      ...tableData.trainColumns,
-      ...tableData.flightColumns,
-    ],
-  ];
+    // Table headers & body (same)
+    const head = [
+      [
+        "SL NO",
+        "NAME",
+        "AGE",
+        "GENDER",
+        "MOBILE",
+        "BOARDING POINT",
+        "DEBOARDING POINT",
+        ...tableData.trainColumns,
+        ...tableData.flightColumns,
+      ],
+    ];
 
-  const body = filteredTravellers.map((trav, idx) => [
-    String(idx + 1).padStart(2, "0"),
-    trav.name || "—",
-    trav.age ?? "—",
-    getDisplayGender(trav.age, trav.gender, trav.sharingType),
-    trav.mobile || "—",
-    trav.boardingPoint || "—",
-    trav.deboardingPoint || "—",
-    ...tableData.trainColumns.map((c) => trav.trainSeats?.[c] ?? "—"),
-    ...tableData.flightColumns.map((c) => trav.flightSeats?.[c] ?? "—"),
-  ]);
+    const body = filteredTravellers.map((trav, idx) => [
+      String(idx + 1).padStart(2, "0"),
+      trav.name || "—",
+      trav.age ?? "—",
+      getDisplayGender(trav.age, trav.gender, trav.sharingType),
+      trav.mobile || "—",
+      trav.boardingPoint || "—",
+      trav.deboardingPoint || "—",
+      ...tableData.trainColumns.map((c) => trav.trainSeats?.[c] ?? "—"),
+      ...tableData.flightColumns.map((c) => trav.flightSeats?.[c] ?? "—"),
+    ]);
 
-  autoTable(doc, {
-    head,
-    body,
-    startY: 80,
-    styles: {
-      fontSize: 10,
-      cellPadding: 5,
-      halign: "center",
-      valign: "middle",
-      overflow: "linebreak",
-    },
-    headStyles: {
-      fillColor: [40, 167, 69],
-      textColor: [255, 255, 255],
-      fontStyle: "bold",
-    },
-    alternateRowStyles: { fillColor: [240, 248, 243] },
-    columnStyles: { 1: { halign: "left" } },
-  });
+    autoTable(doc, {
+      head,
+      body,
+      startY: 80,
+      styles: {
+        fontSize: 10,
+        cellPadding: 5,
+        halign: "center",
+        valign: "middle",
+        overflow: "linebreak",
+      },
+      headStyles: {
+        fillColor: [40, 167, 69],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+      },
+      alternateRowStyles: { fillColor: [240, 248, 243] },
+      columnStyles: { 1: { halign: "left" } },
+    });
 
-  // Filename - database raw title அப்படியே
-  const safeFileName = displayTitle
-    .replace(/[^a-zA-Z0-9\s-]/g, "")
-    .replace(/\s+/g, "_")
-    .trim();
+    // Filename - database raw title அப்படியே
+    const safeFileName = displayTitle
+      .replace(/[^a-zA-Z0-9\s-]/g, "")
+      .replace(/\s+/g, "_")
+      .trim();
 
-  doc.save(`${safeFileName}_Traveller_List.pdf`);
-  // Result: GRAND_GUJARAT_YATRA_JAN_26_Traveller_List.pdf
+    doc.save(`${safeFileName}_Traveller_List.pdf`);
+    // Result: GRAND_GUJARAT_YATRA_JAN_26_Traveller_List.pdf
 
-  toast.success(
-    <div className="flex items-center gap-2">
-      <span>✅</span>
-      <span>PDF exported successfully</span>
-    </div>,
-    { toastId: "pdf-export-success" }
-  );
-};
+    toast.success(
+      <div className="flex items-center gap-2">
+        <span>✅</span>
+        <span>PDF exported successfully</span>
+      </div>,
+      { toastId: "pdf-export-success" },
+    );
+  };
 
   // Add train/flight column
   const handleAddGlobalColumn = (type) => {
@@ -382,7 +382,7 @@ const TourNameList = () => {
             <span>❌</span>
             <span>Cannot add more than {maxColumns} columns</span>
           </div>,
-          { toastId: "max-columns-error" }
+          { toastId: "max-columns-error" },
         );
         console.log("Toast displayed: max-columns-error");
         return prev;
@@ -397,7 +397,7 @@ const TourNameList = () => {
             <span>✅</span>
             <span>Train column "{newName}" added</span>
           </div>,
-          { toastId: `add-train-${newName}` }
+          { toastId: `add-train-${newName}` },
         );
         console.log("Toast displayed: add-train-", newName);
       } else {
@@ -409,7 +409,7 @@ const TourNameList = () => {
             <span>✅</span>
             <span>Flight column "{newName}" added</span>
           </div>,
-          { toastId: `add-flight-${newName}` }
+          { toastId: `add-flight-${newName}` },
         );
         console.log("Toast displayed: add-flight-", newName);
       }
@@ -435,7 +435,7 @@ const TourNameList = () => {
             <span>✅</span>
             <span>Train column renamed to "{newName}"</span>
           </div>,
-          { toastId: `rename-train-${index}` }
+          { toastId: `rename-train-${index}` },
         );
         console.log("Toast displayed: rename-train-", index);
       } else {
@@ -451,7 +451,7 @@ const TourNameList = () => {
             <span>✅</span>
             <span>Flight column renamed to "{newName}"</span>
           </div>,
-          { toastId: `rename-flight-${index}` }
+          { toastId: `rename-flight-${index}` },
         );
         console.log("Toast displayed: rename-flight-", index);
       }
@@ -472,7 +472,7 @@ const TourNameList = () => {
               <span>❌</span>
               <span>At least one train column is required</span>
             </div>,
-            { toastId: "remove-train-error" }
+            { toastId: "remove-train-error" },
           );
           console.log("Toast displayed: remove-train-error");
           return prev;
@@ -484,7 +484,7 @@ const TourNameList = () => {
             <span>✅</span>
             <span>Train column "{removed}" removed</span>
           </div>,
-          { toastId: `remove-train-${index}` }
+          { toastId: `remove-train-${index}` },
         );
         console.log("Toast displayed: remove-train-", index);
       } else {
@@ -494,7 +494,7 @@ const TourNameList = () => {
               <span>❌</span>
               <span>At least one flight column is required</span>
             </div>,
-            { toastId: "remove-flight-error" }
+            { toastId: "remove-flight-error" },
           );
           console.log("Toast displayed: remove-flight-error");
           return prev;
@@ -506,7 +506,7 @@ const TourNameList = () => {
             <span>✅</span>
             <span>Flight column "{removed}" removed</span>
           </div>,
-          { toastId: `remove-flight-${index}` }
+          { toastId: `remove-flight-${index}` },
         );
         console.log("Toast displayed: remove-flight-", index);
       }
@@ -518,10 +518,10 @@ const TourNameList = () => {
 
     const promises = tableData.travellers.map((traveller) => {
       const trainSeatsArr = Object.entries(traveller.trainSeats).map(
-        ([trainName, seatNo]) => ({ trainName, seatNo })
+        ([trainName, seatNo]) => ({ trainName, seatNo }),
       );
       const flightSeatsArr = Object.entries(traveller.flightSeats).map(
-        ([flightName, seatNo]) => ({ flightName, seatNo })
+        ([flightName, seatNo]) => ({ flightName, seatNo }),
       );
 
       const payload = {
@@ -530,7 +530,7 @@ const TourNameList = () => {
       };
 
       const booking = bookings.find((b) =>
-        b.travellers.some((t) => t._id === traveller.id)
+        b.travellers.some((t) => t._id === traveller.id),
       );
       if (!booking) return null;
 
@@ -543,7 +543,7 @@ const TourNameList = () => {
         handleApiResponse(
           response,
           `Traveller ${tableData.travellers[idx].name} details updated`,
-          true
+          true,
         );
       }
     });
@@ -570,7 +570,7 @@ const TourNameList = () => {
           <span>❌</span>
           <span>Please select a tour first.</span>
         </div>,
-        { toastId: "no-tour-error" }
+        { toastId: "no-tour-error" },
       );
       console.log("Toast displayed: no-tour-error");
       return;
@@ -578,10 +578,10 @@ const TourNameList = () => {
 
     try {
       const trainSeatsArr = Object.entries(traveller.trainSeats).map(
-        ([trainName, seatNo]) => ({ trainName, seatNo })
+        ([trainName, seatNo]) => ({ trainName, seatNo }),
       );
       const flightSeatsArr = Object.entries(traveller.flightSeats).map(
-        ([flightName, seatNo]) => ({ flightName, seatNo })
+        ([flightName, seatNo]) => ({ flightName, seatNo }),
       );
 
       const payload = {
@@ -590,7 +590,7 @@ const TourNameList = () => {
       };
 
       const booking = bookings.find((b) =>
-        b.travellers.some((t) => t._id === traveller.id)
+        b.travellers.some((t) => t._id === traveller.id),
       );
       if (!booking) {
         toast.error(
@@ -598,7 +598,7 @@ const TourNameList = () => {
             <span>❌</span>
             <span>Booking not found for this traveller.</span>
           </div>,
-          { toastId: "no-booking-error" }
+          { toastId: "no-booking-error" },
         );
         console.log("Toast displayed: no-booking-error");
         return;
@@ -607,7 +607,7 @@ const TourNameList = () => {
       const response = await updateTravellerDetails(
         booking._id,
         traveller.id,
-        payload
+        payload,
       );
       handleApiResponse(
         response,
@@ -615,7 +615,7 @@ const TourNameList = () => {
           <span>✅</span>
           <span>Traveller {traveller.name} details updated</span>
         </div>,
-        { toastId: `save-traveller-${traveller.id}` }
+        { toastId: `save-traveller-${traveller.id}` },
       );
     } catch (error) {
       console.error("handleSaveSingleTraveller error:", error);
@@ -624,7 +624,7 @@ const TourNameList = () => {
           <span>❌</span>
           <span>Failed to save traveller details: {error.message}</span>
         </div>,
-        { toastId: `save-traveller-error-${traveller.id}` }
+        { toastId: `save-traveller-error-${traveller.id}` },
       );
       console.log("Toast displayed: save-traveller-error-", traveller.id);
     }
@@ -638,7 +638,7 @@ const TourNameList = () => {
           <span>❌</span>
           <span>Please select a tour first.</span>
         </div>,
-        { toastId: "no-tour-error" }
+        { toastId: "no-tour-error" },
       );
       console.log("Toast displayed: no-tour-error");
       return;
@@ -647,10 +647,10 @@ const TourNameList = () => {
     try {
       const promises = tableData.travellers.map((traveller) => {
         const trainSeatsArr = Object.entries(traveller.trainSeats).map(
-          ([trainName, seatNo]) => ({ trainName, seatNo })
+          ([trainName, seatNo]) => ({ trainName, seatNo }),
         );
         const flightSeatsArr = Object.entries(traveller.flightSeats).map(
-          ([flightName, seatNo]) => ({ flightName, seatNo })
+          ([flightName, seatNo]) => ({ flightName, seatNo }),
         );
 
         const payload = {
@@ -659,7 +659,7 @@ const TourNameList = () => {
         };
 
         const booking = bookings.find((b) =>
-          b.travellers.some((t) => t._id === traveller.id)
+          b.travellers.some((t) => t._id === traveller.id),
         );
         if (!booking) return null;
 
@@ -678,7 +678,7 @@ const TourNameList = () => {
                 Traveller {tableData.travellers[idx].name} details updated
               </span>
             </div>,
-            { toastId: `update-traveller-${idx}` }
+            { toastId: `update-traveller-${idx}` },
           );
           if (!response.success) allSuccessful = false;
         }
@@ -690,7 +690,7 @@ const TourNameList = () => {
             <span>✅</span>
             <span>All traveller details saved successfully!</span>
           </div>,
-          { toastId: "save-all-success" }
+          { toastId: "save-all-success" },
         );
         console.log("Toast displayed: save-all-success");
       }
@@ -701,7 +701,7 @@ const TourNameList = () => {
           <span>❌</span>
           <span>Failed to save all traveller details: {error.message}</span>
         </div>,
-        { toastId: "save-all-error" }
+        { toastId: "save-all-error" },
       );
       console.log("Toast displayed: save-all-error");
     }
@@ -714,8 +714,8 @@ const TourNameList = () => {
     totalColumns > 10
       ? "min-w-[80px]"
       : totalColumns > 6
-      ? "min-w-[100px]"
-      : "min-w-[120px]";
+        ? "min-w-[100px]"
+        : "min-w-[120px]";
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-full mx-auto">
@@ -740,7 +740,7 @@ const TourNameList = () => {
 
       <div className="mb-4 sm:mb-6 lg:mb-8">
         <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold mb-4 sm:mb-6 text-center">
-          Tour Name List
+          Name List
         </h2>
         <div className="mb-4 sm:mb-6">
           <label
@@ -955,7 +955,7 @@ const TourNameList = () => {
                               handleColumnNameChangeGlobal(
                                 "train",
                                 i,
-                                e.target.value
+                                e.target.value,
                               )
                             }
                             className="w-16 sm:w-20 lg:w-24 px-1 sm:px-2 py-1 border border-gray-300 rounded-md text-xs sm:text-sm font-semibold text-center touch-manipulation"
@@ -988,7 +988,7 @@ const TourNameList = () => {
                               handleColumnNameChangeGlobal(
                                 "flight",
                                 i,
-                                e.target.value
+                                e.target.value,
                               )
                             }
                             className="w-16 sm:w-20 lg:w-24 px-1 sm:px-2 py-1 border border-gray-300 rounded-md text-xs sm:text-sm font-semibold text-center touch-manipulation"
@@ -1034,7 +1034,7 @@ const TourNameList = () => {
                         {getDisplayGender(
                           trav.age,
                           trav.gender,
-                          trav.sharingType
+                          trav.sharingType,
                         )}
                       </td>
                       <td className="p-2 sm:p-3 border border-gray-200 text-center text-xs sm:text-sm lg:text-base">
@@ -1065,7 +1065,7 @@ const TourNameList = () => {
                                 trav.id,
                                 "train",
                                 col,
-                                e.target.value
+                                e.target.value,
                               )
                             }
                             className="w-14 sm:w-16 lg:w-20 px-1 sm:px-2 py-1 border border-gray-300 rounded-md text-xs sm:text-sm text-center touch-manipulation"
@@ -1086,7 +1086,7 @@ const TourNameList = () => {
                                 trav.id,
                                 "flight",
                                 col,
-                                e.target.value
+                                e.target.value,
                               )
                             }
                             className="w-14 sm:w-16 lg:w-20 px-1 sm:px-2 py-1 border border-gray-300 rounded-md text-xs sm:text-sm text-center touch-manipulation"
@@ -1143,7 +1143,7 @@ const TourNameList = () => {
                         handleColumnNameChangeGlobal(
                           "flight",
                           i,
-                          e.target.value
+                          e.target.value,
                         )
                       }
                       className="w-full px-2 py-2 border border-gray-300 rounded-md text-xs sm:text-sm touch-manipulation"
@@ -1184,7 +1184,7 @@ const TourNameList = () => {
                       {getDisplayGender(
                         trav.age,
                         trav.gender,
-                        trav.sharingType
+                        trav.sharingType,
                       )}
                     </div>
                     <div>
@@ -1210,7 +1210,7 @@ const TourNameList = () => {
                               trav.id,
                               "train",
                               col,
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           className="w-full px-2 py-2 border border-gray-300 rounded-md text-xs sm:text-sm touch-manipulation"
@@ -1229,7 +1229,7 @@ const TourNameList = () => {
                               trav.id,
                               "flight",
                               col,
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           className="w-full px-2 py-2 border border-gray-300 rounded-md text-xs sm:text-sm touch-manipulation"

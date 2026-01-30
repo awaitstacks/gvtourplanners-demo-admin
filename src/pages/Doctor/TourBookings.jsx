@@ -614,7 +614,7 @@ const TourBookings = () => {
       <ToastContainer position="top-right" autoClose={3000} />
 
       <h2 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 pl-12 md:pl-0">
-        Bookings
+        Tour Bookings
       </h2>
 
       {/* Tour Selector */}

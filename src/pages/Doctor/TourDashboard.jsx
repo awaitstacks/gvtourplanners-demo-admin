@@ -37,7 +37,7 @@ const TourDashboard = () => {
       console.log(
         "API Response at",
         new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
-        response
+        response,
       );
       if (response && typeof response === "object" && "success" in response) {
         if (response.success) {
@@ -52,7 +52,7 @@ const TourDashboard = () => {
         return false;
       }
     },
-    []
+    [],
   );
 
   // Fetch tour list
@@ -60,7 +60,7 @@ const TourDashboard = () => {
     if (ttoken) {
       console.log(
         "Fetching tour list at",
-        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
       );
       setIsLoading(true);
       getTourList()
@@ -68,19 +68,19 @@ const TourDashboard = () => {
           handleApiResponse(
             response,
             "Tour list fetched successfully",
-            "Failed to fetch tour list"
+            "Failed to fetch tour list",
           );
         })
         .catch((error) => {
           console.error(
             "Fetch tour list error at",
             new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
-            error
+            error,
           );
           toast.error(
             error.response?.data?.message ||
               error.message ||
-              "Failed to fetch tour list"
+              "Failed to fetch tour list",
           );
         })
         .finally(() => setIsLoading(false));
@@ -92,7 +92,7 @@ const TourDashboard = () => {
     if (ttoken && selectedTourId) {
       console.log(
         `Fetching dashboard data and bookings for tour ${selectedTourId} at`,
-        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
       );
       setIsLoading(true);
       Promise.all([getDashData(selectedTourId), getBookings(selectedTourId)])
@@ -100,19 +100,19 @@ const TourDashboard = () => {
           handleApiResponse(
             dashResponse,
             "Dashboard data fetched successfully",
-            "Failed to fetch dashboard data"
+            "Failed to fetch dashboard data",
           );
         })
         .catch((error) => {
           console.error(
             "Fetch dashboard/bookings error at",
             new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
-            error
+            error,
           );
           toast.error(
             error.response?.data?.message ||
               error.message ||
-              "Failed to fetch dashboard data or bookings"
+              "Failed to fetch dashboard data or bookings",
           );
         })
         .finally(() => setIsLoading(false));
@@ -149,7 +149,7 @@ const TourDashboard = () => {
       // Filter out travellers who are cancelled (by admin, traveller, or both)
       const nonCancelledTravellers =
         b.travellers?.filter(
-          (trav) => !trav.cancelled?.byTraveller && !trav.cancelled?.byAdmin
+          (trav) => !trav.cancelled?.byTraveller && !trav.cancelled?.byAdmin,
         ) || [];
 
       // Only count travellers if there are non-cancelled travellers and advance is paid
@@ -162,7 +162,7 @@ const TourDashboard = () => {
         b.travellers?.every(
           (trav) =>
             trav.cancelled?.byTraveller === true ||
-            trav.cancelled?.byAdmin === true
+            trav.cancelled?.byAdmin === true,
         ) || b.travellers?.length === 0;
 
       // Count as completed only if isBookingCompleted is true and not all travellers are cancelled
@@ -203,16 +203,16 @@ const TourDashboard = () => {
       completedBookings: completed,
       pendingBookings: pending,
       advancePending: advancePending.sort(
-        (a, b) => new Date(b.bookingDate) - new Date(a.bookingDate)
+        (a, b) => new Date(b.bookingDate) - new Date(a.bookingDate),
       ),
       balancePending: balancePending.sort(
-        (a, b) => new Date(b.bookingDate) - new Date(a.bookingDate)
+        (a, b) => new Date(b.bookingDate) - new Date(a.bookingDate),
       ),
       uncompleted: uncompleted.sort(
-        (a, b) => new Date(b.bookingDate) - new Date(a.bookingDate)
+        (a, b) => new Date(b.bookingDate) - new Date(a.bookingDate),
       ),
       modifyReceiptPending: modifyReceiptPending.sort(
-        (a, b) => new Date(b.bookingDate) - new Date(a.bookingDate)
+        (a, b) => new Date(b.bookingDate) - new Date(a.bookingDate),
       ), // Sort modified receipts
     };
   }, [bookings]);
@@ -225,7 +225,7 @@ const TourDashboard = () => {
     }
 
     const confirm = window.confirm(
-      `Are you sure you want to mark this ${type} receipt as complete?`
+      `Are you sure you want to mark this ${type} receipt as complete?`,
     );
     if (!confirm) return;
 
@@ -235,13 +235,13 @@ const TourDashboard = () => {
       if (type === "advance") {
         if (!booking.payment.advance.paid) {
           toast.error(
-            "❌ Cannot complete. Advance payment not marked as paid."
+            "❌ Cannot complete. Advance payment not marked as paid.",
           );
           return;
         }
         console.log(
           `Marking advance receipt sent for booking ${booking._id} at`,
-          new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+          new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
         );
         response = await markAdvanceReceiptSent(booking._id, selectedTourId);
       } else if (type === "balance") {
@@ -255,7 +255,7 @@ const TourDashboard = () => {
         }
         console.log(
           `Marking balance receipt sent for booking ${booking._id} at`,
-          new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+          new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
         );
         response = await markBalanceReceiptSent(booking._id, selectedTourId);
       } else if (type === "modify") {
@@ -265,7 +265,7 @@ const TourDashboard = () => {
         }
         console.log(
           `Marking modify receipt for booking ${booking._id} at`,
-          new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+          new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
         );
         response = await markModifyReceipt(booking._id, selectedTourId);
       }
@@ -276,7 +276,7 @@ const TourDashboard = () => {
           `${
             type.charAt(0).toUpperCase() + type.slice(1)
           } receipt marked as complete`,
-          `Failed to mark ${type} receipt`
+          `Failed to mark ${type} receipt`,
         )
       ) {
         setDismissedBookings((prev) => new Set(prev).add(booking._id));
@@ -285,12 +285,12 @@ const TourDashboard = () => {
       console.error(
         `mark${type.charAt(0).toUpperCase() + type.slice(1)}Receipt error at`,
         new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
-        error
+        error,
       );
       toast.error(
         error.response?.data?.message ||
           error.message ||
-          `Failed to mark ${type} receipt`
+          `Failed to mark ${type} receipt`,
       );
     } finally {
       setIsLoading(false);
@@ -377,7 +377,7 @@ const TourDashboard = () => {
       />
 
       <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8 text-center">
-        Tour Dashboard
+        Tour info
       </h1>
 
       {isLoading ? (

@@ -51,15 +51,16 @@ const AllTourBookings = () => {
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(
       () => toast.success("Booking ID copied!"),
-      () => toast.error("Failed to copy")
+      () => toast.error("Failed to copy"),
     );
   };
 
   // Dynamic status key (short string for filtering)
   const getStatusKey = (booking) => {
-    const isFullyCancelled = booking.cancelled?.byAdmin || booking.cancelled?.byTraveller;
-    const allTravellersCancelled = booking.travellers?.every((t) => 
-      t.cancelled?.byAdmin || t.cancelled?.byTraveller
+    const isFullyCancelled =
+      booking.cancelled?.byAdmin || booking.cancelled?.byTraveller;
+    const allTravellersCancelled = booking.travellers?.every(
+      (t) => t.cancelled?.byAdmin || t.cancelled?.byTraveller,
     );
 
     if (isFullyCancelled || allTravellersCancelled) {
@@ -92,12 +93,24 @@ const AllTourBookings = () => {
   const getStatusLabel = (booking) => {
     const key = getStatusKey(booking);
     switch (key) {
-      case "cancelled": return <span className="text-red-600 font-medium">Cancelled</span>;
-      case "completed": return <span className="text-green-600 font-medium">Completed</span>;
-      case "fully_paid": return <span className="text-green-600 font-medium">Fully Paid</span>;
-      case "advance_paid": return <span className="text-yellow-600 font-medium">Advance Paid</span>;
-      case "advance_pending": return <span className="text-orange-600 font-medium">Advance Pending</span>;
-      default: return <span className="text-gray-600 font-medium">Under Completion</span>;
+      case "cancelled":
+        return <span className="text-red-600 font-medium">Cancelled</span>;
+      case "completed":
+        return <span className="text-green-600 font-medium">Completed</span>;
+      case "fully_paid":
+        return <span className="text-green-600 font-medium">Fully Paid</span>;
+      case "advance_paid":
+        return (
+          <span className="text-yellow-600 font-medium">Advance Paid</span>
+        );
+      case "advance_pending":
+        return (
+          <span className="text-orange-600 font-medium">Advance Pending</span>
+        );
+      default:
+        return (
+          <span className="text-gray-600 font-medium">Under Completion</span>
+        );
     }
   };
 
@@ -109,21 +122,29 @@ const AllTourBookings = () => {
         ? `${firstTraveller.firstName} ${firstTraveller.lastName}`.toLowerCase()
         : "unknown traveller";
 
-      const tourMatch = b?.tourData?.title?.toLowerCase().includes(filters.tour.toLowerCase());
+      const tourMatch = b?.tourData?.title
+        ?.toLowerCase()
+        .includes(filters.tour.toLowerCase());
 
       // Contact filter: name OR mobile (email removed from filter)
-      const contactMatch = filters.contact === "" || 
+      const contactMatch =
+        filters.contact === "" ||
         displayName.includes(filters.contact.toLowerCase()) ||
-        b?.contact?.mobile?.toLowerCase().includes(filters.contact.toLowerCase());
+        b?.contact?.mobile
+          ?.toLowerCase()
+          .includes(filters.contact.toLowerCase());
 
       const paymentStatus = `${
         b.payment?.advance?.paid ? "advance-paid" : "advance-pending"
       } ${b.payment?.balance?.paid ? "balance-paid" : "balance-pending"}`;
 
-      const paymentMatch = paymentStatus.includes(filters.payment.toLowerCase());
+      const paymentMatch = paymentStatus.includes(
+        filters.payment.toLowerCase(),
+      );
 
       const statusKey = getStatusKey(b);
-      const statusMatch = filters.status === "all" || statusKey === filters.status;
+      const statusMatch =
+        filters.status === "all" || statusKey === filters.status;
 
       // Date range filter
       let dateMatch = true;
@@ -140,7 +161,9 @@ const AllTourBookings = () => {
         }
       }
 
-      return tourMatch && contactMatch && paymentMatch && statusMatch && dateMatch;
+      return (
+        tourMatch && contactMatch && paymentMatch && statusMatch && dateMatch
+      );
     })
     .sort((a, b) => new Date(b.bookingDate) - new Date(a.bookingDate));
 
@@ -159,14 +182,16 @@ const AllTourBookings = () => {
       />
 
       <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-blue-800 mb-6 text-center">
-        All Tour Bookings
+        All Bookings
       </h1>
 
       {/* Filters */}
       <div className="bg-white rounded-xl shadow-md p-4 mb-6 overflow-x-auto">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tour</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Tour
+            </label>
             <input
               type="text"
               placeholder="Filter tour"
@@ -177,21 +202,29 @@ const AllTourBookings = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name / Mobile</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Name / Mobile
+            </label>
             <input
               type="text"
               placeholder="Filter by name or mobile"
               value={filters.contact}
-              onChange={(e) => setFilters({ ...filters, contact: e.target.value })}
+              onChange={(e) =>
+                setFilters({ ...filters, contact: e.target.value })
+              }
               className="w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Payment</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Payment
+            </label>
             <select
               value={filters.payment}
-              onChange={(e) => setFilters({ ...filters, payment: e.target.value })}
+              onChange={(e) =>
+                setFilters({ ...filters, payment: e.target.value })
+              }
               className="w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
             >
               <option value="">All</option>
@@ -203,36 +236,47 @@ const AllTourBookings = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Status
+            </label>
             <select
               value={filters.status}
-              onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+              onChange={(e) =>
+                setFilters({ ...filters, status: e.target.value })
+              }
               className="w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
             >
               <option value="all">All</option>
               <option value="cancelled">Cancelled</option>
               <option value="completed">Completed</option>
               <option value="fully_paid">Fully Paid</option>
-             
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              From Date
+            </label>
             <input
               type="date"
               value={filters.fromDate}
-              onChange={(e) => setFilters({ ...filters, fromDate: e.target.value })}
+              onChange={(e) =>
+                setFilters({ ...filters, fromDate: e.target.value })
+              }
               className="w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">To Date</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              To Date
+            </label>
             <input
               type="date"
               value={filters.toDate}
-              onChange={(e) => setFilters({ ...filters, toDate: e.target.value })}
+              onChange={(e) =>
+                setFilters({ ...filters, toDate: e.target.value })
+              }
               className="w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
             />
           </div>
@@ -253,12 +297,24 @@ const AllTourBookings = () => {
             <thead className="bg-blue-50">
               <tr>
                 <th className="p-3 text-left text-sm font-semibold text-gray-700 w-10"></th>
-                <th className="p-3 text-left text-sm font-semibold text-gray-700">S.No</th>
-                <th className="p-3 text-left text-sm font-semibold text-gray-700">Tour</th>
-                <th className="p-3 text-left text-sm font-semibold text-gray-700">Booked On</th>
-                <th className="p-3 text-left text-sm font-semibold text-gray-700">Contact</th>
-                <th className="p-3 text-left text-sm font-semibold text-gray-700">Payment</th>
-                <th className="p-3 text-left text-sm font-semibold text-gray-700">Status</th>
+                <th className="p-3 text-left text-sm font-semibold text-gray-700">
+                  S.No
+                </th>
+                <th className="p-3 text-left text-sm font-semibold text-gray-700">
+                  Tour
+                </th>
+                <th className="p-3 text-left text-sm font-semibold text-gray-700">
+                  Booked On
+                </th>
+                <th className="p-3 text-left text-sm font-semibold text-gray-700">
+                  Contact
+                </th>
+                <th className="p-3 text-left text-sm font-semibold text-gray-700">
+                  Payment
+                </th>
+                <th className="p-3 text-left text-sm font-semibold text-gray-700">
+                  Status
+                </th>
               </tr>
             </thead>
 
@@ -273,10 +329,16 @@ const AllTourBookings = () => {
                   <React.Fragment key={booking._id}>
                     <tr
                       className="border-b hover:bg-gray-50 transition cursor-pointer"
-                      onClick={() => setExpandedRow(expandedRow === index ? null : index)}
+                      onClick={() =>
+                        setExpandedRow(expandedRow === index ? null : index)
+                      }
                     >
                       <td className="p-3 text-gray-600">
-                        {expandedRow === index ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                        {expandedRow === index ? (
+                          <ChevronDown size={16} />
+                        ) : (
+                          <ChevronRight size={16} />
+                        )}
                       </td>
                       <td className="p-3 text-sm text-gray-800">{index + 1}</td>
                       <td className="p-3 text-sm text-gray-800">
@@ -284,28 +346,35 @@ const AllTourBookings = () => {
                       </td>
                       <td className="p-3 text-sm text-gray-800">
                         {booking?.bookingDate
-                          ? new Date(booking.bookingDate).toLocaleDateString("en-IN", {
-                              day: "2-digit",
-                              month: "short",
-                              year: "numeric",
-                            })
+                          ? new Date(booking.bookingDate).toLocaleDateString(
+                              "en-IN",
+                              {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              },
+                            )
                           : "N/A"}
                       </td>
                       <td className="p-3 text-sm text-gray-800">
-                        <div><strong>{displayName}</strong></div>
+                        <div>
+                          <strong>{displayName}</strong>
+                        </div>
                         <div>Mobile: {booking?.contact?.mobile || "N/A"}</div>
                         <div>Email: {booking?.contact?.email || "N/A"}</div>
                       </td>
                       <td className="p-3 text-sm text-gray-800">
                         <div>
-                          Advance: {booking.payment?.advance?.paid ? (
+                          Advance:{" "}
+                          {booking.payment?.advance?.paid ? (
                             <span className="text-green-600">Paid</span>
                           ) : (
                             <span className="text-red-600">Pending</span>
                           )}
                         </div>
                         <div>
-                          Balance: {booking.payment?.balance?.paid ? (
+                          Balance:{" "}
+                          {booking.payment?.balance?.paid ? (
                             <span className="text-green-600">Paid</span>
                           ) : (
                             <span className="text-yellow-600">Pending</span>
@@ -332,7 +401,7 @@ const AllTourBookings = () => {
                                 e.stopPropagation();
                                 navigator.clipboard.writeText(booking._id).then(
                                   () => toast.success("Booking ID copied!"),
-                                  () => toast.error("Failed to copy")
+                                  () => toast.error("Failed to copy"),
                                 );
                               }}
                               className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
@@ -349,13 +418,17 @@ const AllTourBookings = () => {
                               Billing Address
                             </h4>
                             <p className="text-sm text-gray-700">
-                              {booking.billingAddress?.addressLine1 || "N/A"}, {booking.billingAddress?.addressLine2 || ""}
+                              {booking.billingAddress?.addressLine1 || "N/A"},{" "}
+                              {booking.billingAddress?.addressLine2 || ""}
                             </p>
                             <p className="text-sm text-gray-700">
-                              {booking.billingAddress?.city || "N/A"}, {booking.billingAddress?.state || "N/A"} - {booking.billingAddress?.pincode || "N/A"}
+                              {booking.billingAddress?.city || "N/A"},{" "}
+                              {booking.billingAddress?.state || "N/A"} -{" "}
+                              {booking.billingAddress?.pincode || "N/A"}
                             </p>
                             <p className="text-sm text-gray-700">
-                              Country: {booking.billingAddress?.country || "India"}
+                              Country:{" "}
+                              {booking.billingAddress?.country || "India"}
                             </p>
                           </div>
 
@@ -373,7 +446,8 @@ const AllTourBookings = () => {
                                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                     <div className="space-y-1">
                                       <p className="font-medium text-gray-800">
-                                        Name: {t.title} {t.firstName} {t.lastName}
+                                        Name: {t.title} {t.firstName}{" "}
+                                        {t.lastName}
                                       </p>
                                       <p>Age: {t.age}</p>
                                       <p>Gender: {t.gender}</p>
@@ -382,13 +456,32 @@ const AllTourBookings = () => {
 
                                     <div className="space-y-1">
                                       <p>
-                                        Package: {t.packageType === "main" ? "Main Package" : `Variant Package ${t.variantPackageIndex + 1}`}
+                                        Package:{" "}
+                                        {t.packageType === "main"
+                                          ? "Main Package"
+                                          : `Variant Package ${t.variantPackageIndex + 1}`}
                                       </p>
                                       <p>
-                                        Addon: {t.selectedAddon?.name ? `${t.selectedAddon.name} (₹${t.selectedAddon.price || 0})` : "Nil"}
+                                        Addon:{" "}
+                                        {t.selectedAddon?.name
+                                          ? `${t.selectedAddon.name} (₹${t.selectedAddon.price || 0})`
+                                          : "Nil"}
                                       </p>
-                                      <p>Boarding: {t.boardingPoint?.stationName || "N/A"} ({t.boardingPoint?.stationCode || "N/A"})</p>
-                                      <p>Deboarding: {t.deboardingPoint?.stationName || "N/A"} ({t.deboardingPoint?.stationCode || "N/A"})</p>
+                                      <p>
+                                        Boarding:{" "}
+                                        {t.boardingPoint?.stationName || "N/A"}{" "}
+                                        ({t.boardingPoint?.stationCode || "N/A"}
+                                        )
+                                      </p>
+                                      <p>
+                                        Deboarding:{" "}
+                                        {t.deboardingPoint?.stationName ||
+                                          "N/A"}{" "}
+                                        (
+                                        {t.deboardingPoint?.stationCode ||
+                                          "N/A"}
+                                        )
+                                      </p>
                                     </div>
 
                                     <div className="space-y-1">
@@ -413,7 +506,10 @@ const AllTourBookings = () => {
 
               {filteredBookings.length === 0 && (
                 <tr>
-                  <td colSpan="7" className="text-center text-gray-500 p-6 text-base">
+                  <td
+                    colSpan="7"
+                    className="text-center text-gray-500 p-6 text-base"
+                  >
                     No results match your filters
                   </td>
                 </tr>
