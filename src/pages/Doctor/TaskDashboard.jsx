@@ -21,6 +21,7 @@ import {
   Users,
   Copy,
   MapPin,
+  Clock,
 } from "lucide-react";
 
 const TaskDashboard = () => {
@@ -63,7 +64,7 @@ const TaskDashboard = () => {
     loadData();
   }, [ttoken, getAllBookings]);
 
-  // Filters (unchanged)
+  // Filters
   const filters = {
     advanceReceipt: (b) =>
       (b.payment?.advance?.paid &&
@@ -100,14 +101,32 @@ const TaskDashboard = () => {
       b?.receipts?.balanceReceiptSent === true &&
       b?.isTripCompleted === false &&
       b?.isBookingCompleted !== true,
+
+    unverified: (b) =>
+      !b?.payment?.advance?.paid &&
+      !b?.payment?.balance?.paid &&
+      b.travellers?.some(
+        (t) => !t?.cancelled?.byTraveller && !t?.cancelled?.byAdmin,
+      ),
   };
 
   const categorized = useMemo(
     () => ({
-      advanceReceipt: bookings.filter(filters.advanceReceipt),
-      balanceReceipt: bookings.filter(filters.balanceReceipt),
-      modifyReceipt: bookings.filter(filters.modifyReceipt),
-      uncompleted: bookings.filter(filters.uncompleted),
+      advanceReceipt: bookings
+        .filter(filters.advanceReceipt)
+        .sort((a, b) => new Date(a.bookingDate) - new Date(b.bookingDate)),
+      balanceReceipt: bookings
+        .filter(filters.balanceReceipt)
+        .sort((a, b) => new Date(a.bookingDate) - new Date(b.bookingDate)),
+      modifyReceipt: bookings
+        .filter(filters.modifyReceipt)
+        .sort((a, b) => new Date(a.bookingDate) - new Date(b.bookingDate)),
+      uncompleted: bookings
+        .filter(filters.uncompleted)
+        .sort((a, b) => new Date(a.bookingDate) - new Date(b.bookingDate)),
+      unverified: bookings
+        .filter(filters.unverified)
+        .sort((a, b) => new Date(a.bookingDate) - new Date(b.bookingDate)),
     }),
     [bookings],
   );
@@ -117,7 +136,8 @@ const TaskDashboard = () => {
       categorized.advanceReceipt.length +
       categorized.balanceReceipt.length +
       categorized.modifyReceipt.length +
-      categorized.uncompleted.length
+      categorized.uncompleted.length +
+      categorized.unverified.length
     );
   }, [categorized]);
 
@@ -171,6 +191,13 @@ const TaskDashboard = () => {
       Icon: CheckCircle,
       color: "text-orange-600",
       bg: "bg-orange-100",
+    },
+    {
+      label: "Unverified",
+      value: categorized.unverified.length,
+      Icon: Clock,
+      color: "text-teal-600",
+      bg: "bg-teal-100",
     },
   ];
 
@@ -259,6 +286,7 @@ const TaskDashboard = () => {
       () => toast.error("Failed to copy"),
     );
   };
+
   const TaskCard = ({ booking, category, type, color }) => {
     const firstTrav = booking.travellers?.[0] || {};
     const travellerName =
@@ -267,38 +295,45 @@ const TaskDashboard = () => {
 
     const isActing = actionLoading[booking._id] === type;
 
+    // No button for unverified category
+    const showActionButton = category !== "unverified";
+
     return (
       <div
         className="bg-white rounded-xl shadow border hover:shadow-lg transition p-4 cursor-pointer relative overflow-hidden w-full"
         onClick={() => toggleExpand(category, booking._id)}
       >
-        {/* Action Button - top-right */}
-        <div className="absolute top-2 right-2 z-10">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleMarkAction(booking._id, type);
-            }}
-            disabled={isActing}
-            className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-white rounded-lg transition ${
-              isActing
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-green-600 hover:bg-green-700"
-            }`}
-          >
-            {isActing ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <Check className="w-3.5 h-3.5" />
-            )}
-            <span className="hidden xs:inline">
-              {type === "completeBooking" ? "Complete" : "Sent"}
-            </span>
-          </button>
-        </div>
+        {/* Green button - fixed top-right, won't move on expand */}
+        {showActionButton && (
+          <div className="absolute top-3 right-3 z-10">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMarkAction(booking._id, type);
+              }}
+              disabled={isActing}
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg shadow-md transition ${
+                isActing
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-green-600 hover:bg-green-700"
+              }`}
+            >
+              {isActing ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Check className="w-4 h-4" />
+              )}
+              <span className="hidden xs:inline">
+                {type === "completeBooking" ? "Mark Completed" : "Mark Sent"}
+              </span>
+            </button>
+          </div>
+        )}
 
-        {/* Header content - no badge */}
-        <div className="pr-16 flex flex-col gap-1">
+        {/* Header content - adjusted padding only when button is present */}
+        <div
+          className={`pr-${showActionButton ? "36" : "4"} flex flex-col gap-1`}
+        >
           <p className="font-semibold text-base text-gray-900 break-words line-clamp-2">
             {booking.tourData?.title || booking.tour?.title || "Tour"}
           </p>
@@ -307,10 +342,9 @@ const TaskDashboard = () => {
           </p>
         </div>
 
-        {/* Expanded content remains the same */}
+        {/* Expanded content */}
         {expanded[category]?.[booking._id] && (
           <div className="mt-4 pt-4 border-t space-y-4 text-sm text-gray-700 overflow-x-hidden">
-            {/* Booking ID */}
             <div className="flex flex-wrap items-center gap-2">
               <strong>Booking ID:</strong>
               <code className="bg-gray-100 px-2 py-1 rounded font-mono text-xs break-all">
@@ -327,7 +361,6 @@ const TaskDashboard = () => {
               </button>
             </div>
 
-            {/* Contact */}
             <div className="grid grid-cols-1 xs:grid-cols-2 gap-3">
               <p className="break-words">
                 <strong>Email:</strong> {booking.contact?.email || "—"}
@@ -352,7 +385,6 @@ const TaskDashboard = () => {
               </p>
             </div>
 
-            {/* Billing Address */}
             {booking.billingAddress && (
               <div className="break-words">
                 <h4 className="font-semibold mb-2 flex items-center gap-2">
@@ -371,7 +403,6 @@ const TaskDashboard = () => {
               </div>
             )}
 
-            {/* Travellers */}
             <div className="max-h-80 overflow-y-auto">
               <h4 className="font-semibold mb-2 flex items-center gap-2">
                 <Users className="w-4 h-4" /> Travellers (
@@ -419,7 +450,6 @@ const TaskDashboard = () => {
               </div>
             </div>
 
-            {/* Payment */}
             <div>
               <h4 className="font-semibold mb-2">Payment Details</h4>
               <p className="break-words">
@@ -438,7 +468,6 @@ const TaskDashboard = () => {
               </p>
             </div>
 
-            {/* Receipts */}
             <div>
               <h4 className="font-semibold mb-2">Receipts</h4>
               <p>
@@ -455,7 +484,6 @@ const TaskDashboard = () => {
               </p>
             </div>
 
-            {/* Advance Admin Remarks */}
             <div>
               <h4 className="font-semibold mb-2">Advance Admin Remarks</h4>
               {booking.advanceAdminRemarks?.length > 0 ? (
@@ -492,7 +520,6 @@ const TaskDashboard = () => {
               )}
             </div>
 
-            {/* Admin Remarks */}
             <div>
               <h4 className="font-semibold mb-2">Admin Remarks</h4>
               {booking.adminRemarks?.length > 0 ? (
@@ -547,7 +574,7 @@ const TaskDashboard = () => {
 
         {items.length === 0 ? (
           <p className="text-center text-gray-500 py-10 text-base">
-            No pending {title.toLowerCase()} at the moment.
+            No {title.toLowerCase()} at the moment.
           </p>
         ) : (
           <>
@@ -614,8 +641,8 @@ const TaskDashboard = () => {
           </div>
         ) : (
           <>
-            {/* Metrics - fully responsive */}
-            <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 mb-8 sm:mb-10">
+            {/* Metrics */}
+            <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 mb-8 sm:mb-10">
               {metrics.map((m, i) => (
                 <div
                   key={i}
@@ -635,6 +662,15 @@ const TaskDashboard = () => {
                 </div>
               ))}
             </div>
+
+            {/* Sections - no count in title */}
+            <Section
+              title="Unverified Bookings"
+              category="unverified"
+              type="advance"
+              color="text-teal-600"
+              Icon={Clock}
+            />
 
             <Section
               title="Advance Receipts Pending"
